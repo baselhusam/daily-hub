@@ -105,6 +105,10 @@ docker-compose.yml
 Dockerfile
 ```
 
+## Author
+
+Built by [Basel Husam](https://baselhusam.com).
+
 ## License
 
 MIT
