@@ -4,7 +4,6 @@ import * as React from "react";
 import { format } from "date-fns";
 import { motion } from "motion/react";
 import { Plus } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { DashboardData } from "@/lib/dashboard";
@@ -28,8 +27,8 @@ export function DashboardShell({ data }: { data: DashboardData }) {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         <motion.header
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -37,7 +36,7 @@ export function DashboardShell({ data }: { data: DashboardData }) {
           className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">DailyHub</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
             <p className="text-sm text-muted-foreground">
               {format(new Date(), "EEEE, MMMM d")}
             </p>
@@ -48,7 +47,6 @@ export function DashboardShell({ data }: { data: DashboardData }) {
             <Badge variant="secondary">
               {data.stats.dailyCompleted}/{data.stats.dailyTotal} daily done
             </Badge>
-            <ThemeToggle />
           </div>
         </motion.header>
 

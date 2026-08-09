@@ -11,6 +11,7 @@ A minimal daily dashboard for organizing businesses, projects, ad-hoc tasks, and
 - **Completion log** that records finished work automatically
 - **Light / dark theme** with a clean neutral UI
 - **Single-page dashboard** — no navigation required
+- **Analytics page** — charts and stats for tasks, businesses, projects, and daily habits
 
 ## Tech Stack
 
