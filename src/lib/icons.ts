@@ -1,9 +1,17 @@
 import type { LucideIcon } from "lucide-react";
 import * as icons from "lucide-react";
 
+function toPascalCase(iconKey: string): string {
+  return iconKey
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+}
+
 export function getIcon(iconKey: string): LucideIcon {
+  const pascalKey = toPascalCase(iconKey);
   const icon = (icons as unknown as Record<string, LucideIcon | undefined>)[
-    iconKey
+    pascalKey
   ];
   return icon ?? icons.Circle;
 }

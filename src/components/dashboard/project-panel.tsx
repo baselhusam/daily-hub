@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { Check, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { completeTask, deleteTask } from "@/app/actions/tasks";
 import { deleteProject } from "@/app/actions/projects";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { EntityIcon } from "./entity-icon";
 import type { DashboardBusiness } from "@/lib/dashboard";
@@ -95,16 +96,12 @@ export function ProjectPanel({ business }: ProjectPanelProps) {
                   layout
                   className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2"
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
+                  <Checkbox
+                    checked={false}
                     disabled={pendingTaskId === task.id}
-                    onClick={() => handleComplete(task.id)}
-                    aria-label="Complete task"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
+                    onCheckedChange={() => handleComplete(task.id)}
+                    aria-label={`Complete ${task.title}`}
+                  />
                   <span className="flex-1 text-sm">{task.title}</span>
                   <Button
                     variant="ghost"

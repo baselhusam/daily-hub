@@ -29,5 +29,11 @@ export function EntityIcon({
   }
 
   const Icon = getIcon(iconKey);
-  return <Icon className={cn("shrink-0", className)} size={size} />;
+  return (
+    <Icon
+      className={cn("shrink-0", className)}
+      style={{ width: size, height: size }}
+      aria-hidden
+    />
+  );
 }

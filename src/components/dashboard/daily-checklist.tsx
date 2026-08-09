@@ -7,7 +7,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
-import { EntityIcon } from "./entity-icon";
 import type { DashboardDailyTask } from "@/lib/dashboard";
 
 type DailyChecklistProps = {
@@ -49,7 +48,6 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
                 disabled={pendingId === task.id}
                 onCheckedChange={() => handleToggle(task.id)}
               />
-              <EntityIcon iconKey={task.iconKey} size={16} className="text-muted-foreground" />
               <span
                 className={
                   task.completedToday

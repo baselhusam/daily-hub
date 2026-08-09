@@ -1,9 +1,9 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
+import { CheckCircle2 } from "lucide-react";
 import { motion } from "motion/react";
 import { Card } from "@/components/ui/card";
-import { EntityIcon } from "./entity-icon";
 import type { DashboardCompletion } from "@/lib/dashboard";
 
 type CompletionFeedProps = {
@@ -30,7 +30,7 @@ export function CompletionFeed({ completions }: CompletionFeedProps) {
             transition={{ delay: index * 0.03 }}
             className="flex items-center gap-3 rounded-lg border bg-background px-3 py-2"
           >
-            <EntityIcon iconKey={item.iconKey} size={16} className="text-muted-foreground" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm">{item.title}</p>
               <p className="text-xs text-muted-foreground">

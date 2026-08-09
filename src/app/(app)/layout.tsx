@@ -1,5 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar";
-import { MobileNav } from "@/components/mobile-nav";
+import { AppShell } from "@/components/app-shell";
 import { getSidebarStats } from "@/lib/sidebar-stats";
 
 export default async function AppLayout({
@@ -9,13 +8,5 @@ export default async function AppLayout({
 }) {
   const stats = await getSidebarStats();
 
-  return (
-    <div className="flex min-h-screen bg-background">
-      <AppSidebar stats={stats} />
-      <div className="flex flex-1 flex-col overflow-auto">
-        <MobileNav />
-        <main className="flex-1">{children}</main>
-      </div>
-    </div>
-  );
+  return <AppShell stats={stats}>{children}</AppShell>;
 }

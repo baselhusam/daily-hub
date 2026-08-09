@@ -3,9 +3,7 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { motion } from "motion/react";
-import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { DashboardData } from "@/lib/dashboard";
 import { BusinessRail } from "./business-rail";
 import { ProjectPanel } from "./project-panel";
@@ -60,11 +58,10 @@ export function DashboardShell({ data }: { data: DashboardData }) {
               transition: { staggerChildren: 0.06 },
             },
           }}
-          className="grid grid-cols-1 gap-4 lg:grid-cols-12"
+          className="space-y-6"
         >
           <motion.section
             variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
-            className="lg:col-span-3"
           >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium">Businesses</h2>
@@ -74,55 +71,56 @@ export function DashboardShell({ data }: { data: DashboardData }) {
               businesses={data.businesses}
               selectedBusinessId={selectedBusinessId}
               onSelect={setSelectedBusinessId}
+              layout="horizontal"
             />
           </motion.section>
 
-          <motion.section
-            variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
-            className="lg:col-span-5"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium">
-                {selectedBusiness ? selectedBusiness.name : "Projects"}
-              </h2>
-              {selectedBusiness && (
-                <CreateProjectDialog businessId={selectedBusiness.id} />
-              )}
-            </div>
-            <ProjectPanel business={selectedBusiness} />
-          </motion.section>
-
-          <motion.section
-            variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
-            className="lg:col-span-4 space-y-4"
-          >
-            <div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+            <motion.section
+              variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+              className="lg:col-span-7"
+            >
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-medium">Daily checklist</h2>
-                <CreateDailyTaskDialog businesses={data.businesses} />
+                <h2 className="text-sm font-medium">
+                  {selectedBusiness ? selectedBusiness.name : "Projects"}
+                </h2>
+                {selectedBusiness && (
+                  <CreateProjectDialog businessId={selectedBusiness.id} />
+                )}
               </div>
-              <DailyChecklist tasks={data.dailyTasks} />
-            </div>
+              <ProjectPanel business={selectedBusiness} />
+            </motion.section>
 
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-medium">Inbox</h2>
-                <CreateTaskDialog businesses={data.businesses} />
+            <motion.section
+              variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+              className="space-y-6 lg:col-span-5"
+            >
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-sm font-medium">Daily checklist</h2>
+                  <CreateDailyTaskDialog businesses={data.businesses} />
+                </div>
+                <DailyChecklist tasks={data.dailyTasks} />
               </div>
-              <TaskInbox tasks={data.inboxTasks} />
-            </div>
-          </motion.section>
+
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-sm font-medium">Inbox</h2>
+                  <CreateTaskDialog businesses={data.businesses} />
+                </div>
+                <TaskInbox tasks={data.inboxTasks} />
+              </div>
+            </motion.section>
+          </div>
 
           <motion.section
             variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
-            className="lg:col-span-12"
           >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium">Recent completions</h2>
-              <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
-                <Plus className="h-3.5 w-3.5" />
+              <span className="text-xs text-muted-foreground">
                 Logged automatically
-              </Button>
+              </span>
             </div>
             <CompletionFeed completions={data.completions} />
           </motion.section>

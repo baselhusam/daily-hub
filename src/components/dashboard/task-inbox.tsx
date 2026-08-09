@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { Check, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { completeTask, deleteTask } from "@/app/actions/tasks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { DashboardTask } from "@/lib/dashboard";
 
 type TaskInboxProps = {
@@ -38,16 +39,12 @@ export function TaskInbox({ tasks }: TaskInboxProps) {
             layout
             className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2"
           >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0"
+            <Checkbox
+              checked={false}
               disabled={pendingId === task.id}
-              onClick={() => handleComplete(task.id)}
-              aria-label="Complete task"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
+              onCheckedChange={() => handleComplete(task.id)}
+              aria-label={`Complete ${task.title}`}
+            />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm">{task.title}</p>
               {(task.business || task.project) && (

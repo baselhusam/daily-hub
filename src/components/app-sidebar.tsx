@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BarChart3 } from "lucide-react";
+import { LayoutDashboard, BarChart3, PanelLeftClose } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { AnalyticsOverview } from "@/lib/analytics";
 
@@ -17,20 +18,36 @@ type AppSidebarProps = {
     AnalyticsOverview,
     "openTasks" | "dailyConsistencyToday" | "completionsThisWeek"
   > | null;
+  expanded: boolean;
+  onCollapse: () => void;
 };
 
-export function AppSidebar({ stats }: AppSidebarProps) {
+export function AppSidebar({ stats, expanded, onCollapse }: AppSidebarProps) {
   const pathname = usePathname();
 
+  if (!expanded) {
+    return null;
+  }
+
   return (
-    <aside className="hidden h-full w-56 shrink-0 flex-col border-r bg-card md:flex">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="text-sm font-semibold tracking-tight">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r bg-card md:flex">
+      <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-3">
+        <Link href="/" className="truncate text-sm font-semibold tracking-tight">
           DailyHub
         </Link>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0"
+          onClick={onCollapse}
+          aria-label="Collapse sidebar"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+        </Button>
       </div>
 
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const isActive =
             item.href === "/"
@@ -45,7 +62,7 @@ export function AppSidebar({ stats }: AppSidebarProps) {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                 isActive
-                  ? "bg-accent text-accent-foreground font-medium"
+                  ? "bg-accent font-medium text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
               )}
             >
@@ -56,29 +73,37 @@ export function AppSidebar({ stats }: AppSidebarProps) {
         })}
       </nav>
 
-      {stats && (
-        <div className="space-y-2 border-t p-4">
-          <p className="text-xs font-medium text-muted-foreground">Quick stats</p>
-          <div className="space-y-1.5 text-xs">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Open tasks</span>
-              <span className="font-medium">{stats.openTasks}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">This week</span>
-              <span className="font-medium">{stats.completionsThisWeek}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Daily today</span>
-              <span className="font-medium">{stats.dailyConsistencyToday}%</span>
-            </div>
+      <div className="mt-auto border-t">
+        {stats && (
+          <div className="space-y-2 px-4 py-4">
+            <p className="text-xs font-medium text-muted-foreground">
+              Quick stats
+            </p>
+            <dl className="space-y-2 text-xs">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">Open tasks</dt>
+                <dd className="font-medium tabular-nums">{stats.openTasks}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">This week</dt>
+                <dd className="font-medium tabular-nums">
+                  {stats.completionsThisWeek}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">Daily today</dt>
+                <dd className="font-medium tabular-nums">
+                  {stats.dailyConsistencyToday}%
+                </dd>
+              </div>
+            </dl>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex items-center justify-between border-t p-3">
-        <span className="text-xs text-muted-foreground">Theme</span>
-        <ThemeToggle />
+        <div className="flex items-center justify-between border-t px-4 py-3">
+          <span className="text-xs text-muted-foreground">Theme</span>
+          <ThemeToggle />
+        </div>
       </div>
     </aside>
   );
