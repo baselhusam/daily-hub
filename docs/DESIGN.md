@@ -15,7 +15,7 @@ DailyHub should feel **calm, minimal, and daily-use friendly** — something you
 - **Light:** white backgrounds, near-black text, soft gray borders (`oklch` neutrals in `src/app/globals.css`)
 - **Dark:** deep gray backgrounds, off-white text, low-contrast borders
 - **No accent color system** in v1 — charts and badges use foreground opacity steps
-- Business `color` field exists for subtle border hints on business cards only
+- Business `color` field exists for subtle border hints only
 
 ### Typography
 
@@ -29,22 +29,31 @@ DailyHub should feel **calm, minimal, and daily-use friendly** — something you
 
 ### App shell
 
-- **Desktop:** fixed left sidebar (~224px) — nav, quick stats, theme toggle
-- **Mobile:** sidebar hidden; top tab bar for Dashboard / Analytics
+- **Desktop:** fixed left sidebar (~224px) — nav, project filter list, quick stats, theme toggle
+- **Mobile:** sidebar hidden; top tab bar for Dashboard / Projects / Daily / Analytics
 - Main content scrolls independently
 
 ### Dashboard (`/`)
 
-Bento-style grid on large screens:
+Bento-style home:
 
-| Column span | Section |
-|-------------|---------|
-| 3 | Business rail (selectable cards) |
-| 5 | Projects + project tasks for selected business |
-| 4 | Daily checklist + inbox |
-| 12 | Recent completion feed |
+| Section | Content |
+|---------|---------|
+| Stat row | Open tasks, overdue, daily today, completions this week |
+| Chart | Compact 14-day activity chart |
+| Filter chips | All, Inbox, per-project |
+| Task tables | Simple columns: checkbox, title, due date — grouped by project + inbox |
+| Side panel | Today's scheduled habits |
 
 Empty states use muted `Card` with one-line guidance — never blank panels.
+
+### Projects (`/projects`)
+
+Card grid for defining projects: logo, name, description, due date, status, optional business label.
+
+### Daily (`/daily`)
+
+Card grid for habits: logo, title, weekday toggles (M–S), active flag, optional business.
 
 ### Analytics (`/analytics`)
 
@@ -55,8 +64,8 @@ Empty states use muted `Card` with one-line guidance — never blank panels.
 
 ## Components
 
-- **shadcn/ui** (new-york style) — Button, Card, Dialog, Checkbox, Badge, Input, ScrollArea
-- Composed patterns live in `src/components/dashboard/` and `src/components/analytics/`
+- **shadcn/ui** (new-york style) — Button, Card, Dialog, Checkbox, Badge, Input, ScrollArea, Table
+- Composed patterns live in `src/components/dashboard/`, `src/components/projects/`, `src/components/daily/`, and `src/components/analytics/`
 - Do not add new UI libraries without reason; extend shadcn primitives
 
 ## Motion
@@ -71,18 +80,18 @@ Empty states use muted `Card` with one-line guidance — never blank panels.
 ## Iconography
 
 - Lucide icons referenced by string `iconKey` (see `src/lib/icons.ts` and `ICON_OPTIONS`)
-- Daily tasks and businesses can show custom icons (e.g. `newspaper` for Medium)
-- Optional **logo image** overrides icon on business cards via `EntityIcon`
+- Projects, daily tasks, and businesses can show custom logos via `EntityIcon`
+- Optional **logo image** overrides icon when `logoUrl` is set
 
 ## Interaction patterns
 
 | Pattern | Behavior |
 |---------|----------|
-| Complete task | Ghost icon button with check → Server Action → row disappears |
-| Daily toggle | Checkbox → toggles today's completion log |
-| Create entities | Small outline `+` buttons open Dialog forms |
-| Business select | Click business card → filters project panel (client state) |
-| Delete | Trash icon on tasks/projects (destructive, no confirm in v1) |
+| Complete task | Checkbox → Server Action → row disappears |
+| Daily toggle | Checkbox → toggles today's completion log (only if scheduled today) |
+| Create entities | Dialog forms on relevant pages |
+| Project filter | Sidebar links or dashboard chips → `/?project=<id>` |
+| Delete | Trash icon on tasks/projects/habits (destructive, no confirm in v1) |
 
 ## Accessibility
 

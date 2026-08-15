@@ -46,11 +46,17 @@ export async function createBusiness(
   });
 
   revalidatePath("/");
+  revalidatePath("/projects");
+  revalidatePath("/analytics");
+  revalidatePath("/daily");
   return { success: true };
 }
 
 export async function deleteBusiness(id: string): Promise<ActionResult> {
   await prisma.business.delete({ where: { id } });
   revalidatePath("/");
+  revalidatePath("/projects");
+  revalidatePath("/analytics");
+  revalidatePath("/daily");
   return { success: true };
 }

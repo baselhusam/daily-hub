@@ -2,24 +2,48 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { createProjectSchema } from "@/lib/validations";
+import { parseDateInput } from "@/lib/dates";
+import {
+  createProjectSchema,
+  updateProjectSchema,
+} from "@/lib/validations";
 import type { ActionResult } from "@/app/actions/businesses";
 
+const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
+
+function revalidateAll() {
+  for (const path of REVALIDATE_PATHS) {
+    revalidatePath(path);
+  }
+}
+
+function parseOptionalBusinessId(value: FormDataEntryValue | null): string | null {
+  if (!value || value === "none") return null;
+  return String(value);
+}
+
 export async function createProject(formData: FormData): Promise<ActionResult> {
+  const businessId = parseOptionalBusinessId(formData.get("businessId"));
+
   const parsed = createProjectSchema.safeParse({
-    businessId: formData.get("businessId"),
+    businessId,
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     iconKey: formData.get("iconKey") || "folder",
+    logoUrl: formData.get("logoUrl") || undefined,
     color: formData.get("color") || undefined,
+    dueDate: formData.get("dueDate") || undefined,
+    status: formData.get("status") || "ACTIVE",
   });
 
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const { businessId, name, description, iconKey, color } = parsed.data;
-  const count = await prisma.project.count({ where: { businessId } });
+  const { name, description, iconKey, logoUrl, color, status } = parsed.data;
+  const count = await prisma.project.count({
+    where: businessId ? { businessId } : { businessId: null },
+  });
 
   await prisma.project.create({
     data: {
@@ -27,17 +51,59 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
       name,
       description: description || null,
       iconKey,
+      logoUrl: logoUrl || null,
       color: color || null,
+      dueDate: parseDateInput(parsed.data.dueDate),
+      status,
       sortOrder: count,
     },
   });
 
-  revalidatePath("/");
+  revalidateAll();
+  return { success: true };
+}
+
+export async function updateProject(formData: FormData): Promise<ActionResult> {
+  const businessId = parseOptionalBusinessId(formData.get("businessId"));
+
+  const parsed = updateProjectSchema.safeParse({
+    id: formData.get("id"),
+    businessId,
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    iconKey: formData.get("iconKey") || "folder",
+    logoUrl: formData.get("logoUrl") || undefined,
+    color: formData.get("color") || undefined,
+    dueDate: formData.get("dueDate") || undefined,
+    status: formData.get("status") || "ACTIVE",
+  });
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  const { id, name, description, iconKey, logoUrl, color, status } = parsed.data;
+
+  await prisma.project.update({
+    where: { id },
+    data: {
+      businessId,
+      name,
+      description: description || null,
+      iconKey,
+      logoUrl: logoUrl || null,
+      color: color || null,
+      dueDate: parseDateInput(parsed.data.dueDate),
+      status,
+    },
+  });
+
+  revalidateAll();
   return { success: true };
 }
 
 export async function deleteProject(id: string): Promise<ActionResult> {
   await prisma.project.delete({ where: { id } });
-  revalidatePath("/");
+  revalidateAll();
   return { success: true };
 }

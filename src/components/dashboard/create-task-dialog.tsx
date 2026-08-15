@@ -14,31 +14,24 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { DashboardBusiness } from "@/lib/dashboard";
+import type { DashboardBusiness, DashboardProject } from "@/lib/dashboard";
 
 type CreateTaskDialogProps = {
   businesses: DashboardBusiness[];
-  defaultBusinessId?: string;
+  projects: DashboardProject[];
   defaultProjectId?: string;
   triggerLabel?: string;
 };
 
 export function CreateTaskDialog({
   businesses,
-  defaultBusinessId,
+  projects,
   defaultProjectId,
-  triggerLabel = "Task",
+  triggerLabel = "Add task",
 }: CreateTaskDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
-  const [selectedBusinessId, setSelectedBusinessId] = React.useState(
-    defaultBusinessId ?? "none"
-  );
-
-  const selectedBusiness = businesses.find(
-    (business) => business.id === selectedBusinessId
-  );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,7 +53,7 @@ export function CreateTaskDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1">
+        <Button size="sm" className="h-8 gap-1">
           <Plus className="h-3.5 w-3.5" />
           {triggerLabel}
         </Button>
@@ -79,13 +72,28 @@ export function CreateTaskDialog({
             <Input id="task-notes" name="notes" placeholder="Optional notes" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="task-business">Business</Label>
+            <Label htmlFor="task-project">Project</Label>
+            <select
+              id="task-project"
+              name="projectId"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              defaultValue={defaultProjectId ?? "none"}
+            >
+              <option value="none">Inbox (no project)</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="task-business">Business (optional)</Label>
             <select
               id="task-business"
               name="businessId"
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              value={selectedBusinessId}
-              onChange={(event) => setSelectedBusinessId(event.target.value)}
+              defaultValue="none"
             >
               <option value="none">None</option>
               {businesses.map((business) => (
@@ -96,20 +104,8 @@ export function CreateTaskDialog({
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="task-project">Project</Label>
-            <select
-              id="task-project"
-              name="projectId"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue={defaultProjectId ?? "none"}
-            >
-              <option value="none">None</option>
-              {selectedBusiness?.projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
+            <Label htmlFor="task-due-date">Due date</Label>
+            <Input id="task-due-date" name="dueDate" type="date" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="task-priority">Priority (0-3)</Label>

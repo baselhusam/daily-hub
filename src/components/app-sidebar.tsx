@@ -1,29 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, BarChart3, PanelLeftClose } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  LayoutDashboard,
+  BarChart3,
+  FolderKanban,
+  CalendarCheck,
+  PanelLeftClose,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { EntityIcon } from "@/components/dashboard/entity-icon";
 import { cn } from "@/lib/utils";
-import type { AnalyticsOverview } from "@/lib/analytics";
+import type { SidebarStats } from "@/lib/sidebar-stats";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/projects", label: "Projects", icon: FolderKanban },
+  { href: "/daily", label: "Daily", icon: CalendarCheck },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 type AppSidebarProps = {
-  stats?: Pick<
-    AnalyticsOverview,
-    "openTasks" | "dailyConsistencyToday" | "completionsThisWeek"
-  > | null;
+  stats: SidebarStats;
   expanded: boolean;
   onCollapse: () => void;
 };
 
 export function AppSidebar({ stats, expanded, onCollapse }: AppSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeProjectId = searchParams.get("project");
 
   if (!expanded) {
     return null;
@@ -73,32 +82,81 @@ export function AppSidebar({ stats, expanded, onCollapse }: AppSidebarProps) {
         })}
       </nav>
 
+      {stats.projects.length > 0 && (
+        <div className="flex min-h-0 flex-1 flex-col border-t px-3 py-3">
+          <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
+            Projects
+          </p>
+          <ScrollArea className="flex-1">
+            <div className="space-y-1 pr-2">
+              <Link
+                href="/"
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors",
+                  pathname === "/" && !activeProjectId
+                    ? "bg-accent font-medium text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                All tasks
+              </Link>
+              <Link
+                href="/?project=inbox"
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors",
+                  pathname === "/" && activeProjectId === "inbox"
+                    ? "bg-accent font-medium text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                Inbox
+              </Link>
+              {stats.projects.map((project) => (
+                <Link
+                  key={project.id}
+                  href={`/?project=${project.id}`}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors",
+                    pathname === "/" && activeProjectId === project.id
+                      ? "bg-accent font-medium text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  )}
+                >
+                  <EntityIcon
+                    iconKey={project.iconKey}
+                    logoUrl={project.logoUrl}
+                    size={14}
+                  />
+                  <span className="truncate">{project.name}</span>
+                </Link>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+
       <div className="mt-auto border-t">
-        {stats && (
-          <div className="space-y-2 px-4 py-4">
-            <p className="text-xs font-medium text-muted-foreground">
-              Quick stats
-            </p>
-            <dl className="space-y-2 text-xs">
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-muted-foreground">Open tasks</dt>
-                <dd className="font-medium tabular-nums">{stats.openTasks}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-muted-foreground">This week</dt>
-                <dd className="font-medium tabular-nums">
-                  {stats.completionsThisWeek}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-muted-foreground">Daily today</dt>
-                <dd className="font-medium tabular-nums">
-                  {stats.dailyConsistencyToday}%
-                </dd>
-              </div>
-            </dl>
-          </div>
-        )}
+        <div className="space-y-2 px-4 py-4">
+          <p className="text-xs font-medium text-muted-foreground">Quick stats</p>
+          <dl className="space-y-2 text-xs">
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">Open tasks</dt>
+              <dd className="font-medium tabular-nums">{stats.openTasks}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">This week</dt>
+              <dd className="font-medium tabular-nums">
+                {stats.completionsThisWeek}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">Daily today</dt>
+              <dd className="font-medium tabular-nums">
+                {stats.dailyConsistencyToday}%
+              </dd>
+            </div>
+          </dl>
+        </div>
 
         <div className="flex items-center justify-between border-t px-4 py-3">
           <span className="text-xs text-muted-foreground">Theme</span>

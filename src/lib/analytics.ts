@@ -1,6 +1,6 @@
 import { subDays, format, eachDayOfInterval } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { getTodayDate } from "@/lib/dates";
+import { getTodayDate, isScheduledOn } from "@/lib/dates";
 
 export type AnalyticsOverview = {
   totalCompletions: number;
@@ -108,11 +108,12 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         completedOn: { gte: lastWeekStart, lte: lastWeekEnd },
       },
     }),
-    prisma.completionLog.count({
+    prisma.completionLog.findMany({
       where: {
         entityType: "DAILY_TASK",
         completedOn: today,
       },
+      select: { entityId: true },
     }),
     prisma.task.count({ where: { status: { not: "DONE" } } }),
     prisma.task.count({ where: { status: "DONE" } }),
@@ -163,10 +164,19 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       ? 0
       : Math.round((completedTasksCount / totalTaskPool) * 100);
 
+  const scheduledToday = dailyTasks.filter((task) =>
+    isScheduledOn(task.weekdays, today)
+  );
+  const completedTodayIds = new Set(todayDailyCompletions.map((c) => c.entityId));
+
   const dailyConsistencyToday =
-    dailyTasks.length === 0
+    scheduledToday.length === 0
       ? 0
-      : Math.round((todayDailyCompletions / dailyTasks.length) * 100);
+      : Math.round(
+          (scheduledToday.filter((task) => completedTodayIds.has(task.id)).length /
+            scheduledToday.length) *
+            100
+        );
 
   const dayRange = eachDayOfInterval({ start: windowStart, end: today });
   const completionsByDay: CompletionDayPoint[] = dayRange.map((day) => {
@@ -242,7 +252,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     return {
       id: project.id,
       name: project.name,
-      businessName: project.business.name,
+      businessName: project.business?.name ?? "—",
       status: project.status,
       openTasks,
       completedTasks,
@@ -251,6 +261,11 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   });
 
   const dailyTaskStats: DailyTaskAnalytics[] = dailyTasks.map((task) => {
+    const scheduledDaysInWindow = eachDayOfInterval({
+      start: dailyWindowStart,
+      end: today,
+    }).filter((day) => isScheduledOn(task.weekdays, day)).length;
+
     const completedDays = dailyCompletionsInWindow.filter(
       (c) => c.entityId === task.id
     ).length;
@@ -260,8 +275,11 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       title: task.title,
       iconKey: task.iconKey,
       completedDays,
-      windowDays: DAILY_STATS_WINDOW,
-      rate: Math.round((completedDays / DAILY_STATS_WINDOW) * 100),
+      windowDays: scheduledDaysInWindow,
+      rate:
+        scheduledDaysInWindow === 0
+          ? 0
+          : Math.round((completedDays / scheduledDaysInWindow) * 100),
     };
   });
 

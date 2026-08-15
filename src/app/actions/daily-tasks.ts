@@ -3,37 +3,99 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate } from "@/lib/dates";
-import { createDailyTaskSchema } from "@/lib/validations";
+import {
+  createDailyTaskSchema,
+  parseWeekdaysFromForm,
+  updateDailyTaskSchema,
+} from "@/lib/validations";
 import type { ActionResult } from "@/app/actions/businesses";
+
+const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
+
+function revalidateAll() {
+  for (const path of REVALIDATE_PATHS) {
+    revalidatePath(path);
+  }
+}
+
+function parseOptionalBusinessId(value: FormDataEntryValue | null): string | null {
+  if (!value || value === "none") return null;
+  return String(value);
+}
 
 export async function createDailyTask(
   formData: FormData
 ): Promise<ActionResult> {
-  const businessId = formData.get("businessId");
+  const businessId = parseOptionalBusinessId(formData.get("businessId"));
+  const weekdays = parseWeekdaysFromForm(formData);
 
   const parsed = createDailyTaskSchema.safeParse({
     title: formData.get("title"),
     iconKey: formData.get("iconKey") || "check",
-    businessId: businessId === "none" || !businessId ? null : businessId,
+    logoUrl: formData.get("logoUrl") || undefined,
+    businessId,
+    weekdays,
+    isActive: formData.get("isActive") !== "false",
   });
 
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const { title, iconKey, businessId: resolvedBusinessId } = parsed.data;
+  const { title, iconKey, logoUrl, isActive } = parsed.data;
   const count = await prisma.dailyTask.count();
 
   await prisma.dailyTask.create({
     data: {
       title,
       iconKey,
-      businessId: resolvedBusinessId ?? null,
+      logoUrl: logoUrl || null,
+      businessId,
+      weekdays: parsed.data.weekdays,
+      isActive,
       sortOrder: count,
     },
   });
 
-  revalidatePath("/");
+  revalidateAll();
+  return { success: true };
+}
+
+export async function updateDailyTask(
+  formData: FormData
+): Promise<ActionResult> {
+  const businessId = parseOptionalBusinessId(formData.get("businessId"));
+  const weekdays = parseWeekdaysFromForm(formData);
+
+  const parsed = updateDailyTaskSchema.safeParse({
+    id: formData.get("id"),
+    title: formData.get("title"),
+    iconKey: formData.get("iconKey") || "check",
+    logoUrl: formData.get("logoUrl") || undefined,
+    businessId,
+    weekdays,
+    isActive: formData.get("isActive") !== "false",
+  });
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  const { id, title, iconKey, logoUrl, isActive } = parsed.data;
+
+  await prisma.dailyTask.update({
+    where: { id },
+    data: {
+      title,
+      iconKey,
+      logoUrl: logoUrl || null,
+      businessId,
+      weekdays: parsed.data.weekdays,
+      isActive,
+    },
+  });
+
+  revalidateAll();
   return { success: true };
 }
 
@@ -62,12 +124,12 @@ export async function toggleDailyTask(
     });
   }
 
-  revalidatePath("/");
+  revalidateAll();
   return { success: true };
 }
 
 export async function deleteDailyTask(id: string): Promise<ActionResult> {
   await prisma.dailyTask.delete({ where: { id } });
-  revalidatePath("/");
+  revalidateAll();
   return { success: true };
 }

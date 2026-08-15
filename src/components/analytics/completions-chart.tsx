@@ -13,15 +13,21 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CompletionDayPoint } from "@/lib/analytics";
 
-export function CompletionsChart({ data }: { data: CompletionDayPoint[] }) {
+export function CompletionsChart({
+  data,
+  compact = false,
+}: {
+  data: CompletionDayPoint[];
+  compact?: boolean;
+}) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className={compact ? "h-full" : undefined}>
+      <CardHeader className={compact ? "pb-2" : undefined}>
         <CardTitle className="text-sm font-medium">
-          Activity — last 14 days
+          {compact ? "Activity" : "Activity — last 14 days"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-72">
+      <CardContent className={compact ? "h-28 px-2" : "h-72"}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -47,22 +53,35 @@ export function CompletionsChart({ data }: { data: CompletionDayPoint[] }) {
               }}
             />
             <Legend wrapperStyle={{ fontSize: "12px" }} />
-            <Bar
-              dataKey="tasks"
-              name="Tasks"
-              stackId="a"
-              fill="var(--foreground)"
-              fillOpacity={0.35}
-              radius={[0, 0, 0, 0]}
-            />
-            <Bar
-              dataKey="daily"
-              name="Daily"
-              stackId="a"
-              fill="var(--foreground)"
-              fillOpacity={0.65}
-              radius={[4, 4, 0, 0]}
-            />
+            {!compact && (
+              <>
+                <Bar
+                  dataKey="tasks"
+                  name="Tasks"
+                  stackId="a"
+                  fill="var(--foreground)"
+                  fillOpacity={0.35}
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="daily"
+                  name="Daily"
+                  stackId="a"
+                  fill="var(--foreground)"
+                  fillOpacity={0.65}
+                  radius={[4, 4, 0, 0]}
+                />
+              </>
+            )}
+            {compact && (
+              <Bar
+                dataKey="total"
+                name="Total"
+                fill="var(--foreground)"
+                fillOpacity={0.5}
+                radius={[4, 4, 0, 0]}
+              />
+            )}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

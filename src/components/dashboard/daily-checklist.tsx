@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Trash2 } from "lucide-react";
 import { toggleDailyTask, deleteDailyTask } from "@/app/actions/daily-tasks";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash2 } from "lucide-react";
+import { EntityIcon } from "./entity-icon";
 import type { DashboardDailyTask } from "@/lib/dashboard";
 
 type DailyChecklistProps = {
@@ -25,7 +26,10 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
   if (tasks.length === 0) {
     return (
       <Card className="p-4 text-sm text-muted-foreground">
-        Add daily tasks you want to complete every day.
+        No habits scheduled for today.{" "}
+        <a href="/daily" className="underline underline-offset-2">
+          Manage daily tasks
+        </a>
       </Card>
     );
   }
@@ -47,6 +51,11 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
                 checked={task.completedToday}
                 disabled={pendingId === task.id}
                 onCheckedChange={() => handleToggle(task.id)}
+              />
+              <EntityIcon
+                iconKey={task.iconKey}
+                logoUrl={task.logoUrl}
+                size={16}
               />
               <span
                 className={

@@ -2,9 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getTodayDate } from "@/lib/dates";
+import { getTodayDate, parseDateInput } from "@/lib/dates";
 import { createTaskSchema } from "@/lib/validations";
 import type { ActionResult } from "@/app/actions/businesses";
+
+const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
+
+function revalidateAll() {
+  for (const path of REVALIDATE_PATHS) {
+    revalidatePath(path);
+  }
+}
 
 export async function createTask(formData: FormData): Promise<ActionResult> {
   const businessId = formData.get("businessId");
@@ -16,6 +24,7 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
     businessId: businessId === "none" || !businessId ? null : businessId,
     projectId: projectId === "none" || !projectId ? null : projectId,
     priority: formData.get("priority") || 0,
+    dueDate: formData.get("dueDate") || undefined,
   });
 
   if (!parsed.success) {
@@ -23,7 +32,7 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
   }
 
   const { title, notes, priority } = parsed.data;
-  const resolvedBusinessId = parsed.data.businessId ?? null;
+  let resolvedBusinessId = parsed.data.businessId ?? null;
   const resolvedProjectId = parsed.data.projectId ?? null;
 
   if (resolvedProjectId) {
@@ -34,6 +43,9 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
     if (!project) {
       return { success: false, error: "Project not found." };
     }
+    if (project.businessId) {
+      resolvedBusinessId = project.businessId;
+    }
   }
 
   await prisma.task.create({
@@ -43,10 +55,11 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
       businessId: resolvedBusinessId,
       projectId: resolvedProjectId,
       priority,
+      dueDate: parseDateInput(parsed.data.dueDate),
     },
   });
 
-  revalidatePath("/");
+  revalidateAll();
   return { success: true };
 }
 
@@ -79,12 +92,12 @@ export async function completeTask(taskId: string): Promise<ActionResult> {
     }),
   ]);
 
-  revalidatePath("/");
+  revalidateAll();
   return { success: true };
 }
 
 export async function deleteTask(id: string): Promise<ActionResult> {
   await prisma.task.delete({ where: { id } });
-  revalidatePath("/");
+  revalidateAll();
   return { success: true };
 }

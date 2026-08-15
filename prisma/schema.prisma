@@ -41,12 +41,14 @@ model Business {
 
 model Project {
   id          String        @id @default(cuid())
-  businessId  String
-  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId  String?
+  business    Business?     @relation(fields: [businessId], references: [id], onDelete: SetNull)
   name        String
   description String?
   iconKey     String        @default("folder")
+  logoUrl     String?
   color       String?
+  dueDate     DateTime?     @db.Date
   status      ProjectStatus @default(ACTIVE)
   sortOrder   Int           @default(0)
   tasks       Task[]
@@ -71,15 +73,17 @@ model Task {
 }
 
 model DailyTask {
-  id          String          @id @default(cuid())
+  id          String    @id @default(cuid())
   businessId  String?
-  business    Business?       @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  business    Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
   title       String
-  iconKey     String          @default("check")
-  sortOrder   Int             @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  iconKey     String    @default("check")
+  logoUrl     String?
+  weekdays    Int[]     @default([0, 1, 2, 3, 4, 5, 6])
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model CompletionLog {

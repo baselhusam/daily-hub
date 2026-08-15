@@ -1,31 +1,41 @@
 "use client";
 
 import * as React from "react";
+import { Suspense } from "react";
 import { PanelLeft } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { AnalyticsOverview } from "@/lib/analytics";
+import type { SidebarStats } from "@/lib/sidebar-stats";
 
 type AppShellProps = {
-  stats: Pick<
-    AnalyticsOverview,
-    "openTasks" | "dailyConsistencyToday" | "completionsThisWeek"
-  >;
+  stats: SidebarStats;
   children: React.ReactNode;
 };
 
+function SidebarWithSearchParams(props: AppSidebarProps) {
+  return <AppSidebar {...props} />;
+}
+
+type AppSidebarProps = {
+  stats: SidebarStats;
+  expanded: boolean;
+  onCollapse: () => void;
+};
+
 export function AppShell({ stats, children }: AppShellProps) {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(true);
 
   return (
     <div className="min-h-svh bg-background">
-      <AppSidebar
-        stats={stats}
-        expanded={expanded}
-        onCollapse={() => setExpanded(false)}
-      />
+      <Suspense fallback={null}>
+        <SidebarWithSearchParams
+          stats={stats}
+          expanded={expanded}
+          onCollapse={() => setExpanded(false)}
+        />
+      </Suspense>
 
       {!expanded && (
         <Button
