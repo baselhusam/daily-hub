@@ -2,47 +2,75 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
-import { createTask } from "@/app/actions/tasks";
+import { createTask, updateTask } from "@/app/actions/tasks";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  DialogInput,
+  DialogSelect,
+  FieldLabel,
+} from "@/components/ui/input";
+import { toDateOnlyString } from "@/lib/dates";
 import type { DashboardBusiness, DashboardProject } from "@/lib/dashboard";
+
+type TaskFormValues = {
+  id: string;
+  title: string;
+  notes: string | null;
+  projectId: string | null;
+  businessId: string | null;
+  dueDate: Date | null;
+  estimatedMinutes: number | null;
+};
 
 type CreateTaskDialogProps = {
   businesses: DashboardBusiness[];
   projects: DashboardProject[];
   defaultProjectId?: string;
+  task?: TaskFormValues;
   triggerLabel?: string;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export function CreateTaskDialog({
   businesses,
   projects,
   defaultProjectId,
+  task,
   triggerLabel = "Add task",
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: CreateTaskDialogProps) {
-  const [open, setOpen] = React.useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  const isEdit = Boolean(task?.id);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setError(null);
 
-    const result = await createTask(new FormData(event.currentTarget));
+    const result = isEdit
+      ? await updateTask(new FormData(event.currentTarget))
+      : await createTask(new FormData(event.currentTarget));
     setPending(false);
 
     if (!result.success) {
-      setError(result.error ?? "Failed to create task.");
+      setError(result.error ?? "Failed to save task.");
       return;
     }
 
@@ -52,65 +80,98 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1">
-          <Plus className="h-3.5 w-3.5" />
-          {triggerLabel}
-        </Button>
-      </DialogTrigger>
+      {(trigger || controlledOpen === undefined) && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button size="sm" className="h-8 gap-1">
+              <Plus className="h-3.5 w-3.5" />
+              {triggerLabel}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>New task</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="task-title">Title</Label>
-            <Input id="task-title" name="title" placeholder="Reply to email" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-notes">Notes</Label>
-            <Input id="task-notes" name="notes" placeholder="Optional notes" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-project">Project</Label>
-            <select
-              id="task-project"
-              name="projectId"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue={defaultProjectId ?? "none"}
-            >
-              <option value="none">Inbox (no project)</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-business">Business (optional)</Label>
-            <select
-              id="task-business"
-              name="businessId"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue="none"
-            >
-              <option value="none">None</option>
-              {businesses.map((business) => (
-                <option key={business.id} value={business.id}>
-                  {business.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-due-date">Due date</Label>
-            <Input id="task-due-date" name="dueDate" type="date" />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>{isEdit ? "Edit task" : "New task"}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            {task?.id && <input type="hidden" name="id" value={task.id} />}
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Task</FieldLabel>
+              <DialogInput
+                name="title"
+                placeholder="What needs doing?"
+                defaultValue={task?.title}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Notes</FieldLabel>
+              <DialogInput
+                name="notes"
+                placeholder="Optional notes"
+                defaultValue={task?.notes ?? ""}
+              />
+            </label>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
+              <label className="flex flex-col gap-1.5">
+                <FieldLabel>Project</FieldLabel>
+                <DialogSelect
+                  name="projectId"
+                  defaultValue={task?.projectId ?? defaultProjectId ?? "none"}
+                >
+                  <option value="none">Inbox (no project)</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </DialogSelect>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <FieldLabel>Due</FieldLabel>
+                <DialogInput
+                  name="dueDate"
+                  type="date"
+                  defaultValue={
+                    task?.dueDate ? toDateOnlyString(task.dueDate) : ""
+                  }
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <FieldLabel>Est. minutes</FieldLabel>
+                <DialogInput
+                  name="estimatedMinutes"
+                  type="number"
+                  min={0}
+                  placeholder="30"
+                  defaultValue={task?.estimatedMinutes ?? ""}
+                />
+              </label>
+            </div>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Business</FieldLabel>
+              <DialogSelect
+                name="businessId"
+                defaultValue={task?.businessId ?? "none"}
+              >
+                <option value="none">None</option>
+                {businesses.map((business) => (
+                  <option key={business.id} value={business.id}>
+                    {business.name}
+                  </option>
+                ))}
+              </DialogSelect>
+            </label>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </DialogBody>
+          <DialogFooter className="justify-end">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating..." : "Add task"}
+              {pending ? "Saving..." : isEdit ? "Save" : "Add"}
             </Button>
           </DialogFooter>
         </form>

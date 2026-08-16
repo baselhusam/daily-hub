@@ -1,6 +1,6 @@
-import { subDays, format, eachDayOfInterval } from "date-fns";
+import { subDays, eachDayOfInterval } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { getTodayDate, isScheduledOn } from "@/lib/dates";
+import { getTodayDate, isScheduledOn, toDateOnlyString } from "@/lib/dates";
 
 export type AnalyticsOverview = {
   totalCompletions: number;
@@ -22,48 +22,70 @@ export type CompletionDayPoint = {
   tasks: number;
   daily: number;
   total: number;
+  isToday: boolean;
 };
 
-export type BusinessAnalytics = {
-  id: string;
+export type BusinessHoursAnalytics = {
   name: string;
-  iconKey: string;
+  hours: number;
+  share: string;
   color: string;
-  openTasks: number;
-  completedTasks: number;
-  completions: number;
-  projectCount: number;
+  barWidth: number;
 };
 
-export type ProjectAnalytics = {
+export type ProjectProgressAnalytics = {
   id: string;
   name: string;
-  businessName: string;
-  status: string;
-  openTasks: number;
-  completedTasks: number;
-  completionRate: number;
+  note: string;
+  noteColor: string;
+  barWidth: number;
+  color: string;
 };
 
-export type DailyTaskAnalytics = {
+export type HabitConsistencyAnalytics = {
   id: string;
   title: string;
-  iconKey: string;
-  completedDays: number;
-  windowDays: number;
+  dots: Array<{ color: string }>;
   rate: number;
+  rateColor: string;
+};
+
+export type WeekdayAnalytics = {
+  label: string;
+  count: number;
+  labelColor: string;
+  barHeight: number;
+};
+
+export type TimeOfDayAnalytics = {
+  name: string;
+  count: number;
+  barWidth: number;
+  isPeak: boolean;
 };
 
 export type AnalyticsData = {
+  rangeDays: number;
+  rangeLabel: string;
+  lede: string;
+  bigStats: Array<{
+    label: string;
+    value: string;
+    unit: string;
+    color: string;
+  }>;
   overview: AnalyticsOverview;
   completionsByDay: CompletionDayPoint[];
-  byBusiness: BusinessAnalytics[];
-  byProject: ProjectAnalytics[];
-  dailyTaskStats: DailyTaskAnalytics[];
+  byBusiness: BusinessHoursAnalytics[];
+  byProject: ProjectProgressAnalytics[];
+  dailyTaskStats: HabitConsistencyAnalytics[];
+  weekdays: WeekdayAnalytics[];
+  weekdayNote: string;
+  timeOfDay: TimeOfDayAnalytics[];
+  timeOfDayNote: string;
 };
 
 const ANALYTICS_WINDOW_DAYS = 14;
-const DAILY_STATS_WINDOW = 7;
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -76,8 +98,8 @@ function startOfWeek(date: Date): Date {
 
 export async function getAnalyticsData(): Promise<AnalyticsData> {
   const today = getTodayDate();
+  const todayKey = toDateOnlyString(today);
   const windowStart = subDays(today, ANALYTICS_WINDOW_DAYS - 1);
-  const dailyWindowStart = subDays(today, DAILY_STATS_WINDOW - 1);
   const thisWeekStart = startOfWeek(today);
   const lastWeekStart = subDays(thisWeekStart, 7);
   const lastWeekEnd = subDays(thisWeekStart, 1);
@@ -93,12 +115,18 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     businesses,
     projects,
     dailyTasks,
-    dailyCompletionsInWindow,
+    tasks,
   ] = await Promise.all([
     prisma.completionLog.count(),
     prisma.completionLog.findMany({
       where: { completedOn: { gte: windowStart } },
-      select: { completedOn: true, entityType: true },
+      select: {
+        completedOn: true,
+        completedAt: true,
+        entityType: true,
+        entityId: true,
+        minutes: true,
+      },
     }),
     prisma.completionLog.count({
       where: { completedOn: { gte: thisWeekStart } },
@@ -119,19 +147,12 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     prisma.task.count({ where: { status: "DONE" } }),
     prisma.business.findMany({
       orderBy: { sortOrder: "asc" },
-      include: {
-        projects: {
-          include: {
-            tasks: { select: { status: true } },
-          },
-        },
-        tasks: { select: { status: true } },
-      },
+      select: { id: true, name: true, color: true },
     }),
     prisma.project.findMany({
       include: {
-        business: { select: { name: true } },
-        tasks: { select: { status: true } },
+        business: { select: { id: true, name: true } },
+        tasks: { select: { id: true, status: true } },
       },
       orderBy: { sortOrder: "asc" },
     }),
@@ -139,12 +160,13 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
     }),
-    prisma.completionLog.findMany({
-      where: {
-        entityType: "DAILY_TASK",
-        completedOn: { gte: dailyWindowStart },
+    prisma.task.findMany({
+      select: {
+        id: true,
+        businessId: true,
+        projectId: true,
+        project: { select: { businessId: true } },
       },
-      select: { entityId: true, completedOn: true },
     }),
   ]);
 
@@ -179,113 +201,260 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         );
 
   const dayRange = eachDayOfInterval({ start: windowStart, end: today });
+
   const completionsByDay: CompletionDayPoint[] = dayRange.map((day) => {
-    const dateKey = format(day, "yyyy-MM-dd");
+    const dateKey = toDateOnlyString(day);
     const dayLogs = windowCompletions.filter(
-      (log) => format(log.completedOn, "yyyy-MM-dd") === dateKey
+      (log) => toDateOnlyString(log.completedOn) === dateKey
     );
-    const tasks = dayLogs.filter((l) => l.entityType === "TASK").length;
+    const tasksCount = dayLogs.filter((l) => l.entityType === "TASK").length;
     const daily = dayLogs.filter((l) => l.entityType === "DAILY_TASK").length;
 
     return {
       date: dateKey,
-      label: format(day, "EEE"),
-      tasks,
+      label: `${day.getDate()}/${day.getMonth() + 1}`,
+      tasks: tasksCount,
       daily,
-      total: tasks + daily,
+      total: tasksCount + daily,
+      isToday: dateKey === todayKey,
     };
   });
 
-  const businessCompletionCounts = await prisma.completionLog.groupBy({
-    by: ["entityId"],
-    where: { entityType: "TASK" },
-    _count: { id: true },
-  });
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const projectMap = new Map(projects.map((p) => [p.id, p]));
+  const businessMap = new Map(businesses.map((b) => [b.id, b]));
 
-  const taskBusinessMap = await prisma.task.findMany({
-    where: { status: "DONE" },
-    select: { id: true, businessId: true, project: { select: { businessId: true } } },
-  });
+  const bizBuckets = new Map<
+    string,
+    { name: string; color: string; minutes: number; count: number }
+  >();
 
-  const taskToBusiness = new Map<string, string | null>();
-  for (const task of taskBusinessMap) {
-    taskToBusiness.set(
-      task.id,
-      task.businessId ?? task.project?.businessId ?? null
-    );
-  }
+  for (const log of windowCompletions) {
+    let bucketKey = "inbox";
+    let name = "Inbox & habits";
+    let color = "#9B9A97";
 
-  const businessCompletionMap = new Map<string, number>();
-  for (const row of businessCompletionCounts) {
-    const businessId = taskToBusiness.get(row.entityId);
-    if (businessId) {
-      businessCompletionMap.set(
-        businessId,
-        (businessCompletionMap.get(businessId) ?? 0) + row._count.id
-      );
+    if (log.entityType === "TASK") {
+      const task = taskMap.get(log.entityId);
+      if (task?.projectId) {
+        const project = projectMap.get(task.projectId);
+        if (project?.businessId) {
+          const biz = businessMap.get(project.businessId);
+          if (biz) {
+            bucketKey = biz.id;
+            name = biz.name;
+            color = biz.color;
+          }
+        } else if (project) {
+          bucketKey = `solo:${project.id}`;
+          name = `${project.name} (standalone)`;
+          color = project.color ?? "#37352F";
+        }
+      }
     }
+
+    const existing = bizBuckets.get(bucketKey) ?? {
+      name,
+      color,
+      minutes: 0,
+      count: 0,
+    };
+    existing.minutes += log.minutes ?? 0;
+    existing.count += 1;
+    bizBuckets.set(bucketKey, existing);
   }
 
-  const byBusiness: BusinessAnalytics[] = businesses.map((business) => {
-    const projectTasks = business.projects.flatMap((p) => p.tasks);
-    const allTasks = [...business.tasks, ...projectTasks];
-    const openTasks = allTasks.filter((t) => t.status !== "DONE").length;
-    const completedTasks = allTasks.filter((t) => t.status === "DONE").length;
+  const totalMinutes = windowCompletions.reduce(
+    (sum, l) => sum + (l.minutes ?? 0),
+    0
+  );
+  const bizArr = [...bizBuckets.values()].sort((a, b) => b.minutes - a.minutes);
+  const bizMax = Math.max(1, ...bizArr.map((b) => b.minutes));
 
-    return {
-      id: business.id,
-      name: business.name,
-      iconKey: business.iconKey,
-      color: business.color,
-      openTasks,
-      completedTasks,
-      completions: businessCompletionMap.get(business.id) ?? 0,
-      projectCount: business.projects.length,
-    };
-  });
+  const byBusiness: BusinessHoursAnalytics[] = bizArr.map((b) => ({
+    name: b.name,
+    hours: Math.round(b.minutes / 60),
+    share: totalMinutes
+      ? `${Math.round((b.minutes / totalMinutes) * 100)}%`
+      : "0%",
+    color: b.color,
+    barWidth: Math.round((b.minutes / bizMax) * 100),
+  }));
 
-  const byProject: ProjectAnalytics[] = projects.map((project) => {
-    const openTasks = project.tasks.filter((t) => t.status !== "DONE").length;
-    const completedTasks = project.tasks.filter((t) => t.status === "DONE").length;
-    const total = openTasks + completedTasks;
+  const projectLastTouch = new Map<string, string>();
+  for (const log of windowCompletions) {
+    if (log.entityType !== "TASK") continue;
+    const task = taskMap.get(log.entityId);
+    if (!task?.projectId) continue;
+    const key = toDateOnlyString(log.completedOn);
+    const prev = projectLastTouch.get(task.projectId);
+    if (!prev || key > prev) projectLastTouch.set(task.projectId, key);
+  }
+
+  const byProject: ProjectProgressAnalytics[] = projects.map((project) => {
+    const open = project.tasks.filter((t) => t.status !== "DONE").length;
+    const done = project.tasks.filter((t) => t.status === "DONE").length;
+    const total = open + done;
+    const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+    const last = projectLastTouch.get(project.id);
+    const idle = last
+      ? Math.floor(
+          (today.getTime() - new Date(last).getTime()) / 86400000
+        )
+      : 99;
 
     return {
       id: project.id,
       name: project.name,
-      businessName: project.business?.name ?? "—",
-      status: project.status,
-      openTasks,
-      completedTasks,
-      completionRate: total === 0 ? 0 : Math.round((completedTasks / total) * 100),
+      note:
+        idle >= 7
+          ? `idle ${idle === 99 ? "always" : `${idle}d`}`
+          : `${pct}% · ${open} open`,
+      noteColor: idle >= 7 ? "#2383E2" : "#787774",
+      barWidth: Math.max(2, pct),
+      color: project.color ?? "#37352F",
     };
   });
 
-  const dailyTaskStats: DailyTaskAnalytics[] = dailyTasks.map((task) => {
-    const scheduledDaysInWindow = eachDayOfInterval({
-      start: dailyWindowStart,
-      end: today,
-    }).filter((day) => isScheduledOn(task.weekdays, day)).length;
+  const dailyTaskStats: HabitConsistencyAnalytics[] = dailyTasks.map((task) => {
+    const dots = dayRange.map((day) => {
+      if (!isScheduledOn(task.weekdays, day)) {
+        return { color: "#F7F7F5" };
+      }
+      const key = toDateOnlyString(day);
+      const ok = windowCompletions.some(
+        (c) =>
+          c.entityType === "DAILY_TASK" &&
+          c.entityId === task.id &&
+          toDateOnlyString(c.completedOn) === key
+      );
+      return {
+        color: ok ? (key === todayKey ? "#2383E2" : "#9CC7EE") : "#EDEDEC",
+      };
+    });
 
-    const completedDays = dailyCompletionsInWindow.filter(
-      (c) => c.entityId === task.id
+    const scheduled = dayRange.filter((day) =>
+      isScheduledOn(task.weekdays, day)
     ).length;
+    const hit = dots.filter((d) => d.color !== "#EDEDEC" && d.color !== "#F7F7F5")
+      .length;
+    const rate = scheduled === 0 ? 0 : Math.round((hit / scheduled) * 100);
 
     return {
       id: task.id,
       title: task.title,
-      iconKey: task.iconKey,
-      completedDays,
-      windowDays: scheduledDaysInWindow,
-      rate:
-        scheduledDaysInWindow === 0
-          ? 0
-          : Math.round((completedDays / scheduledDaysInWindow) * 100),
+      dots,
+      rate,
+      rateColor: rate >= 80 ? "#448361" : rate >= 50 ? "#787774" : "#C4554D",
     };
   });
 
+  const wdCounts = [0, 0, 0, 0, 0, 0, 0];
+  const wdDays = [0, 0, 0, 0, 0, 0, 0];
+  for (const day of dayRange) {
+    const dow = day.getDay();
+    const key = toDateOnlyString(day);
+    const count = windowCompletions.filter(
+      (l) => toDateOnlyString(l.completedOn) === key
+    ).length;
+    wdCounts[dow] += count;
+    wdDays[dow] += 1;
+  }
+
+  const wdAvg = wdCounts.map((c, i) => (wdDays[i] ? c / wdDays[i] : 0));
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const wdMax = Math.max(0.1, ...wdAvg);
+  let bestI = order[0];
+  let worstI = order[0];
+  for (const i of order) {
+    if (wdAvg[i] > wdAvg[bestI]) bestI = i;
+    if (wdAvg[i] < wdAvg[worstI]) worstI = i;
+  }
+
+  const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dow = today.getDay();
+
+  const weekdays: WeekdayAnalytics[] = order.map((i) => ({
+    label: dayLabels[i],
+    count: Math.round(wdAvg[i] * 10) / 10,
+    labelColor:
+      i === bestI ? "#2383E2" : i === dow ? "#37352F" : "#9B9A97",
+    barHeight: Math.max(3, Math.round((wdAvg[i] / wdMax) * 100)),
+  }));
+
+  const buckets = [
+    { name: "Morning", lo: 5, hi: 11 },
+    { name: "Midday", lo: 12, hi: 16 },
+    { name: "Evening", lo: 17, hi: 21 },
+    { name: "Late night", lo: 22, hi: 28 },
+  ];
+
+  const bCounts = buckets.map((b) =>
+    windowCompletions.filter((l) => {
+      const hr = l.completedAt.getHours();
+      const adjusted = hr < 5 ? hr + 24 : hr;
+      return adjusted >= b.lo && adjusted <= b.hi;
+    }).length
+  );
+  const bMax = Math.max(1, ...bCounts);
+  let peak = 0;
+  bCounts.forEach((c, i) => {
+    if (c > bCounts[peak]) peak = i;
+  });
+
+  const timeOfDay: TimeOfDayAnalytics[] = buckets.map((b, i) => ({
+    name: b.name,
+    count: bCounts[i],
+    barWidth: Math.max(2, Math.round((bCounts[i] / bMax) * 100)),
+    isPeak: i === peak,
+  }));
+
   const activeProjects = projects.filter((p) => p.status === "ACTIVE").length;
+  const rangeLogs = windowCompletions;
 
   return {
+    rangeDays: ANALYTICS_WINDOW_DAYS,
+    rangeLabel: `Last ${ANALYTICS_WINDOW_DAYS} days`,
+    lede: rangeLogs.length
+      ? `You logged ${rangeLogs.length} completions and about ${Math.round(totalMinutes / 60)} hours of focus. ${dayNames[bestI]} is your strongest day.`
+      : "Nothing logged in this window yet.",
+    bigStats: [
+      {
+        label: "Completed",
+        value: String(rangeLogs.length),
+        unit: "items",
+        color: "#37352F",
+      },
+      {
+        label: "Tasks",
+        value: String(
+          rangeLogs.filter((l) => l.entityType === "TASK").length
+        ),
+        unit: "done",
+        color: "#37352F",
+      },
+      {
+        label: "Habit check-ins",
+        value: String(
+          rangeLogs.filter((l) => l.entityType === "DAILY_TASK").length
+        ),
+        unit: "",
+        color: "#787774",
+      },
+      {
+        label: "Focus time",
+        value: String(Math.round(totalMinutes / 60)),
+        unit: "hours",
+        color: "#2383E2",
+      },
+      {
+        label: "Per day",
+        value: (rangeLogs.length / ANALYTICS_WINDOW_DAYS).toFixed(1),
+        unit: "avg",
+        color: "#37352F",
+      },
+    ],
     overview: {
       totalCompletions: allCompletions,
       completionsThisWeek: thisWeekCompletions,
@@ -303,5 +472,9 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     byBusiness,
     byProject,
     dailyTaskStats,
+    weekdays,
+    weekdayNote: `${dayNames[bestI]} is your strongest day · ${dayNames[worstI]} your weakest`,
+    timeOfDay,
+    timeOfDayNote: `Peak stretch: ${buckets[peak].name.toLowerCase()}`,
   };
 }

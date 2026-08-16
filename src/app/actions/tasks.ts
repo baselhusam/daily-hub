@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate, parseDateInput } from "@/lib/dates";
-import { createTaskSchema } from "@/lib/validations";
+import { createTaskSchema, updateTaskSchema } from "@/lib/validations";
 import type { ActionResult } from "@/app/actions/businesses";
 
 const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
@@ -14,50 +14,122 @@ function revalidateAll() {
   }
 }
 
-export async function createTask(formData: FormData): Promise<ActionResult> {
+function parseTaskForm(formData: FormData) {
   const businessId = formData.get("businessId");
   const projectId = formData.get("projectId");
+  const estimatedRaw = formData.get("estimatedMinutes");
 
-  const parsed = createTaskSchema.safeParse({
+  return {
     title: formData.get("title"),
     notes: formData.get("notes") || undefined,
     businessId: businessId === "none" || !businessId ? null : businessId,
     projectId: projectId === "none" || !projectId ? null : projectId,
     priority: formData.get("priority") || 0,
     dueDate: formData.get("dueDate") || undefined,
-  });
+    estimatedMinutes:
+      estimatedRaw === "" || estimatedRaw === null
+        ? null
+        : Number(estimatedRaw),
+  };
+}
 
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message };
-  }
+async function resolveBusinessId(
+  businessId: string | null | undefined,
+  projectId: string | null | undefined
+): Promise<string | null> {
+  let resolvedBusinessId = businessId ?? null;
 
-  const { title, notes, priority } = parsed.data;
-  let resolvedBusinessId = parsed.data.businessId ?? null;
-  const resolvedProjectId = parsed.data.projectId ?? null;
-
-  if (resolvedProjectId) {
+  if (projectId) {
     const project = await prisma.project.findUnique({
-      where: { id: resolvedProjectId },
+      where: { id: projectId },
       select: { businessId: true },
     });
     if (!project) {
-      return { success: false, error: "Project not found." };
+      throw new Error("Project not found.");
     }
     if (project.businessId) {
       resolvedBusinessId = project.businessId;
     }
   }
 
-  await prisma.task.create({
-    data: {
-      title,
-      notes: notes || null,
-      businessId: resolvedBusinessId,
-      projectId: resolvedProjectId,
-      priority,
-      dueDate: parseDateInput(parsed.data.dueDate),
-    },
+  return resolvedBusinessId;
+}
+
+export async function createTask(formData: FormData): Promise<ActionResult> {
+  const parsed = createTaskSchema.safeParse(parseTaskForm(formData));
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  const { title, notes, priority, estimatedMinutes } = parsed.data;
+  const resolvedProjectId = parsed.data.projectId ?? null;
+
+  try {
+    const resolvedBusinessId = await resolveBusinessId(
+      parsed.data.businessId,
+      resolvedProjectId
+    );
+
+    await prisma.task.create({
+      data: {
+        title,
+        notes: notes || null,
+        businessId: resolvedBusinessId,
+        projectId: resolvedProjectId,
+        priority,
+        estimatedMinutes: estimatedMinutes ?? null,
+        dueDate: parseDateInput(parsed.data.dueDate),
+      },
+    });
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create task.",
+    };
+  }
+
+  revalidateAll();
+  return { success: true };
+}
+
+export async function updateTask(formData: FormData): Promise<ActionResult> {
+  const parsed = updateTaskSchema.safeParse({
+    id: formData.get("id"),
+    ...parseTaskForm(formData),
   });
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  const { id, title, notes, priority, estimatedMinutes } = parsed.data;
+  const resolvedProjectId = parsed.data.projectId ?? null;
+
+  try {
+    const resolvedBusinessId = await resolveBusinessId(
+      parsed.data.businessId,
+      resolvedProjectId
+    );
+
+    await prisma.task.update({
+      where: { id },
+      data: {
+        title,
+        notes: notes || null,
+        businessId: resolvedBusinessId,
+        projectId: resolvedProjectId,
+        priority,
+        estimatedMinutes: estimatedMinutes ?? null,
+        dueDate: parseDateInput(parsed.data.dueDate),
+      },
+    });
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update task.",
+    };
+  }
 
   revalidateAll();
   return { success: true };
@@ -88,6 +160,7 @@ export async function completeTask(taskId: string): Promise<ActionResult> {
         entityType: "TASK",
         entityId: taskId,
         completedOn: today,
+        minutes: task.estimatedMinutes,
       },
     }),
   ]);

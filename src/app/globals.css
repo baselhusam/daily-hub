@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant dh (@media (min-width: 900px));
 
 @theme inline {
   --color-background: var(--background);
@@ -28,12 +29,21 @@
   --color-hover: var(--hover);
   --color-faint: var(--faint);
   --color-ink-soft: var(--ink-soft);
+  --color-canvas-sunk: var(--canvas-sunk);
+  --color-rule-soft: var(--rule-soft);
+  --color-warn: var(--warn);
+  --color-warn-wash: var(--warn-wash);
+  --color-warn-border: var(--warn-border);
   --font-sans: var(--font-instrument-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-xl: 12px;
+  --radius-card: 10px;
+  --shadow-raised: 0 1px 2px rgba(15, 15, 15, 0.05);
+  --shadow-dialog: 0 24px 60px -20px rgba(15, 15, 15, 0.24);
+  --breakpoint-dh: 900px;
 }
 
 :root {
@@ -44,7 +54,7 @@
   --card-foreground: #37352f;
   --popover: #ffffff;
   --popover-foreground: #37352f;
-  --primary: #37352f;
+  --primary: #2383e2;
   --primary-foreground: #ffffff;
   --secondary: #f7f7f5;
   --secondary-foreground: #37352f;
@@ -63,6 +73,11 @@
   --hover: #efefed;
   --faint: #9b9a97;
   --ink-soft: #4f4d48;
+  --canvas-sunk: #fbfbfa;
+  --rule-soft: #f1f1ef;
+  --warn: #d9730d;
+  --warn-wash: #faebdd;
+  --warn-border: #f0dcc4;
 }
 
 .dark {
@@ -72,7 +87,7 @@
   --card-foreground: #f7f7f5;
   --popover: #32312c;
   --popover-foreground: #f7f7f5;
-  --primary: #f7f7f5;
+  --primary: #6baee9;
   --primary-foreground: #2b2a25;
   --secondary: #37352f;
   --secondary-foreground: #f7f7f5;
@@ -91,6 +106,42 @@
   --hover: #3f3d38;
   --faint: #8e8d8a;
   --ink-soft: #c7c6c2;
+  --canvas-sunk: #32312c;
+  --rule-soft: rgb(255 255 255 / 8%);
+  --warn: #d9730d;
+  --warn-wash: rgb(217 115 13 / 15%);
+  --warn-border: rgb(217 115 13 / 30%);
+}
+
+@keyframes dh-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dh-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dh-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @layer base {
@@ -107,5 +158,73 @@
   h3 {
     font-weight: 600;
     letter-spacing: -0.025em;
+  }
+
+  ::selection {
+    background: var(--signal-wash);
+  }
+}
+
+@layer utilities {
+  .text-display {
+    font-size: clamp(1.5rem, 3.2vw, 2rem);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+
+  .text-display-lg {
+    font-size: clamp(1.875rem, 4.4vw, 2.625rem);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.02;
+  }
+
+  .text-section {
+    font-size: 1.3125rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  .text-eyebrow {
+    font-size: 0.71875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--faint);
+  }
+
+  .text-body {
+    font-size: 0.84375rem;
+    line-height: 1.55;
+  }
+
+  .text-caption {
+    font-size: 0.78125rem;
+    color: var(--muted-foreground);
+  }
+
+  .text-metric {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .page-gutter {
+    padding-left: clamp(14px, 2.6vw, 32px);
+    padding-right: clamp(14px, 2.6vw, 32px);
+  }
+
+  .animate-dh-fade {
+    animation: dh-fade 0.3s ease both;
+  }
+
+  .animate-dh-in {
+    animation: dh-in 0.22s ease both;
+  }
+
+  .animate-dh-pop {
+    animation: dh-pop 0.2s cubic-bezier(0.2, 0.8, 0.3, 1) both;
   }
 }

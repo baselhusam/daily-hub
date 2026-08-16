@@ -52,8 +52,30 @@ model Project {
   status      ProjectStatus @default(ACTIVE)
   sortOrder   Int           @default(0)
   tasks       Task[]
+  milestones  Milestone[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+}
+
+model Milestone {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  dueDate   DateTime? @db.Date
+  done      Boolean   @default(false)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Settings {
+  id            String  @id @default("default")
+  displayName   String  @default("You")
+  role          String  @default("Operator")
+  workspaceName String  @default("Personal HQ")
+  showStreaks   Boolean @default(true)
+  nudgeDays     Int     @default(7)
 }
 
 model Task {
@@ -66,10 +88,11 @@ model Task {
   notes       String?
   dueDate     DateTime?
   status      TaskStatus @default(TODO)
-  priority    Int        @default(0)
-  completedAt DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  priority         Int        @default(0)
+  estimatedMinutes Int?
+  completedAt      DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 }
 
 model DailyTask {
@@ -92,6 +115,7 @@ model CompletionLog {
   entityId    String
   completedOn DateTime   @db.Date
   completedAt DateTime   @default(now())
+  minutes     Int?
   note        String?
 
   @@unique([entityType, entityId, completedOn])

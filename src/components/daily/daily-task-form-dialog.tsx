@@ -4,20 +4,25 @@ import * as React from "react";
 import { Plus } from "lucide-react";
 import {
   createDailyTask,
+  deleteDailyTask,
   updateDailyTask,
 } from "@/app/actions/daily-tasks";
 import { uploadLogo } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  DialogInput,
+  DialogSelect,
+  FieldLabel,
+} from "@/components/ui/input";
 import { ICON_OPTIONS } from "@/lib/icons";
 import { WEEKDAY_LABELS } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -91,9 +96,7 @@ export function DailyTaskFormDialog({
         const uploadData = new FormData();
         uploadData.set("logo", logoFile);
         const logoUrl = await uploadLogo(uploadData);
-        if (logoUrl) {
-          formData.set("logoUrl", logoUrl);
-        }
+        if (logoUrl) formData.set("logoUrl", logoUrl);
       } else if (task?.logoUrl) {
         formData.set("logoUrl", task.logoUrl);
       }
@@ -103,7 +106,7 @@ export function DailyTaskFormDialog({
         : await createDailyTask(formData);
 
       if (!result.success) {
-        setError(result.error ?? "Failed to save daily task.");
+        setError(result.error ?? "Failed to save habit.");
         return;
       }
 
@@ -124,101 +127,117 @@ export function DailyTaskFormDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="sm" className="h-8 gap-1">
+          <Button size="sm" className="h-9 gap-1 px-4 text-[13.5px] font-semibold">
             <Plus className="h-3.5 w-3.5" />
             Habit
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Edit habit" : "New habit"}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {task?.id && <input type="hidden" name="id" value={task.id} />}
-          <div className="space-y-2">
-            <Label htmlFor="daily-title">Title</Label>
-            <Input
-              id="daily-title"
-              name="title"
-              placeholder="Check inbox"
-              defaultValue={task?.title}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="daily-logo">Logo (optional)</Label>
-            <Input id="daily-logo" name="logo" type="file" accept="image/*" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="daily-icon">Icon</Label>
-            <select
-              id="daily-icon"
-              name="iconKey"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue={task?.iconKey ?? "check"}
-            >
-              {ICON_OPTIONS.map((icon) => (
-                <option key={icon} value={icon}>
-                  {icon}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label>Schedule</Label>
-            <div className="flex gap-1">
-              {WEEKDAY_LABELS.map((label, index) => (
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>{isEdit ? "Edit habit" : "New habit"}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            {task?.id && <input type="hidden" name="id" value={task.id} />}
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Habit</FieldLabel>
+              <DialogInput
+                name="title"
+                placeholder="e.g. Post on Medium"
+                defaultValue={task?.title}
+                required
+              />
+            </label>
+            <div className="flex flex-col gap-2">
+              <FieldLabel>Schedule</FieldLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {WEEKDAY_LABELS.map((label, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => toggleWeekday(index)}
+                    className={cn(
+                      "relative grid h-[42px] w-[42px] place-items-center rounded-lg border text-xs font-semibold transition-colors",
+                      selectedWeekdays.includes(index)
+                        ? "border-foreground text-white"
+                        : "border-border bg-card text-foreground hover:border-foreground"
+                    )}
+                  >
+                    {selectedWeekdays.includes(index) && (
+                      <span className="absolute inset-[-1px] rounded-lg bg-foreground" />
+                    )}
+                    <span className="relative z-10">{label}</span>
+                  </button>
+                ))}
                 <button
-                  key={index}
                   type="button"
-                  onClick={() => toggleWeekday(index)}
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md border text-xs font-medium transition-colors",
-                    selectedWeekdays.includes(index)
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border text-muted-foreground hover:border-foreground/30"
-                  )}
-                  aria-pressed={selectedWeekdays.includes(index)}
+                  onClick={() => setSelectedWeekdays([0, 1, 2, 3, 4, 5, 6])}
+                  className="h-[42px] rounded-lg border border-dashed border-[#DEDDDA] px-4 text-[12.5px] font-semibold text-muted-foreground hover:border-signal hover:text-signal"
                 >
-                  {label}
+                  Every day
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="daily-business">Business (optional)</Label>
-            <select
-              id="daily-business"
-              name="businessId"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue={task?.businessId ?? "none"}
-            >
-              <option value="none">None</option>
-              {businesses.map((business) => (
-                <option key={business.id} value={business.id}>
-                  {business.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              id="daily-active"
-              name="isActive"
-              type="checkbox"
-              value="true"
-              defaultChecked={task?.isActive ?? true}
-              className="h-4 w-4 rounded border border-input"
-            />
-            <Label htmlFor="daily-active">Active</Label>
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Logo</FieldLabel>
+              <DialogInput name="logo" type="file" accept="image/*" />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Icon</FieldLabel>
+              <DialogSelect
+                name="iconKey"
+                defaultValue={task?.iconKey ?? "check"}
+              >
+                {ICON_OPTIONS.map((icon) => (
+                  <option key={icon} value={icon}>
+                    {icon}
+                  </option>
+                ))}
+              </DialogSelect>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Business</FieldLabel>
+              <DialogSelect
+                name="businessId"
+                defaultValue={task?.businessId ?? "none"}
+              >
+                <option value="none">None</option>
+                {businesses.map((business) => (
+                  <option key={business.id} value={business.id}>
+                    {business.name}
+                  </option>
+                ))}
+              </DialogSelect>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                name="isActive"
+                type="checkbox"
+                value="true"
+                defaultChecked={task?.isActive ?? true}
+                className="size-4 rounded border-border"
+              />
+              <span className="text-sm">Active</span>
+            </label>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </DialogBody>
           <DialogFooter>
+            {isEdit && task?.id && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="mr-auto text-faint hover:text-destructive"
+                onClick={() => deleteDailyTask(task.id!)}
+              >
+                Delete
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : isEdit ? "Save changes" : "Create habit"}
+              {pending ? "Saving..." : isEdit ? "Save" : "Create"}
             </Button>
           </DialogFooter>
         </form>

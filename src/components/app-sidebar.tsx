@@ -1,172 +1,210 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
-  LayoutDashboard,
   BarChart3,
-  FolderKanban,
   CalendarCheck,
-  PanelLeftClose,
-  PanelLeft,
+  ChevronDown,
+  FolderKanban,
+  LayoutDashboard,
 } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { BrandLockup, BrandMark } from "@/components/brand-mark";
-import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/brand-mark";
+import { ChainDots } from "@/components/ui/chain-dots";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { EntityIcon } from "@/components/dashboard/entity-icon";
+import { SettingsDialog } from "@/components/settings-dialog";
 import { cn } from "@/lib/utils";
+import { resolveEntityColor } from "@/lib/entity-colors";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
 const navItems = [
-  { href: "/", label: "Today", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/daily", label: "Habits", icon: CalendarCheck },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/", label: "Today", icon: LayoutDashboard, countKey: "openTasks" as const },
+  { href: "/projects", label: "Projects", icon: FolderKanban, countKey: "projectCount" as const },
+  { href: "/daily", label: "Habits", icon: CalendarCheck, countKey: "habitCount" as const },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, countKey: null },
 ];
 
 type AppSidebarProps = {
   stats: SidebarStats;
-  expanded: boolean;
-  onCollapse: () => void;
-  onExpand: () => void;
 };
 
-export function AppSidebar({
-  stats,
-  expanded,
-  onCollapse,
-  onExpand,
-}: AppSidebarProps) {
+export function AppSidebar({ stats }: AppSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeProjectId = searchParams.get("project");
-
-  if (!expanded) {
-    return (
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-12 flex-col items-center border-r bg-paper py-3 md:flex">
-        <Link
-          href="/"
-          aria-label="DailyHub"
-          className="flex h-10 w-10 items-center justify-center"
-        >
-          <BrandMark size={28} className="text-foreground" />
-        </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="mt-1 h-8 w-8 text-faint"
-          onClick={onExpand}
-          aria-label="Expand sidebar"
-        >
-          <PanelLeft className="h-4 w-4" />
-        </Button>
-      </aside>
-    );
-  }
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[216px] flex-col border-r bg-paper md:flex">
-      <div className="flex h-14 shrink-0 items-center justify-between gap-2 px-3">
-        <Link href="/" className="min-w-0">
-          <BrandLockup size={28} wordmarkClassName="text-[15px] leading-none" />
-        </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0 text-faint"
-          onClick={onCollapse}
-          aria-label="Collapse sidebar"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </Button>
-      </div>
+    <>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-paper dh:flex">
+        <div className="flex flex-col gap-5 p-3.5 pb-3">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="flex w-full items-center gap-2.5 rounded-lg border border-border bg-card px-2 py-2 text-left shadow-[0_1px_2px_rgba(15,15,15,.04)] transition-colors hover:border-[#D3D2CF]"
+          >
+            <BrandMark size={28} className="text-foreground" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[11px] font-semibold tracking-[0.02em] text-faint">
+                {stats.settings.workspaceName}
+              </span>
+              <span className="block text-[13.5px] font-semibold tracking-[-0.01em]">
+                DailyHub
+              </span>
+            </span>
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-faint" />
+          </button>
 
-      <nav className="space-y-0.5 px-2.5">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
-          const Icon = item.icon;
+          <nav className="flex flex-col gap-0.5">
+            <p className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[0.02em] text-faint">
+              Main Menu
+            </p>
+            {navItems.map((item) => {
+              const isActive =
+                item.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.href);
+              const Icon = item.icon;
+              const count =
+                item.countKey !== null ? stats[item.countKey] : undefined;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13.5px] transition-colors duration-[120ms]",
-                isActive
-                  ? "border border-border bg-background font-medium text-foreground shadow-[0_1px_2px_rgba(15,15,15,.05)]"
-                  : "text-ink-soft hover:bg-hover"
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {stats.projects.length > 0 && (
-        <div className="mt-6 flex min-h-0 flex-1 flex-col px-2.5">
-          <p className="mb-1.5 px-2.5 text-[11.5px] font-semibold uppercase tracking-[0.04em] text-faint">
-            Projects
-          </p>
-          <ScrollArea className="flex-1">
-            <div className="space-y-0.5 pr-2">
-              <Link
-                href="/"
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13.5px] transition-colors duration-[120ms]",
-                  pathname === "/" && !activeProjectId
-                    ? "border border-border bg-background font-medium text-foreground shadow-[0_1px_2px_rgba(15,15,15,.05)]"
-                    : "text-ink-soft hover:bg-hover"
-                )}
-              >
-                All
-              </Link>
-              <Link
-                href="/?project=inbox"
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13.5px] transition-colors duration-[120ms]",
-                  pathname === "/" && activeProjectId === "inbox"
-                    ? "border border-border bg-background font-medium text-foreground shadow-[0_1px_2px_rgba(15,15,15,.05)]"
-                    : "text-ink-soft hover:bg-hover"
-                )}
-              >
-                Inbox
-              </Link>
-              {stats.projects.map((project) => (
+              return (
                 <Link
-                  key={project.id}
-                  href={`/?project=${project.id}`}
+                  key={item.href}
+                  href={item.href}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13.5px] transition-colors duration-[120ms]",
-                    pathname === "/" && activeProjectId === project.id
-                      ? "border border-border bg-background font-medium text-foreground shadow-[0_1px_2px_rgba(15,15,15,.05)]"
+                    "relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13.5px] font-medium transition-colors duration-[120ms]",
+                    isActive
+                      ? "text-foreground"
                       : "text-ink-soft hover:bg-hover"
                   )}
                 >
-                  <EntityIcon
-                    iconKey={project.iconKey}
-                    logoUrl={project.logoUrl}
-                    size={14}
-                  />
-                  <span className="truncate">{project.name}</span>
+                  {isActive && (
+                    <span className="absolute inset-0 rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(15,15,15,.05)]" />
+                  )}
+                  <span className="relative z-10 flex w-full items-center gap-2.5">
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">{item.label}</span>
+                    {count !== undefined && (
+                      <span className="text-[11px] text-faint tabular-nums">
+                        {count}
+                      </span>
+                    )}
+                  </span>
                 </Link>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-      )}
+              );
+            })}
+          </nav>
 
-      <div className="mt-auto flex items-center justify-between px-4 py-3">
-        <span className="text-xs text-faint">Theme</span>
-        <ThemeToggle />
-      </div>
-    </aside>
+          {stats.projects.length > 0 && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="mb-1 flex items-center justify-between px-3">
+                <p className="text-[11.5px] font-semibold tracking-[0.02em] text-faint">
+                  Filter Today
+                </p>
+                {activeProjectId && (
+                  <Link
+                    href="/"
+                    className="text-[11px] font-semibold text-signal hover:text-[#1A7BD4]"
+                  >
+                    clear
+                  </Link>
+                )}
+              </div>
+              <ScrollArea className="max-h-48">
+                <div className="space-y-0.5 pr-2">
+                  <Link
+                    href="/"
+                    className={cn(
+                      "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13.5px] font-medium",
+                      pathname === "/" && !activeProjectId
+                        ? "bg-hover text-foreground"
+                        : "text-foreground hover:bg-hover"
+                    )}
+                  >
+                    <span className="h-2 w-2 rounded-sm bg-foreground" />
+                    <span className="flex-1">Everything</span>
+                    <span className="text-[11px] text-faint tabular-nums">
+                      {stats.openTasks}
+                    </span>
+                  </Link>
+                  {stats.projects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/?project=${project.id}`}
+                      className={cn(
+                        "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13.5px] font-medium",
+                        pathname === "/" && activeProjectId === project.id
+                          ? "bg-hover"
+                          : "hover:bg-hover"
+                      )}
+                    >
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-sm"
+                        style={{
+                          backgroundColor: resolveEntityColor(project.color),
+                        }}
+                      />
+                      <span className="flex-1 truncate">{project.name}</span>
+                      <span className="text-[11px] text-faint tabular-nums">
+                        {project.openCount}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto flex flex-col gap-2 p-3">
+          {stats.showStreaks && (
+            <div className="rounded-[10px] border border-border bg-card p-3.5">
+              <p className="mb-1.5 text-[11.5px] font-semibold tracking-[0.02em] text-faint">
+                Chain
+              </p>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[26px] font-semibold text-signal tabular-nums leading-none">
+                  {stats.streak}
+                </span>
+                <span className="text-[12.5px] text-muted-foreground">
+                  days unbroken
+                </span>
+              </div>
+              <ChainDots dots={stats.streakDots} className="mt-2.5" />
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-2 py-2 text-left shadow-[0_1px_2px_rgba(15,15,15,.04)] transition-colors hover:border-[#D3D2CF]"
+          >
+            <span className="relative grid h-[30px] w-[30px] place-items-center rounded-full bg-border text-xs font-semibold text-muted-foreground">
+              {stats.settings.displayName.slice(0, 1).toUpperCase()}
+              <span className="absolute -right-px -bottom-px h-2 w-2 rounded-full border-2 border-card bg-signal" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13px] font-semibold leading-snug">
+                {stats.settings.displayName}
+              </span>
+              <span className="block text-[11px] text-faint">
+                {stats.settings.role}
+              </span>
+            </span>
+          </button>
+        </div>
+      </aside>
+
+      <SettingsDialog
+        settings={{
+          id: "default",
+          ...stats.settings,
+        }}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+      />
+    </>
   );
 }

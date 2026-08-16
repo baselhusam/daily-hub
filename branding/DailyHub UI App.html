@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#FFFFFF;color:#37352F;-webkit-font-smoothing:antialiased}
+  body{font-family:'Instrument Sans',system-ui,sans-serif}
+  a{color:#2383E2;text-decoration:none}
+  a:hover{color:#1A7BD4;text-decoration:underline}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px;color:#37352F}
+  input[type="date"]{min-height:38px}
+  ::selection{background:#D3E5F8}
+  @keyframes dhIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes dhPop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes dhFade{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#FFFFFF;display:flex;align-items:stretch">
+
+  <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+  <aside style="width:256px;flex:0 0 256px;background:#F7F7F5;border-right:1px solid #E9E9E7;padding:14px 12px 12px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:8px;padding:8px 9px;box-shadow:0 1px 2px rgba(15,15,15,.04)">
+      <span style="flex:0 0 auto;width:30px;height:30px;display:grid;place-items:center">
+        <svg width="28" height="28" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+      </span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:11px;font-weight:600;letter-spacing:.02em;color:#9B9A97;line-height:1.4">{{ workspace }}</span>
+        <span style="display:block;font-size:13.5px;font-weight:600;letter-spacing:-.01em;color:#37352F;line-height:1.3">DailyHub</span>
+      </span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9B9A97" stroke-width="2"><path d="M8 10l4-4 4 4M8 14l4 4 4-4"></path></svg>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.02em;color:#9B9A97;padding:0 10px 7px">Main Menu</div>
+      <button onClick="{{ goToday }}" style="position:relative;display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:9px 10px;border-radius:6px;text-align:left;font-size:13.5px;font-weight:500;color:#4F4D48" style-hover="background:#EFEFED">
+        <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;inset:0;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:6px;box-shadow:0 1px 2px rgba(15,15,15,.05)"></span></sc-if>
+        <span style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;width:100%">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v2M4 9h16M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"></path><path d="M8 14l1.8 1.8L14 12"></path></svg>
+          <span style="flex:1">Today</span>
+          <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#9B9A97">{{ openCount }}</span>
+        </span>
+      </button>
+      <button onClick="{{ goProjects }}" style="position:relative;display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:9px 10px;border-radius:6px;text-align:left;font-size:13.5px;font-weight:500;color:#4F4D48" style-hover="background:#EFEFED">
+        <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:6px;box-shadow:0 1px 2px rgba(15,15,15,.05)"></span></sc-if>
+        <span style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;width:100%">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path></svg>
+          <span style="flex:1">Projects</span>
+          <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#9B9A97">{{ projectCount }}</span>
+        </span>
+      </button>
+      <button onClick="{{ goHabits }}" style="position:relative;display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:9px 10px;border-radius:6px;text-align:left;font-size:13.5px;font-weight:500;color:#4F4D48" style-hover="background:#EFEFED">
+        <sc-if value="{{ isHabits }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:6px;box-shadow:0 1px 2px rgba(15,15,15,.05)"></span></sc-if>
+        <span style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;width:100%">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+          <span style="flex:1">Habits</span>
+          <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#9B9A97">{{ habitCount }}</span>
+        </span>
+      </button>
+      <button onClick="{{ goAnalytics }}" style="position:relative;display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:9px 10px;border-radius:6px;text-align:left;font-size:13.5px;font-weight:500;color:#4F4D48" style-hover="background:#EFEFED">
+        <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:6px;box-shadow:0 1px 2px rgba(15,15,15,.05)"></span></sc-if>
+        <span style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;width:100%">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg>
+          <span style="flex:1">Analytics</span>
+        </span>
+      </button>
+    </nav>
+
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 12px 2px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Filter Today</div>
+        <sc-if value="{{ hasFilter }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ clearFilter }}" style="border:0;background:transparent;padding:0;font-size:11px;font-weight:600;color:#2383E2">clear</button>
+        </sc-if>
+      </div>
+      <button onClick="{{ clearFilter }}" style="position:relative;display:flex;align-items:center;gap:9px;border:0;background:transparent;padding:7px 12px;border-radius:6px;text-align:left;font-size:13.5px;font-weight:500;color:#37352F" style-hover="background:#EFEFED">
+        <sc-if value="{{ allActive }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;inset:0;background:#EFEFED;border-radius:6px"></span></sc-if>
+        <span style="position:relative;z-index:1;display:flex;align-items:center;gap:9px;width:100%"><span style="width:8px;height:8px;border-radius:2px;background:#37352F"></span><span style="flex:1">Everything</span><span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#9B9A97">{{ openCount }}</span></span>
+      </button>
+      <sc-for list="{{ filterList }}" as="f" hint-placeholder-count="4">
+        <button onClick="{{ f.pick }}" style="position:relative;display:flex;align-items:center;gap:9px;border:0;background:transparent;padding:7px 12px;border-radius:6px;text-align:left;font-size:13.5px;font-weight:500;color:#37352F;width:100%" style-hover="background:#EFEFED">
+          <sc-if value="{{ f.active }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:#EFEFED;border-radius:6px"></span></sc-if>
+          <span style="position:relative;z-index:1;display:flex;align-items:center;gap:9px;width:100%">
+            <span style="width:8px;height:8px;border-radius:2px;background:{{ f.color }}"></span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.name }}</span>
+            <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#9B9A97">{{ f.open }}</span>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+      <sc-if value="{{ streaksOn }}" hint-placeholder-val="{{ true }}">
+      <div style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:13px 14px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97;margin-bottom:7px">Chain</div>
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:26px;font-weight:600;line-height:1;color:#2383E2">{{ streak }}</div>
+          <div style="font-size:12.5px;color:#787774">days unbroken</div>
+        </div>
+        <div style="display:flex;gap:3px;margin-top:11px">
+          <sc-for list="{{ streakDots }}" as="s" hint-placeholder-count="14">
+            <span style="flex:1;height:6px;border-radius:2px;background:{{ s.c }}"></span>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <div style="display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:8px;padding:8px 9px;box-shadow:0 1px 2px rgba(15,15,15,.04)">
+        <span style="position:relative;flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:#E9E9E7;display:grid;place-items:center;font-size:12px;font-weight:600;color:#787774">{{ userInitial }}
+          <span style="position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:#2383E2;border:2px solid #FFFFFF"></span>
+        </span>
+        <span style="flex:1;min-width:0">
+          <span style="display:block;font-size:13px;font-weight:600;color:#37352F;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ userNameOut }}</span>
+          <span style="display:block;font-size:11px;color:#9B9A97;line-height:1.3">{{ userRole }}</span>
+        </span>
+        <button onClick="{{ resetData }}" title="Reset demo data" style="border:0;background:transparent;padding:2px;line-height:0;color:#9B9A97" style-hover="color:#37352F">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 10l4-4 4 4M8 14l4 4 4-4"></path></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+  </sc-if>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+   <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:11px clamp(14px,2.2vw,26px);background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-bottom:1px solid #E9E9E7">
+     <div style="display:flex;align-items:center;gap:8px;min-width:0">
+       <span style="font-size:13px;color:#9B9A97">Dashboard</span>
+       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C7C6C2" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg>
+       <span style="font-size:13px;font-weight:600;color:#37352F">{{ crumb }}</span>
+     </div>
+     <div style="flex:1;min-width:8px"></div>
+     <div style="display:flex;align-items:center;gap:8px;flex:0 1 320px;background:#F7F7F5;border:1px solid #EDEDEC;border-radius:6px;padding:6px 8px 6px 10px">
+       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9B9A97" stroke-width="2" style="flex:0 0 auto"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+       <input value="{{ search }}" onChange="{{ onSearch }}" placeholder="Search tasks…" style="flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:13px" />
+       <sc-if value="{{ searching }}" hint-placeholder-val="{{ false }}">
+         <button onClick="{{ clearSearch }}" style="border:0;background:#EFEFED;width:19px;height:19px;border-radius:4px;font-size:12px;line-height:1;color:#787774;display:grid;place-items:center;flex:0 0 auto" style-hover="background:#E9E9E7">×</button>
+       </sc-if>
+       <sc-if value="{{ notSearching }}" hint-placeholder-val="{{ true }}">
+         <span style="flex:0 0 auto;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:#9B9A97;background:#F7F7F5;border:1px solid #EDEDEC;border-radius:4px;padding:2px 6px">⌘K</span>
+       </sc-if>
+     </div>
+     <button onClick="{{ goAnalytics }}" title="Analytics" style="flex:0 0 auto;width:32px;height:32px;border:1px solid #E9E9E7;background:#FFFFFF;border-radius:6px;display:grid;place-items:center;color:#787774" style-hover="border-color:#D3D2CF;color:#37352F">
+       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg>
+     </button>
+     <button onClick="{{ goHabits }}" title="Habits" style="flex:0 0 auto;position:relative;width:32px;height:32px;border:1px solid #E9E9E7;background:#FFFFFF;border-radius:6px;display:grid;place-items:center;color:#787774" style-hover="border-color:#D3D2CF;color:#37352F">
+       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 8a6 6 0 1 0-12 0c0 7-2 8-2 8h16s-2-1-2-8M10.5 20a2 2 0 0 0 3 0"></path></svg>
+       <sc-if value="{{ hasNudge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#2383E2;border:2px solid #FFFFFF"></span></sc-if>
+     </button>
+     <span style="flex:0 0 auto;width:32px;height:32px;border-radius:6px;background:#37352F;color:#FFFFFF;display:grid;place-items:center;font-size:12.5px;font-weight:600">{{ userInitial }}</span>
+   </div>
+   <div style="flex:1;padding:clamp(18px,2.6vw,32px) clamp(14px,2.6vw,32px) 110px">
+   <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:-4px">
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <svg width="24" height="24" viewBox="0 0 40 40" fill="none" style="align-self:center"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+          <div style="font-family:'Instrument Sans',sans-serif;font-size:23px;font-weight:600;letter-spacing:-.035em;line-height:1">Daily<span style="color:#2383E2">Hub</span></div>
+        </div>
+        <sc-if value="{{ streaksOn }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:6px;border:1px solid #E9E9E7;background:#FFFFFF;border-radius:999px;padding:5px 11px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#2383E2"><path d="M12 2s4 5 4 9a4 4 0 0 1-8 0c0-1.5.6-2.6.6-2.6S6 11 6 14a6 6 0 0 0 12 0c0-5-6-12-6-12z"></path></svg>
+          <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;color:#2383E2">{{ streak }}</span>
+        </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ══════════════ TODAY ══════════════ -->
+    <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:22px;animation:dhFade .3s ease both">
+
+      <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:500;letter-spacing:.02em;color:#9B9A97;margin-bottom:9px">{{ dateLine }}</div>
+          <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:clamp(24px,3.2vw,32px);line-height:1.15">{{ greeting }}</h1>
+          <div style="margin-top:9px;font-size:14.5px;color:#787774;max-width:52ch;text-wrap:pretty">{{ subline }}</div>
+        </div>
+        <sc-if value="{{ hasFilter }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:9px;border:1px solid #E9E9E7;background:#FFFFFF;border-radius:999px;padding:7px 8px 7px 13px">
+            <span style="font-size:13px;font-weight:600">Filtered · {{ filterName }}</span>
+            <button onClick="{{ clearFilter }}" style="border:0;background:#EFEEE9;width:22px;height:22px;border-radius:50%;line-height:1;font-size:13px;color:#787774;display:grid;place-items:center" style-hover="background:#E9E9E7">×</button>
+          </div>
+        </sc-if>
+      </header>
+
+      <!-- quick add -->
+      <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:stretch;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:9px">
+        <div style="flex:1 1 180px;display:flex;align-items:center;gap:10px;padding:0 6px 0 10px">
+          <span style="width:15px;height:15px;border:1.6px dashed #C7C6C2;border-radius:4px;flex:0 0 auto"></span>
+          <input value="{{ quick }}" onChange="{{ onQuick }}" onKeyDown="{{ onQuickKey }}" placeholder="Add a task and hit enter…" style="flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:15px;padding:10px 0" />
+        </div>
+        <select value="{{ quickProject }}" onChange="{{ onQuickProject }}" style="border:1px solid #E9E9E7;background:#F1F1EF;border-radius:6px;padding:9px 10px;outline:none;font-size:13.5px;font-weight:500">
+          <option value="">Inbox</option>
+          <sc-for list="{{ projectOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+        </select>
+        <input type="date" value="{{ quickDue }}" onChange="{{ onQuickDue }}" style="border:1px solid #E9E9E7;background:#F1F1EF;border-radius:6px;padding:9px 10px;outline:none;font-size:13.5px;color:#787774" />
+        <button onClick="{{ addQuick }}" style="border:0;background:#2383E2;color:#FFFFFF;border-radius:6px;padding:10px 20px;font-size:13.5px;font-weight:600" style-hover="background:#1A7BD4">Add</button>
+      </div>
+
+      <!-- nudges -->
+      <sc-if value="{{ hasNudge }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-wrap:wrap;gap:9px">
+        <sc-for list="{{ nudges }}" as="n" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:10px;background:{{ n.bg }};border:1px solid {{ n.br }};border-radius:8px;padding:9px 14px">
+            <span style="width:6px;height:6px;border-radius:50%;background:{{ n.dot }};flex:0 0 auto"></span>
+            <span style="font-size:13.5px;font-weight:500;color:#37352F">{{ n.text }}</span>
+            <sc-if value="{{ n.hasAction }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ n.action }}" style="border:0;background:transparent;padding:0;font-size:12.5px;font-weight:600;color:#2383E2;white-space:nowrap">{{ n.actionLabel }} →</button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- snapshot -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px">
+        <sc-for list="{{ snapshot }}" as="s" hint-placeholder-count="4">
+          <div style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(15,15,15,.03)">
+            <div style="flex:1;padding:14px 15px 12px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:11px;font-weight:600;letter-spacing:.02em;color:#9B9A97">{{ s.label }}</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto">
+                <div style="display:flex;align-items:baseline;gap:5px;min-width:0">
+                  <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:29px;font-weight:600;line-height:1;letter-spacing:-.03em;color:{{ s.color }}">{{ s.value }}</span>
+                  <span style="font-size:11.5px;color:#9B9A97">{{ s.unit }}</span>
+                </div>
+                <sc-if value="{{ s.hasSpark }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;align-items:flex-end;gap:3px;height:28px;flex:0 0 auto">
+                    <sc-for list="{{ s.bars }}" as="b" hint-placeholder-count="7">
+                      <span style="width:4px;border-radius:1px;background:#37352F;height:{{ b.h }};opacity:{{ b.o }}"></span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+            <div style="border-top:1px solid #F1F1EF;padding:8px 15px;display:flex;align-items:center;gap:7px">
+              <span style="flex:0 0 auto;width:5px;height:5px;border-radius:50%;background:{{ s.hintColor }}"></span>
+              <span style="flex:1;min-width:0;font-size:11.5px;color:#787774;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.hint }}</span>
+              <span style="flex:0 0 auto;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;letter-spacing:.02em;color:#B4B3AF;white-space:nowrap">{{ s.foot }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- habits -->
+      <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 14px;border-bottom:1px solid #EDEDEC">
+          <div style="display:flex;align-items:baseline;gap:11px">
+            <h2 style="margin:0;font-size:11px;font-weight:600;letter-spacing:.02em;color:#787774;line-height:1">Today's habits</h2>
+            <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;font-weight:500;color:#9B9A97">{{ habitProgress }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex:0 1 180px">
+            <div style="flex:1;height:5px;border-radius:3px;background:#EDEDEC;overflow:hidden">
+              <div style="{{ habitBar }}"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ todayHabits }}" as="h" hint-placeholder-count="3">
+            <div style="position:relative;display:flex;align-items:center;gap:13px;padding:13px 18px;border-bottom:1px solid #F1F1EF" style-hover="background:#FBFBFA">
+              <button onClick="{{ h.toggle }}" style="position:relative;flex:0 0 auto;width:22px;height:22px;border-radius:4px;border:1.7px solid #D3D2CF;background:#FFFFFF;padding:0;display:grid;place-items:center" style-hover="border-color:#2383E2">
+                <sc-if value="{{ h.done }}" hint-placeholder-val="{{ false }}">
+                  <span style="position:absolute;inset:-1.7px;border-radius:4px;background:#2383E2;display:grid;place-items:center">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round"><path d="M5 13l4.5 4.5L19 7"></path></svg>
+                  </span>
+                </sc-if>
+              </button>
+              <span style="flex:0 0 auto;width:28px;height:28px;border-radius:8px;background:#F7F7F5;border:1px solid #E9E9E7;display:grid;place-items:center;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:#787774;overflow:hidden">
+                <sc-if value="{{ h.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ h.img }}" alt="" style="width:100%;height:100%;object-fit:cover" /></sc-if>
+                <sc-if value="{{ h.noImg }}" hint-placeholder-val="{{ true }}"><span>{{ h.logo }}</span></sc-if>
+              </span>
+              <div style="flex:1;min-width:0;position:relative">
+                <div style="font-size:14.5px;font-weight:600;line-height:1.3">{{ h.name }}</div>
+                <div style="font-size:12px;color:#9B9A97;margin-top:2px">{{ h.meta }}</div>
+                <sc-if value="{{ h.done }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:9px;height:1.5px;width:100%;max-width:{{ h.strikeW }};background:#A3A29E"></span></sc-if>
+              </div>
+              <sc-if value="{{ h.done }}" hint-placeholder-val="{{ false }}">
+                <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;font-weight:600;color:#2383E2;letter-spacing:.08em">DONE</span>
+                <span style="position:absolute;inset:0;background:rgba(255,255,255,.62);pointer-events:none"></span>
+              </sc-if>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noHabitsToday }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:22px 18px;font-size:13.5px;color:#9B9A97">Nothing scheduled for today. <button onClick="{{ goHabits }}" style="border:0;background:transparent;padding:0;font-weight:600;color:#2383E2">Manage habits →</button></div>
+          </sc-if>
+        </div>
+      </section>
+
+      <!-- tasks by project -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 2px">
+          <h2 style="margin:0;font-size:11px;font-weight:600;letter-spacing:.02em;color:#787774;line-height:1">Open work</h2>
+          <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;letter-spacing:.1em;color:#9B9A97">{{ openCount }} open</span>
+        </div>
+
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+          <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;overflow:hidden">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #EDEDEC;background:#FBFBFA">
+              <span style="flex:0 0 auto;width:30px;height:30px;border-radius:6px;background:{{ g.tint }};border:1px solid {{ g.border }};display:grid;place-items:center;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;font-weight:600;color:{{ g.color }};overflow:hidden">
+                <sc-if value="{{ g.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ g.img }}" alt="" style="width:100%;height:100%;object-fit:cover" /></sc-if>
+                <sc-if value="{{ g.noImg }}" hint-placeholder-val="{{ true }}"><span>{{ g.logo }}</span></sc-if>
+              </span>
+              <div style="flex:1;min-width:130px">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:15px;font-weight:600;letter-spacing:-.01em">{{ g.name }}</span>
+                  <sc-if value="{{ g.hasBusiness }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97;border:1px solid #E9E9E7;border-radius:4px;padding:2px 6px">{{ g.business }}</span>
+                  </sc-if>
+                </div>
+                <div style="font-size:12px;color:#9B9A97;margin-top:3px">{{ g.sub }}</div>
+              </div>
+              <sc-if value="{{ g.hasDeadline }}" hint-placeholder-val="{{ false }}">
+                <div style="text-align:right">
+                  <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:14px;font-weight:600;color:{{ g.dlColor }};line-height:1">{{ g.dlDays }}</div>
+                  <div style="font-size:11.5px;color:#9B9A97;margin-top:3px">{{ g.dlLabel }}</div>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ g.hasMilestone }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-wrap:wrap;gap:7px;padding:11px 18px;border-bottom:1px solid #F1F1EF;background:#FBFBFA">
+                <sc-for list="{{ g.milestones }}" as="m" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:7px;border:1px solid {{ m.br }};background:{{ m.bg }};border-radius:999px;padding:4px 11px 4px 8px">
+                    <span style="width:7px;height:7px;border-radius:50%;background:{{ m.dot }}"></span>
+                    <span style="font-size:12px;font-weight:600;color:#37352F">{{ m.name }}</span>
+                    <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;color:#9B9A97">{{ m.due }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ g.tasks }}" as="t" hint-placeholder-count="3">
+                <div style="position:relative;display:flex;align-items:flex-start;gap:13px;padding:12px 18px;border-bottom:1px solid #F1F1EF" style-hover="background:#FBFBFA">
+                  <button onClick="{{ t.toggle }}" style="position:relative;flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:4px;border:1.7px solid #D3D2CF;background:#FFFFFF;padding:0;display:grid;place-items:center" style-hover="border-color:#2383E2">
+                    <sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}">
+                      <span style="position:absolute;inset:-1.7px;border-radius:4px;background:#2383E2;display:grid;place-items:center">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round"><path d="M5 13l4.5 4.5L19 7"></path></svg>
+                      </span>
+                    </sc-if>
+                  </button>
+                  <div style="flex:1;min-width:0;position:relative">
+                    <div style="font-size:14.5px;font-weight:500;line-height:1.35;text-wrap:pretty">{{ t.title }}</div>
+                    <sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:9px;height:1.5px;width:100%;max-width:{{ t.strikeW }};background:#A3A29E"></span></sc-if>
+                  </div>
+                  <div style="flex:0 0 auto;display:flex;align-items:center;gap:11px">
+                    <sc-if value="{{ t.hasEst }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:#9B9A97">{{ t.est }}</span>
+                    </sc-if>
+                    <sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:{{ t.dueColor }};background:{{ t.dueBg }};border-radius:4px;padding:3px 7px;white-space:nowrap">{{ t.dueLabel }}</span>
+                    </sc-if>
+                    <button onClick="{{ t.edit }}" style="border:0;background:transparent;padding:2px;color:#C7C6C2;line-height:0" style-hover="color:#37352F">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 20h4l10-10-4-4L4 16v4z"></path></svg>
+                    </button>
+                  </div>
+                  <sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:rgba(255,255,255,.62);pointer-events:none"></span></sc-if>
+                </div>
+              </sc-for>
+              <button onClick="{{ g.add }}" style="border:0;background:transparent;text-align:left;padding:12px 18px;font-size:13px;font-weight:600;color:#9B9A97" style-hover="color:#2383E2;background:#F7F7F5">+ Add task to {{ g.name }}</button>
+            </div>
+          </section>
+        </sc-for>
+
+        <!-- inbox -->
+        <sc-if value="{{ showInbox }}" hint-placeholder-val="{{ true }}">
+        <section style="background:#F7F7F5;border:1px solid #E9E9E7;border-radius:10px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #E9E9E7">
+            <span style="flex:0 0 auto;width:30px;height:30px;border-radius:6px;background:#E9E9E7;display:grid;place-items:center;color:#787774">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 13h4l2 3h4l2-3h4M4 13l2.5-7h11L20 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5z"></path></svg>
+            </span>
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:600">Inbox</div>
+              <div style="font-size:12px;color:#9B9A97;margin-top:3px">No project yet · file these or finish them</div>
+            </div>
+            <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:#787774">{{ inboxCount }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ inbox }}" as="t" hint-placeholder-count="3">
+              <div style="position:relative;display:flex;align-items:flex-start;gap:13px;padding:12px 18px;border-bottom:1px solid #EFEFED" style-hover="background:#FFFFFF">
+                <button onClick="{{ t.toggle }}" style="position:relative;flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:4px;border:1.7px solid #D3D2CF;background:#FBFBFA;padding:0;display:grid;place-items:center" style-hover="border-color:#2383E2">
+                  <sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}">
+                    <span style="position:absolute;inset:-1.7px;border-radius:4px;background:#2383E2;display:grid;place-items:center">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round"><path d="M5 13l4.5 4.5L19 7"></path></svg>
+                    </span>
+                  </sc-if>
+                </button>
+                <div style="flex:1;min-width:0;position:relative">
+                  <div style="font-size:14.5px;font-weight:500;line-height:1.35">{{ t.title }}</div>
+                  <sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:9px;height:1.5px;width:100%;max-width:{{ t.strikeW }};background:#A3A29E"></span></sc-if>
+                </div>
+                <div style="flex:0 0 auto;display:flex;align-items:center;gap:11px">
+                  <sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:{{ t.dueColor }};background:{{ t.dueBg }};border-radius:4px;padding:3px 7px;white-space:nowrap">{{ t.dueLabel }}</span>
+                  </sc-if>
+                  <button onClick="{{ t.edit }}" style="border:0;background:transparent;padding:2px;color:#C7C6C2;line-height:0" style-hover="color:#37352F">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 20h4l10-10-4-4L4 16v4z"></path></svg>
+                  </button>
+                </div>
+                <sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:rgba(251,251,250,.66);pointer-events:none"></span></sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{ inboxEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px 18px;font-size:13.5px;color:#9B9A97">Inbox clear.</div>
+            </sc-if>
+          </div>
+        </section>
+        </sc-if>
+      </div>
+
+      <!-- week review -->
+      <section style="background:#37352F;color:#FFFFFF;border-radius:10px;padding:20px 22px;display:flex;flex-wrap:wrap;gap:26px;align-items:center">
+        <div style="flex:1 1 220px;min-width:0">
+          <div style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#A3A29E">Week in review</div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-size:26px;line-height:1.15;margin-top:9px;text-wrap:pretty">{{ reviewLine }}</div>
+        </div>
+        <div style="display:flex;gap:26px;flex-wrap:wrap">
+          <sc-for list="{{ reviewStats }}" as="r" hint-placeholder-count="3">
+            <div>
+              <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:24px;font-weight:600;line-height:1">{{ r.value }}</div>
+              <div style="font-size:11.5px;color:#A3A29E;margin-top:6px">{{ r.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ goAnalytics }}" style="border:1px solid rgba(255,255,255,.2);background:transparent;color:#FFFFFF;border-radius:6px;padding:10px 18px;font-size:13px;font-weight:600;white-space:nowrap" style-hover="background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.38)">Full analytics →</button>
+      </section>
+    </div>
+    </sc-if>
+
+    <!-- ══════════════ PROJECTS ══════════════ -->
+    <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:22px;animation:dhFade .3s ease both">
+      <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px">
+        <div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;letter-spacing:.02em;color:#9B9A97;margin-bottom:9px">Workstreams</div>
+          <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:clamp(30px,4.4vw,42px);line-height:1.02">Projects</h1>
+          <div style="margin-top:9px;font-size:14.5px;color:#787774;max-width:54ch;text-wrap:pretty">What each one still needs, and when it's due.</div>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <button onClick="{{ newBusiness }}" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:6px;padding:10px 16px;font-size:13.5px;font-weight:600;color:#37352F" style-hover="border-color:#37352F">+ Business</button>
+          <button onClick="{{ newProject }}" style="border:0;background:#2383E2;color:#FFFFFF;border-radius:6px;padding:10px 18px;font-size:13.5px;font-weight:600" style-hover="background:#1A7BD4">+ Project</button>
+        </div>
+      </header>
+
+      <section style="display:flex;flex-direction:column;gap:9px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97;padding:0 2px">Businesses</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+          <sc-for list="{{ businessCards }}" as="b" hint-placeholder-count="1">
+            <div style="display:flex;align-items:center;gap:12px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:14px 15px">
+              <span style="flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:{{ b.tint }};border:1px solid {{ b.border }};display:grid;place-items:center;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:{{ b.color }}">{{ b.logo }}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:600">{{ b.name }}</div>
+                <div style="font-size:12px;color:#9B9A97;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.sub }}</div>
+              </div>
+              <button onClick="{{ b.edit }}" style="border:0;background:transparent;padding:2px;color:#C7C6C2;line-height:0" style-hover="color:#37352F">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 20h4l10-10-4-4L4 16v4z"></path></svg>
+              </button>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
+        <sc-for list="{{ projectCards }}" as="p" hint-placeholder-count="4">
+          <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <span style="flex:0 0 auto;width:38px;height:38px;border-radius:8px;background:{{ p.tint }};border:1px solid {{ p.border }};display:grid;place-items:center;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;color:{{ p.color }};overflow:hidden">
+                <sc-if value="{{ p.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ p.img }}" alt="" style="width:100%;height:100%;object-fit:cover" /></sc-if>
+                <sc-if value="{{ p.noImg }}" hint-placeholder-val="{{ true }}"><span>{{ p.logo }}</span></sc-if>
+              </span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:16.5px;font-weight:600;letter-spacing:-.01em">{{ p.name }}</span>
+                  <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97;border:1px solid #E9E9E7;border-radius:4px;padding:2px 6px">{{ p.business }}</span>
+                </div>
+                <div style="font-size:13px;color:#787774;margin-top:6px;line-height:1.45;text-wrap:pretty">{{ p.desc }}</div>
+              </div>
+              <div style="display:flex;gap:2px;flex:0 0 auto">
+                <button onClick="{{ p.edit }}" style="border:0;background:transparent;padding:3px;color:#C7C6C2;line-height:0" style-hover="color:#37352F">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 20h4l10-10-4-4L4 16v4z"></path></svg>
+                </button>
+                <button onClick="{{ p.remove }}" style="border:0;background:transparent;padding:3px;color:#C7C6C2;line-height:0" style-hover="color:#C4554D">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between">
+                <span style="font-size:12px;color:#787774"><b style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;color:#37352F">{{ p.open }}</b> still open · {{ p.doneCount }} done</span>
+                <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;font-weight:600;color:{{ p.color }}">{{ p.pctLabel }}</span>
+              </div>
+              <div style="height:6px;border-radius:3px;background:#EDEDEC;overflow:hidden"><div style="{{ p.bar }}"></div></div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #F1F1EF;padding-top:13px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Milestones</span>
+                <sc-if value="{{ p.hasDeadline }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:{{ p.dlColor }}">Ships {{ p.dlDate }} · {{ p.dlDays }}</span>
+                </sc-if>
+              </div>
+              <sc-for list="{{ p.milestones }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <button onClick="{{ m.toggle }}" style="position:relative;flex:0 0 auto;width:17px;height:17px;border-radius:4px;border:1.6px solid #D3D2CF;background:#FFFFFF;padding:0;display:grid;place-items:center" style-hover="border-color:#2383E2">
+                    <sc-if value="{{ m.done }}" hint-placeholder-val="{{ false }}">
+                      <span style="position:absolute;inset:-1.6px;border-radius:4px;background:#2383E2;display:grid;place-items:center">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round"><path d="M5 13l4.5 4.5L19 7"></path></svg>
+                      </span>
+                    </sc-if>
+                  </button>
+                  <span style="flex:1;min-width:0;font-size:13.5px;font-weight:500;color:{{ m.textColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.name }}</span>
+                  <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:{{ m.dueColor }};white-space:nowrap">{{ m.dueLabel }}</span>
+                </div>
+              </sc-for>
+              <sc-if value="{{ p.noMilestones }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12.5px;color:#9B9A97">No milestones yet.</div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ p.stalled }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:9px;background:#FAEBDD;border:1px solid #F0DCC4;border-radius:10px;padding:9px 12px">
+                <span style="width:6px;height:6px;border-radius:50%;background:#D9730D"></span>
+                <span style="font-size:12.5px;font-weight:500;color:#9E5B12">{{ p.stalledLabel }}</span>
+              </div>
+            </sc-if>
+          </section>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ══════════════ HABITS ══════════════ -->
+    <sc-if value="{{ isHabits }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:22px;animation:dhFade .3s ease both">
+      <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px">
+        <div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;letter-spacing:.02em;color:#9B9A97;margin-bottom:9px">Recurring</div>
+          <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:clamp(30px,4.4vw,42px);line-height:1.02">Habits</h1>
+          <div style="margin-top:9px;font-size:14.5px;color:#787774;max-width:54ch;text-wrap:pretty">Set the schedule here. Check them off on Today.</div>
+        </div>
+        <button onClick="{{ newHabit }}" style="border:0;background:#2383E2;color:#FFFFFF;border-radius:6px;padding:10px 18px;font-size:13.5px;font-weight:600" style-hover="background:#1A7BD4">+ Habit</button>
+      </header>
+
+      <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;overflow:hidden">
+        <sc-for list="{{ habitCards }}" as="h" hint-placeholder-count="4">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid #F1F1EF">
+            <span style="flex:0 0 auto;width:36px;height:36px;border-radius:10px;background:#F7F7F5;border:1px solid #E9E9E7;display:grid;place-items:center;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:#787774;overflow:hidden">
+              <sc-if value="{{ h.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ h.img }}" alt="" style="width:100%;height:100%;object-fit:cover" /></sc-if>
+              <sc-if value="{{ h.noImg }}" hint-placeholder-val="{{ true }}"><span>{{ h.logo }}</span></sc-if>
+            </span>
+            <div style="flex:1 1 180px;min-width:0">
+              <div style="font-size:15px;font-weight:600">{{ h.name }}</div>
+              <div style="font-size:12px;color:#9B9A97;margin-top:3px">{{ h.scheduleLabel }}</div>
+            </div>
+            <div style="display:flex;gap:4px">
+              <sc-for list="{{ h.dayPills }}" as="d" hint-placeholder-count="7">
+                <sc-if value="{{ d.on }}" hint-placeholder-val="{{ true }}"><span style="width:24px;height:24px;border-radius:7px;background:#37352F;color:#FFFFFF;display:grid;place-items:center;font-size:11.5px;font-weight:600">{{ d.l }}</span></sc-if>
+                <sc-if value="{{ d.off }}" hint-placeholder-val="{{ false }}"><span style="width:24px;height:24px;border-radius:7px;background:#F7F7F5;border:1px solid #EFEFED;color:#B4B3AF;display:grid;place-items:center;font-size:11.5px;font-weight:600">{{ d.l }}</span></sc-if>
+              </sc-for>
+            </div>
+            <div style="flex:0 0 auto;display:flex;align-items:center;gap:14px;min-width:150px">
+              <div style="display:flex;gap:2.5px">
+                <sc-for list="{{ h.dots }}" as="dt" hint-placeholder-count="14">
+                  <span style="width:7px;height:16px;border-radius:2px;background:{{ dt.c }}"></span>
+                </sc-for>
+              </div>
+              <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:{{ h.pctColor }}">{{ h.pct }}</span>
+            </div>
+            <div style="display:flex;gap:2px">
+              <button onClick="{{ h.edit }}" style="border:0;background:transparent;padding:3px;color:#C7C6C2;line-height:0" style-hover="color:#37352F">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 20h4l10-10-4-4L4 16v4z"></path></svg>
+              </button>
+              <button onClick="{{ h.remove }}" style="border:0;background:transparent;padding:3px;color:#C7C6C2;line-height:0" style-hover="color:#C4554D">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"></path></svg>
+              </button>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+    </sc-if>
+
+    <!-- ══════════════ ANALYTICS ══════════════ -->
+    <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:22px;animation:dhFade .3s ease both">
+      <header>
+        <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;letter-spacing:.02em;color:#9B9A97;margin-bottom:9px">{{ rangeLabel }}</div>
+        <h1 style="margin:0;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:clamp(30px,4.4vw,42px);line-height:1.02">Looking back</h1>
+        <div style="margin-top:9px;font-size:14.5px;color:#787774;max-width:56ch;text-wrap:pretty">{{ analyticsLede }}</div>
+      </header>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        <sc-for list="{{ bigStats }}" as="s" hint-placeholder-count="5">
+          <div style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:15px 16px">
+            <div style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">{{ s.label }}</div>
+            <div style="display:flex;align-items:baseline;gap:5px;margin-top:12px">
+              <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:29px;font-weight:600;line-height:1;letter-spacing:-.02em;color:{{ s.color }}">{{ s.value }}</span>
+              <span style="font-size:12px;color:#9B9A97">{{ s.unit }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:18px 20px 16px">
+        <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:20px">
+          <h2 style="margin:0;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:21px">Activity over time</h2>
+          <div style="display:flex;gap:14px;font-size:11.5px;color:#9B9A97">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:#37352F"></span>Tasks</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:#C7C6C2"></span>Habits</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:clamp(3px,.9vw,9px);height:150px">
+          <sc-for list="{{ timeline }}" as="d" hint-placeholder-count="14">
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%">
+              <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:10px;color:#9B9A97">{{ d.total }}</span>
+              <div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;flex:1">
+                <div style="{{ d.habitBar }}"></div>
+                <div style="{{ d.taskBar }}"></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:clamp(3px,.9vw,9px);margin-top:9px">
+          <sc-for list="{{ timeline }}" as="d" hint-placeholder-count="14">
+            <div style="flex:1;min-width:0;text-align:center;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11px;color:{{ d.labelColor }};letter-spacing:-.02em">{{ d.label }}</div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+        <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:18px 20px">
+          <h2 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:21px">Where the time went</h2>
+          <div style="font-size:12.5px;color:#9B9A97;margin-bottom:18px">Focus hours by business</div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ byBusiness }}" as="b" hint-placeholder-count="3">
+              <div>
+                <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:13.5px;font-weight:600">{{ b.name }}</span>
+                  <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#787774">{{ b.hours }}h · {{ b.share }}</span>
+                </div>
+                <div style="height:8px;border-radius:4px;background:#EDEDEC;overflow:hidden"><div style="{{ b.bar }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:18px 20px">
+          <h2 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:21px">Project progress</h2>
+          <div style="font-size:12.5px;color:#9B9A97;margin-bottom:18px">Done vs. still open</div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ projectProgress }}" as="p" hint-placeholder-count="4">
+              <div>
+                <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:13.5px;font-weight:600">{{ p.name }}</span>
+                  <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:{{ p.noteColor }}">{{ p.note }}</span>
+                </div>
+                <div style="height:8px;border-radius:4px;background:#EDEDEC;overflow:hidden"><div style="{{ p.bar }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:18px 20px">
+        <h2 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:21px">Habit consistency</h2>
+        <div style="font-size:12.5px;color:#9B9A97;margin-bottom:18px">Scheduled days only · left is oldest</div>
+        <div style="display:flex;flex-direction:column;gap:13px">
+          <sc-for list="{{ habitConsistency }}" as="h" hint-placeholder-count="4">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+              <span style="flex:1 1 150px;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ h.name }}</span>
+              <div style="display:flex;gap:3px">
+                <sc-for list="{{ h.dots }}" as="dt" hint-placeholder-count="14">
+                  <span style="width:11px;height:22px;border-radius:3px;background:{{ dt.c }}"></span>
+                </sc-for>
+              </div>
+              <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;width:46px;text-align:right;color:{{ h.pctColor }}">{{ h.pct }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+        <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:18px 20px">
+          <h2 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:21px">Best and worst days</h2>
+          <div style="font-size:12.5px;color:#9B9A97;margin-bottom:18px">{{ weekdayNote }}</div>
+          <div style="display:flex;align-items:flex-end;gap:9px;height:110px">
+            <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%">
+                <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:10px;color:#9B9A97">{{ w.count }}</span>
+                <div style="{{ w.bar }}"></div>
+                <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600;color:{{ w.labelColor }}">{{ w.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:18px 20px">
+          <h2 style="margin:0 0 4px;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:21px">When you actually work</h2>
+          <div style="font-size:12.5px;color:#9B9A97;margin-bottom:18px">{{ timeOfDayNote }}</div>
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <sc-for list="{{ timeOfDay }}" as="t" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="flex:0 0 88px;font-size:13px;font-weight:600">{{ t.name }}</span>
+                <div style="flex:1;height:20px;border-radius:4px;background:#EDEDEC;overflow:hidden"><div style="{{ t.bar }}"></div></div>
+                <span style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#787774;width:34px;text-align:right">{{ t.count }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </div>
+    </sc-if>
+
+   </div>
+   </div>
+  </main>
+
+  <!-- mobile tab bar -->
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+  <nav style="position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-top:1px solid #E9E9E7;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 6px calc(7px + env(safe-area-inset-bottom))">
+    <button onClick="{{ goToday }}" style="position:relative;border:0;background:transparent;padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:5px;color:#37352F">
+      <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2.5px;border-radius:2px;background:#2383E2"></span></sc-if>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v2M4 9h16M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"></path><path d="M8 14l1.8 1.8L14 12"></path></svg>
+      <span style="font-size:11.5px;font-weight:600">Today</span>
+    </button>
+    <button onClick="{{ goProjects }}" style="position:relative;border:0;background:transparent;padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:5px;color:#37352F">
+      <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2.5px;border-radius:2px;background:#2383E2"></span></sc-if>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path></svg>
+      <span style="font-size:11.5px;font-weight:600">Projects</span>
+    </button>
+    <button onClick="{{ goHabits }}" style="position:relative;border:0;background:transparent;padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:5px;color:#37352F">
+      <sc-if value="{{ isHabits }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2.5px;border-radius:2px;background:#2383E2"></span></sc-if>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+      <span style="font-size:11.5px;font-weight:600">Habits</span>
+    </button>
+    <button onClick="{{ goAnalytics }}" style="position:relative;border:0;background:transparent;padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:5px;color:#37352F">
+      <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2.5px;border-radius:2px;background:#2383E2"></span></sc-if>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg>
+      <span style="font-size:11.5px;font-weight:600">Analytics</span>
+    </button>
+  </nav>
+  </sc-if>
+
+  <!-- ══════════════ DIALOG ══════════════ -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:60;background:rgba(15,15,15,.3);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:clamp(14px,6vh,80px) 14px;overflow-y:auto;animation:dhFade .16s ease both">
+    <div onClick="{{ stop }}" style="width:100%;max-width:520px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:12px;box-shadow:0 24px 60px -20px rgba(15,15,15,.24);animation:dhPop .2s cubic-bezier(.2,.8,.3,1) both">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 15px;border-bottom:1px solid #EDEDEC">
+        <h2 style="margin:0;font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:-.015em;font-size:23px;line-height:1">{{ modalTitle }}</h2>
+        <button onClick="{{ closeModal }}" style="border:0;background:#EDEDEC;width:27px;height:27px;border-radius:50%;font-size:15px;color:#787774;display:grid;place-items:center;line-height:1" style-hover="background:#E9E9E7;color:#37352F">×</button>
+      </div>
+
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:15px">
+        <label style="display:flex;flex-direction:column;gap:7px">
+          <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">{{ nameLabel }}</span>
+          <input name="name" value="{{ fName }}" onChange="{{ onField }}" placeholder="{{ namePlaceholder }}" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:11px 12px;outline:none;font-size:14.5px" style-focus="border-color:#2383E2;box-shadow:0 0 0 3px rgba(35,131,226,.16)" />
+        </label>
+
+        <sc-if value="{{ mTask }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:13px">
+            <label style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Project</span>
+              <select name="projectId" value="{{ fProjectId }}" onChange="{{ onField }}" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:11px 10px;outline:none;font-size:14px">
+                <option value="">Inbox (no project)</option>
+                <sc-for list="{{ projectOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+              </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Due</span>
+              <input type="date" name="due" value="{{ fDue }}" onChange="{{ onField }}" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:11px 12px;outline:none;font-size:14px" />
+            </label>
+            <label style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Est. minutes</span>
+              <input type="number" name="est" value="{{ fEst }}" onChange="{{ onField }}" placeholder="30" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:11px 12px;outline:none;font-size:14px" />
+            </label>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ mProject }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:15px">
+            <label style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Description</span>
+              <textarea name="desc" value="{{ fDesc }}" onChange="{{ onField }}" rows="2" placeholder="What is this, in one line?" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:11px 12px;outline:none;font-size:14px;resize:vertical;line-height:1.5"></textarea>
+            </label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:13px">
+              <label style="display:flex;flex-direction:column;gap:7px">
+                <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Business</span>
+                <select name="businessId" value="{{ fBusinessId }}" onChange="{{ onField }}" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:11px 10px;outline:none;font-size:14px">
+                  <option value="">Standalone</option>
+                  <sc-for list="{{ businessOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+                </select>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:7px">
+                <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Deadline</span>
+                <input type="date" name="deadline" value="{{ fDeadline }}" onChange="{{ onField }}" style="border:1px solid #E9E9E7;background:#FFFFFF;border-radius:10px;padding:11px 12px;outline:none;font-size:14px" />
+              </label>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px;border-top:1px solid #EDEDEC;padding-top:15px">
+              <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Milestones</span>
+              <sc-for list="{{ fMilestones }}" as="m" hint-placeholder-count="2">
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input value="{{ m.name }}" onChange="{{ m.onName }}" placeholder="Milestone name" style="flex:1;min-width:0;border:1px solid #E9E9E7;background:#FFFFFF;border-radius:6px;padding:9px 11px;outline:none;font-size:13.5px" />
+                  <input type="date" value="{{ m.due }}" onChange="{{ m.onDue }}" style="flex:0 0 145px;border:1px solid #E9E9E7;background:#FFFFFF;border-radius:6px;padding:9px 10px;outline:none;font-size:13px" />
+                  <button onClick="{{ m.remove }}" style="flex:0 0 auto;border:0;background:transparent;padding:4px;color:#C7C6C2;line-height:0" style-hover="color:#C4554D">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                  </button>
+                </div>
+              </sc-for>
+              <button onClick="{{ addMilestone }}" style="align-self:flex-start;border:1px dashed #DEDDDA;background:transparent;border-radius:6px;padding:8px 13px;font-size:12.5px;font-weight:600;color:#787774" style-hover="border-color:#2383E2;color:#2383E2">+ Add milestone</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ mHabit }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Schedule</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <sc-for list="{{ fDays }}" as="d" hint-placeholder-count="7">
+                <button onClick="{{ d.toggle }}" style="position:relative;width:42px;height:42px;border-radius:8px;border:1px solid #E9E9E7;background:#FFFFFF;padding:0;font-size:12px;font-weight:600;color:#37352F" style-hover="border-color:#37352F">
+                  <sc-if value="{{ d.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:-1px;border-radius:8px;background:#37352F"></span></sc-if>
+                  <sc-if value="{{ d.on }}" hint-placeholder-val="{{ false }}"><span style="position:relative;z-index:1;color:#FFFFFF">{{ d.l }}</span></sc-if>
+                  <sc-if value="{{ d.off }}" hint-placeholder-val="{{ true }}"><span style="position:relative;z-index:1">{{ d.l }}</span></sc-if>
+                </button>
+              </sc-for>
+              <button onClick="{{ allDays }}" style="border:1px dashed #DEDDDA;background:transparent;border-radius:8px;padding:0 15px;height:42px;font-size:12.5px;font-weight:600;color:#787774" style-hover="border-color:#2383E2;color:#2383E2">Every day</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasLogo }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:13px;border-top:1px solid #EDEDEC;padding-top:15px">
+            <span style="flex:0 0 auto;width:44px;height:44px;border-radius:10px;background:#F7F7F5;border:1px solid #E9E9E7;display:grid;place-items:center;font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:#787774;overflow:hidden">
+              <sc-if value="{{ fHasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ fImg }}" alt="" style="width:100%;height:100%;object-fit:cover" /></sc-if>
+              <sc-if value="{{ fNoImg }}" hint-placeholder-val="{{ true }}"><span>{{ fInitials }}</span></sc-if>
+            </span>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+              <span style="font-size:11.5px;font-weight:600;letter-spacing:.02em;color:#9B9A97">Logo</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <input name="logo" value="{{ fLogo }}" onChange="{{ onField }}" maxlength="3" placeholder="Initials" style="flex:0 0 92px;border:1px solid #E9E9E7;background:#FFFFFF;border-radius:6px;padding:9px 11px;outline:none;font-size:13.5px" />
+                <label style="border:1px dashed #DEDDDA;border-radius:6px;padding:9px 13px;font-size:12.5px;font-weight:600;color:#787774;cursor:pointer" style-hover="border-color:#2383E2;color:#2383E2">
+                  Upload image
+                  <input type="file" accept="image/*" onChange="{{ onLogoFile }}" style="display:none" />
+                </label>
+                <sc-if value="{{ fHasImg }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ clearImg }}" style="border:0;background:transparent;padding:0;font-size:12px;font-weight:600;color:#9B9A97" style-hover="color:#C4554D">remove</button>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:15px 20px 18px;border-top:1px solid #EDEDEC">
+        <sc-if value="{{ canDelete }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ deleteItem }}" style="border:0;background:transparent;padding:10px 0;font-size:13px;font-weight:600;color:#9B9A97" style-hover="color:#C4554D">Delete</button>
+        </sc-if>
+        <div style="flex:1"></div>
+        <button onClick="{{ closeModal }}" style="border:1px solid #E9E9E7;background:transparent;border-radius:6px;padding:10px 16px;font-size:13.5px;font-weight:600;color:#787774" style-hover="border-color:#37352F;color:#37352F">Cancel</button>
+        <button onClick="{{ saveModal }}" style="border:0;background:#2383E2;color:#FFFFFF;border-radius:6px;padding:10px 20px;font-size:13.5px;font-weight:600" style-hover="background:#1A7BD4">{{ saveLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;userName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Ahmad&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Personal&quot;},&quot;userRole&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Operator&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Personal&quot;},&quot;workspaceName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Personal HQ&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Personal&quot;},&quot;showStreaks&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;nudgeDays&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:7,&quot;min&quot;:2,&quot;max&quot;:21,&quot;unit&quot;:&quot;days&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;rangeDays&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:14,&quot;options&quot;:[7,14,21,30],&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Analytics&quot;}}">
+const LS = 'dailyhub.v2';
+const DAYN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYL = ['S','M','T','W','T','F','S'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const INK = '#37352F', SOFT = '#787774', MUTE = '#9B9A97', VERM = '#2383E2', OLIVE = '#2383E2';
+
+function iso(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function parseISO(s) { const p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; }
+function uid(p) { return p + Math.random().toString(36).slice(2, 8); }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    this.T = today;
+    this.tk = iso(today);
+    let d = null;
+    try { const raw = localStorage.getItem(LS); if (raw) { const p = JSON.parse(raw); if (p && p.projects) d = p; } } catch (e) {}
+    if (d) {
+      const CM = { '#16794C': '#2383E2', '#2F6B5F': '#448361', '#5B4B8A': '#9065B0', '#B45309': '#D9730D', '#1F5E7A': '#337EA9' };
+      (d.projects || []).forEach((p) => { if (CM[p.color]) p.color = CM[p.color]; });
+      (d.businesses || []).forEach((b) => { if (CM[b.color]) b.color = CM[b.color]; });
+    }
+    if (!d) d = this.seed();
+    this.state = {
+      d: d, view: 'today', filter: null, modal: null, form: {},
+      quick: '', quickProject: '', quickDue: '',
+      isMobile: typeof window !== 'undefined' && window.innerWidth < 900
+    };
+  }
+
+  componentDidMount() {
+    this._r = () => { const m = window.innerWidth < 900; if (m !== this.state.isMobile) this.setState({ isMobile: m }); };
+    window.addEventListener('resize', this._r);
+  }
+  componentWillUnmount() { if (this._r) window.removeEventListener('resize', this._r); }
+
+  save(d) { this.setState({ d: d }); try { localStorage.setItem(LS, JSON.stringify(d)); } catch (e) {} }
+  patch(fn) { const d = JSON.parse(JSON.stringify(this.state.d)); fn(d); this.save(d); }
+
+  off(n) { return iso(new Date(this.T.getTime() + n * 864e5)); }
+
+  seed() {
+    const off = (n) => iso(new Date(this.T.getTime() + n * 864e5));
+    const businesses = [{ id: 'b1', name: 'Raqam Studio', color: VERM, logo: 'RS', note: 'Small agency — my own products under one roof' }];
+    const projects = [
+      { id: 'p1', name: 'ClickML', businessId: 'b1', logo: 'CM', color: VERM, img: '', desc: 'No-code ML platform. Train, evaluate and deploy models without writing code.', deadline: off(24), milestones: [
+        { id: 'm11', name: 'Model training UI', due: off(-3), done: true },
+        { id: 'm12', name: 'Dataset connectors', due: off(9), done: false },
+        { id: 'm13', name: 'Public beta', due: off(24), done: false }] },
+      { id: 'p2', name: 'CronCare', businessId: 'b1', logo: 'CC', color: '#448361', img: '', desc: 'iOS habit tracker. Streaks, reminders, HealthKit sync.', deadline: off(45), milestones: [
+        { id: 'm21', name: 'Onboarding flow', due: off(12), done: false },
+        { id: 'm22', name: 'TestFlight build', due: off(30), done: false }] },
+      { id: 'p3', name: 'NexusSelf', businessId: 'b1', logo: 'NS', color: '#9065B0', img: '', desc: 'Open-source portfolio builder. Themes plus one-command deploy.', deadline: off(60), milestones: [
+        { id: 'm31', name: 'Theme API', due: off(18), done: false },
+        { id: 'm32', name: 'v1.0 docs', due: off(40), done: false }] },
+      { id: 'p4', name: 'Hardware', businessId: '', logo: 'HW', color: '#D9730D', img: '', desc: 'Learning electronics — ESP32, sensors, PCB basics.', deadline: '', milestones: [
+        { id: 'm41', name: 'Finish BLE course', due: off(20), done: false }] }
+    ];
+    const tasks = [
+      { id: 't1', title: 'Fix feature-importance chart on the eval page', projectId: 'p1', due: off(-2), est: 45, done: false },
+      { id: 't2', title: 'Write docs for the /predict endpoint', projectId: 'p1', due: off(0), est: 60, done: false },
+      { id: 't3', title: 'Dataset connector: Postgres', projectId: 'p1', due: off(3), est: 120, done: false },
+      { id: 't4', title: 'Trim onboarding to three steps', projectId: 'p1', due: off(7), est: 90, done: false },
+      { id: 't5', title: 'HealthKit permission flow', projectId: 'p2', due: off(-1), est: 90, done: false },
+      { id: 't6', title: 'Polish the streak animation', projectId: 'p2', due: off(1), est: 45, done: false },
+      { id: 't7', title: 'App Store screenshots', projectId: 'p2', due: off(12), est: 60, done: false },
+      { id: 't8', title: 'Theme API: token schema', projectId: 'p3', due: off(4), est: 120, done: false },
+      { id: 't9', title: 'README and contribution guide', projectId: 'p3', due: off(6), est: 45, done: false },
+      { id: 't10', title: 'Answer three open issues', projectId: 'p3', due: off(0), est: 30, done: false },
+      { id: 't11', title: 'Finish ESP32 BLE lesson 4', projectId: 'p4', due: off(0), est: 40, done: false },
+      { id: 't12', title: 'Order the sensor kit', projectId: 'p4', due: off(2), est: 15, done: false },
+      { id: 't13', title: 'Renew the raqam.studio domain', projectId: '', due: off(5), est: 10, done: false },
+      { id: 't14', title: 'Reply to Sara about the podcast', projectId: '', due: off(-3), est: 15, done: false },
+      { id: 't15', title: 'Book a dentist appointment', projectId: '', due: '', est: 20, done: false }
+    ];
+    const habits = [
+      { id: 'h1', name: 'Post on Medium', logo: 'M', img: '', days: [0, 1, 2, 3, 4, 5, 6] },
+      { id: 'h2', name: 'Watch 2–3 course videos', logo: 'CO', img: '', days: [0, 1, 2, 3, 4, 5, 6] },
+      { id: 'h3', name: '30 min hardware build time', logo: 'HW', img: '', days: [0, 1, 2, 3, 4, 5, 6] },
+      { id: 'h4', name: 'Post on LinkedIn', logo: 'in', img: '', days: [1] }
+    ];
+    const pool = ['Fixed a flaky test', 'Reviewed a pull request', 'Shipped a small refactor', 'Wrote release notes', 'Cleaned up the design tokens', 'Answered support email', 'Sketched a new screen', 'Cut the bundle size', 'Set up CI cache', 'Rewrote the empty state', 'Triaged issues', 'Recorded a demo clip'];
+    const logs = [];
+    for (let k = 17; k >= 1; k--) {
+      const day = new Date(this.T.getTime() - k * 864e5);
+      const key = iso(day), dow = day.getDay();
+      habits.forEach((h) => {
+        if (h.days.indexOf(dow) < 0) return;
+        const r = hash(key + h.id);
+        const p = h.id === 'h2' ? 0.9 : h.id === 'h1' ? 0.8 : h.id === 'h3' ? 0.72 : 0.85;
+        if (k <= 4 || r < p) logs.push({ id: 'l' + key + h.id, type: 'habit', refId: h.id, name: h.name, projectId: '', at: key, hour: 7 + Math.floor(hash(key + h.id + 'x') * 4), minutes: h.id === 'h2' ? 35 : 25 });
+      });
+      const n = dow === 0 ? Math.floor(hash(key + 't') * 2) : Math.floor(hash(key + 't') * 4) + 1;
+      for (let j = 0; j < n; j++) {
+        const pr = projects[Math.floor(hash(key + 'p' + j) * projects.length)];
+        logs.push({ id: 'l' + key + 't' + j, type: 'task', refId: '', name: pool[Math.floor(hash(key + 's' + j) * pool.length)], projectId: pr.id, at: key, hour: 9 + Math.floor(hash(key + 'h' + j) * 11), minutes: [25, 40, 55, 70, 90][Math.floor(hash(key + 'm' + j) * 5)] });
+      }
+    }
+    return { businesses: businesses, projects: projects, tasks: tasks, habits: habits, logs: logs };
+  }
+
+  /* ── mutations ─────────────────────────────── */
+  addTask(title, projectId, due) {
+    const t = String(title || '').trim(); if (!t) return;
+    this.patch((d) => { d.tasks.unshift({ id: uid('t'), title: t, projectId: projectId || '', due: due || '', est: 30, done: false }); });
+    this.setState({ quick: '', quickDue: '' });
+  }
+  toggleTask(id) {
+    const now = new Date();
+    this.patch((d) => {
+      const t = d.tasks.find((x) => x.id === id); if (!t) return;
+      t.done = !t.done;
+      if (t.done) { t.completedAt = this.tk; d.logs.push({ id: uid('l'), type: 'task', refId: t.id, name: t.title, projectId: t.projectId || '', at: this.tk, hour: now.getHours(), minutes: t.est || 30 }); }
+      else { t.completedAt = ''; d.logs = d.logs.filter((l) => l.refId !== id); }
+    });
+  }
+  toggleHabit(id) {
+    const now = new Date();
+    this.patch((d) => {
+      const ex = d.logs.find((l) => l.type === 'habit' && l.refId === id && l.at === this.tk);
+      if (ex) d.logs = d.logs.filter((l) => l !== ex);
+      else { const h = d.habits.find((x) => x.id === id); d.logs.push({ id: uid('l'), type: 'habit', refId: id, name: h ? h.name : '', projectId: '', at: this.tk, hour: now.getHours(), minutes: 25 }); }
+    });
+  }
+  toggleMilestone(pid, mid) {
+    this.patch((d) => { const p = d.projects.find((x) => x.id === pid); if (!p) return; const m = p.milestones.find((x) => x.id === mid); if (m) m.done = !m.done; });
+  }
+
+  /* ── modal ─────────────────────────────────── */
+  open(kind, item, extra) {
+    const f = { kind: kind, id: item ? item.id : '', name: '', desc: '', projectId: '', businessId: '', due: '', deadline: '', est: '', logo: '', img: '', days: [0, 1, 2, 3, 4, 5, 6], milestones: [] };
+    if (kind === 'task' && item) { f.name = item.title; f.projectId = item.projectId || ''; f.due = item.due || ''; f.est = item.est || ''; }
+    if (kind === 'task' && !item && extra) f.projectId = extra;
+    if (kind === 'project' && item) { f.name = item.name; f.desc = item.desc || ''; f.businessId = item.businessId || ''; f.deadline = item.deadline || ''; f.logo = item.logo || ''; f.img = item.img || ''; f.milestones = (item.milestones || []).map((m) => ({ id: m.id, name: m.name, due: m.due || '', done: !!m.done })); }
+    if (kind === 'habit' && item) { f.name = item.name; f.logo = item.logo || ''; f.img = item.img || ''; f.days = item.days.slice(); }
+    if (kind === 'business' && item) { f.name = item.name; f.logo = item.logo || ''; f.note = item.note || ''; }
+    this.setState({ modal: kind, form: f });
+  }
+  setField(k, v) { this.setState({ form: Object.assign({}, this.state.form, { [k]: v }) }); }
+
+  commit() {
+    const f = this.state.form, k = f.kind, name = String(f.name || '').trim();
+    if (!name) { this.setState({ modal: null }); return; }
+    this.patch((d) => {
+      if (k === 'task') {
+        const t = d.tasks.find((x) => x.id === f.id);
+        const est = f.est === '' ? 30 : Math.max(0, parseInt(f.est, 10) || 0);
+        if (t) { t.title = name; t.projectId = f.projectId; t.due = f.due; t.est = est; }
+        else d.tasks.unshift({ id: uid('t'), title: name, projectId: f.projectId, due: f.due, est: est, done: false });
+      } else if (k === 'project') {
+        const ms = f.milestones.filter((m) => String(m.name).trim()).map((m) => ({ id: m.id || uid('m'), name: m.name.trim(), due: m.due, done: !!m.done }));
+        const p = d.projects.find((x) => x.id === f.id);
+        if (p) { p.name = name; p.desc = f.desc; p.businessId = f.businessId; p.deadline = f.deadline; p.logo = f.logo || name.slice(0, 2).toUpperCase(); p.img = f.img; p.milestones = ms; }
+        else d.projects.push({ id: uid('p'), name: name, desc: f.desc, businessId: f.businessId, deadline: f.deadline, logo: f.logo || name.slice(0, 2).toUpperCase(), img: f.img, color: ['#2383E2', '#448361', '#9065B0', '#D9730D', '#337EA9'][d.projects.length % 5], milestones: ms });
+      } else if (k === 'habit') {
+        const h = d.habits.find((x) => x.id === f.id);
+        const days = f.days.length ? f.days.slice().sort() : [0, 1, 2, 3, 4, 5, 6];
+        if (h) { h.name = name; h.logo = f.logo; h.img = f.img; h.days = days; }
+        else d.habits.push({ id: uid('h'), name: name, logo: f.logo || name.slice(0, 2).toUpperCase(), img: f.img, days: days });
+      } else if (k === 'business') {
+        const b = d.businesses.find((x) => x.id === f.id);
+        if (b) { b.name = name; b.logo = f.logo || name.slice(0, 2).toUpperCase(); }
+        else d.businesses.push({ id: uid('b'), name: name, logo: f.logo || name.slice(0, 2).toUpperCase(), color: VERM, note: '' });
+      }
+    });
+    this.setState({ modal: null });
+  }
+  removeItem() {
+    const f = this.state.form, k = f.kind;
+    this.patch((d) => {
+      if (k === 'task') d.tasks = d.tasks.filter((x) => x.id !== f.id);
+      if (k === 'project') { d.projects = d.projects.filter((x) => x.id !== f.id); d.tasks.forEach((t) => { if (t.projectId === f.id) t.projectId = ''; }); }
+      if (k === 'habit') d.habits = d.habits.filter((x) => x.id !== f.id);
+      if (k === 'business') { d.businesses = d.businesses.filter((x) => x.id !== f.id); d.projects.forEach((p) => { if (p.businessId === f.id) p.businessId = ''; }); }
+    });
+    this.setState({ modal: null, filter: this.state.filter === f.id ? null : this.state.filter });
+  }
+
+  /* ── helpers ───────────────────────────────── */
+  daysTo(k) { return Math.round((parseISO(k).getTime() - this.T.getTime()) / 864e5); }
+  dueMeta(k) {
+    if (!k) return null;
+    const n = this.daysTo(k);
+    let label = n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n === -1 ? '1d late' : n < 0 ? (-n) + 'd late' : n <= 7 ? DAYN[parseISO(k).getDay()] : (parseISO(k).getDate() + ' ' + MON[parseISO(k).getMonth()]);
+    const late = n < 0, soon = n === 0;
+    return { label: label, color: late ? '#C4554D' : soon ? '#1B6FC0' : SOFT, bg: late ? '#FBECEB' : soon ? '#EAF3FB' : '#F7F7F5', n: n };
+  }
+  dlColor(n) { return n < 0 ? '#C4554D' : n <= 7 ? VERM : n <= 21 ? '#D9730D' : SOFT; }
+  logDone(logs, habitId, key) { return logs.some((l) => l.type === 'habit' && l.refId === habitId && l.at === key); }
+
+  streakInfo(d) {
+    const dayOk = (dt) => {
+      const key = iso(dt), dow = dt.getDay();
+      const sched = d.habits.filter((h) => h.days.indexOf(dow) >= 0);
+      if (!sched.length) return true;
+      return sched.every((h) => this.logDone(d.logs, h.id, key));
+    };
+    let cursor = new Date(this.T.getTime());
+    if (!dayOk(cursor)) cursor = new Date(cursor.getTime() - 864e5);
+    let n = 0, guard = 0;
+    while (dayOk(cursor) && guard++ < 400) { n++; cursor = new Date(cursor.getTime() - 864e5); }
+    const dots = [];
+    for (let k = 13; k >= 0; k--) {
+      const dt = new Date(this.T.getTime() - k * 864e5);
+      dots.push({ c: dayOk(dt) ? (k === 0 ? '#2383E2' : '#B6D8F5') : '#EDEDEC' });
+    }
+    return { streak: n, dots: dots };
+  }
+
+  renderVals() {
+    const st = this.state, d = st.d;
+    const showStreaks = this.props.showStreaks !== false;
+    const nudgeDays = this.props.nudgeDays || 7;
+    const range = this.props.rangeDays || 14;
+    const projById = {}; d.projects.forEach((p) => { projById[p.id] = p; });
+    const bizById = {}; d.businesses.forEach((b) => { bizById[b.id] = b; });
+    const openTasks = d.tasks.filter((t) => !t.done);
+    const q = (st.q || '').trim().toLowerCase();
+    const hit = (t) => !q || String(t.title || '').toLowerCase().indexOf(q) >= 0;
+    const overdue = openTasks.filter((t) => t.due && this.daysTo(t.due) < 0);
+    const dueThisWeek = openTasks.filter((t) => t.due && this.daysTo(t.due) >= 0 && this.daysTo(t.due) <= 6);
+    const dow = this.T.getDay();
+    const si = this.streakInfo(d);
+
+    /* greeting */
+    const h = new Date().getHours();
+    const name = this.props.userName || 'Ahmad';
+    const greeting = (h < 5 ? 'Still up, ' : h < 12 ? 'Good morning, ' : h < 17 ? 'Good afternoon, ' : 'Good evening, ') + name + '.';
+    const dateLine = DAYN[dow] + ' · ' + this.T.getDate() + ' ' + MON[this.T.getMonth()] + ' ' + this.T.getFullYear();
+
+    /* today habits */
+    const schedToday = d.habits.filter((x) => x.days.indexOf(dow) >= 0);
+    const doneToday = schedToday.filter((x) => this.logDone(d.logs, x.id, this.tk));
+    const todayHabits = schedToday.map((x) => {
+      const done = this.logDone(d.logs, x.id, this.tk);
+      return {
+        name: x.name, logo: x.logo || '·', img: x.img || '', hasImg: !!x.img, noImg: !x.img, done: done,
+        strikeW: Math.min(x.name.length * 7.6, 420) + 'px',
+        meta: x.days.length === 7 ? 'Every day' : x.days.map((i) => DAYN[i]).join(' · '),
+        toggle: () => this.toggleHabit(x.id)
+      };
+    });
+    const hp = schedToday.length ? Math.round((doneToday.length / schedToday.length) * 100) : 0;
+
+    /* deadlines */
+    let nearest = null;
+    d.projects.forEach((p) => {
+      (p.milestones || []).forEach((m) => { if (!m.done && m.due) { const n = this.daysTo(m.due); if (n >= 0 && (!nearest || n < nearest.n)) nearest = { n: n, label: m.name, project: p.name }; } });
+      if (p.deadline) { const n = this.daysTo(p.deadline); if (n >= 0 && (!nearest || n < nearest.n)) nearest = { n: n, label: p.name + ' ships', project: p.name }; }
+    });
+
+    /* sparklines (real series) */
+    const back7 = []; for (let k = 6; k >= 0; k--) back7.push(iso(new Date(this.T.getTime() - k * 864e5)));
+    const fwd7 = []; for (let k = 0; k < 7; k++) fwd7.push(iso(new Date(this.T.getTime() + k * 864e5)));
+    const doneSeries = back7.map((k) => d.logs.filter((l) => l.at === k && l.type === 'task').length);
+    const habitSeries = back7.map((k) => d.habits.filter((x) => this.logDone(d.logs, x.id, k)).length);
+    const dueSeries = fwd7.map((k) => openTasks.filter((t) => t.due === k).length);
+    const mkBars = (vals) => { const mx = Math.max(1, ...vals); return vals.map((v) => ({ h: Math.max(3, Math.round(v / mx * 26)) + 'px', o: v ? 1 : 0.28 })); };
+
+    const snapshot = [
+      { label: 'Open tasks', value: String(openTasks.length), unit: 'items', color: INK, hint: overdue.length ? overdue.length + ' overdue' : 'nothing overdue',
+        hintColor: overdue.length ? '#C4554D' : MUTE, hasSpark: true, bars: mkBars(doneSeries), foot: '7d closed' },
+      { label: 'Current streak', value: String(si.streak), unit: 'days', color: INK, hint: doneToday.length === schedToday.length && schedToday.length ? 'today is safe' : 'today still open',
+        hintColor: doneToday.length === schedToday.length && schedToday.length ? '#448361' : '#D9730D', hasSpark: true, bars: mkBars(habitSeries), foot: '7d hits' },
+      { label: 'Due this week', value: String(dueThisWeek.length), unit: 'tasks', color: INK, hint: dueThisWeek.length ? 'next 7 days' : 'clear week ahead',
+        hintColor: MUTE, hasSpark: true, bars: mkBars(dueSeries), foot: 'next 7d' },
+      { label: 'Next deadline', value: nearest ? String(nearest.n) : '—', unit: nearest ? 'days' : '', color: nearest ? this.dlColor(nearest.n) : MUTE, hint: nearest ? nearest.label : 'no dated milestones',
+        hintColor: MUTE, hasSpark: false, bars: [], foot: nearest ? nearest.project : 'nothing scheduled' }
+    ];
+
+    /* nudges: overdue + stalled projects */
+    const lastTouch = {};
+    d.logs.forEach((l) => { if (l.projectId) { if (!lastTouch[l.projectId] || l.at > lastTouch[l.projectId]) lastTouch[l.projectId] = l.at; } });
+    const stalled = d.projects.filter((p) => {
+      const openN = d.tasks.filter((t) => t.projectId === p.id && !t.done).length;
+      if (!openN) return false;
+      const lt = lastTouch[p.id];
+      return !lt || -this.daysTo(lt) >= nudgeDays;
+    });
+    const nudges = [];
+    if (overdue.length) nudges.push({ text: overdue.length + (overdue.length === 1 ? ' task is' : ' tasks are') + ' past due', bg: '#FAEBDD', br: '#F0DCC4', dot: '#D9730D', hasAction: false, actionLabel: '', action: () => {} });
+    stalled.forEach((p) => {
+      const lt = lastTouch[p.id];
+      nudges.push({ text: p.name + ' untouched for ' + (lt ? -this.daysTo(lt) : nudgeDays + '+') + ' days', bg: '#F7F7F5', br: '#E9E9E7', dot: '#D9730D', hasAction: true, actionLabel: 'Focus', action: () => this.setState({ filter: p.id, view: 'today' }) });
+    });
+
+    /* groups */
+    const visibleProjects = st.filter ? d.projects.filter((p) => p.id === st.filter) : d.projects;
+    const groups = visibleProjects.map((p) => {
+      const list = d.tasks.filter((t) => t.projectId === p.id && (!t.done || t.completedAt === this.tk) && hit(t));
+      const openN = list.filter((t) => !t.done).length;
+      const dl = p.deadline ? this.daysTo(p.deadline) : null;
+      const doneN = d.logs.filter((l) => l.type === 'task' && l.projectId === p.id).length;
+      const ms = (p.milestones || []).filter((m) => !m.done).slice(0, 3).map((m) => {
+        const n = m.due ? this.daysTo(m.due) : null;
+        return { name: m.name, due: n === null ? '' : n < 0 ? (-n) + 'd late' : n + 'd', bg: n !== null && n <= 7 ? '#EAF3FB' : '#F7F7F5', br: n !== null && n <= 7 ? '#CFE3F7' : '#E9E9E7', dot: n !== null && n <= 7 ? '#2383E2' : '#C7C6C2' };
+      });
+      return {
+        name: p.name, logo: p.logo || '··', img: p.img || '', hasImg: !!p.img, noImg: !p.img,
+        color: p.color || INK, tint: (p.color || INK) + '18', border: (p.color || INK) + '33',
+        business: p.businessId && bizById[p.businessId] ? bizById[p.businessId].name : '', hasBusiness: !!(p.businessId && bizById[p.businessId]),
+        sub: openN + ' open · ' + doneN + ' logged',
+        hasDeadline: dl !== null, dlDays: dl === null ? '' : (dl < 0 ? (-dl) + 'd late' : dl + 'd'), dlLabel: dl === null ? '' : 'to deadline', dlColor: dl === null ? SOFT : this.dlColor(dl),
+        hasMilestone: ms.length > 0, milestones: ms,
+        add: () => this.open('task', null, p.id),
+        tasks: list.sort((a, b) => (a.due || '9') > (b.due || '9') ? 1 : -1).map((t) => {
+          const dm = this.dueMeta(t.due);
+          return { title: t.title, done: !!t.done, strikeW: Math.min(t.title.length * 7.6, 560) + 'px',
+            hasDue: !!dm, dueLabel: dm ? dm.label : '', dueColor: dm ? dm.color : SOFT, dueBg: dm ? dm.bg : '#F7F7F5',
+            hasEst: !!t.est, est: t.est >= 60 ? (Math.round(t.est / 6) / 10) + 'h' : t.est + 'm',
+            toggle: () => this.toggleTask(t.id), edit: () => this.open('task', t) };
+        })
+      };
+    }).filter((g) => g.tasks.length || (!st.filter && !q));
+
+    const inboxAll = d.tasks.filter((t) => !t.projectId && (!t.done || t.completedAt === this.tk) && hit(t));
+    const inbox = inboxAll.sort((a, b) => (a.due || '9') > (b.due || '9') ? 1 : -1).map((t) => {
+      const dm = this.dueMeta(t.due);
+      return { title: t.title, done: !!t.done, strikeW: Math.min(t.title.length * 7.6, 560) + 'px',
+        hasDue: !!dm, dueLabel: dm ? dm.label : '', dueColor: dm ? dm.color : SOFT, dueBg: dm ? dm.bg : '#F7F7F5',
+        toggle: () => this.toggleTask(t.id), edit: () => this.open('task', t) };
+    });
+
+    /* week review */
+    const wkStart = new Date(this.T.getTime() - ((dow + 6) % 7) * 864e5);
+    const wkKey = iso(wkStart);
+    const weekLogs = d.logs.filter((l) => l.at >= wkKey);
+    const weekTasks = weekLogs.filter((l) => l.type === 'task').length;
+    const weekMin = weekLogs.reduce((a, l) => a + (l.minutes || 0), 0);
+    const byDay = {}; weekLogs.forEach((l) => { byDay[l.at] = (byDay[l.at] || 0) + 1; });
+    let bestKey = null; Object.keys(byDay).forEach((k) => { if (!bestKey || byDay[k] > byDay[bestKey]) bestKey = k; });
+    const reviewLine = weekLogs.length
+      ? weekLogs.length + ' things done since Monday' + (bestKey ? ', best on ' + DAYN[parseISO(bestKey).getDay()] + '.' : '.')
+      : 'Fresh week. Nothing logged yet.';
+
+    /* ── analytics ── */
+    const days = [];
+    for (let k = range - 1; k >= 0; k--) {
+      const dt = new Date(this.T.getTime() - k * 864e5), key = iso(dt);
+      const ls = d.logs.filter((l) => l.at === key);
+      days.push({ key: key, dt: dt, dow: dt.getDay(), tasks: ls.filter((l) => l.type === 'task').length, habits: ls.filter((l) => l.type === 'habit').length, minutes: ls.reduce((a, l) => a + (l.minutes || 0), 0) });
+    }
+    const maxDay = Math.max(1, ...days.map((x) => x.tasks + x.habits));
+    const timeline = days.map((x) => {
+      const total = x.tasks + x.habits;
+      const isToday = x.key === this.tk;
+      return { total: total || '', label: x.dt.getDate() + '/' + (x.dt.getMonth() + 1), labelColor: isToday ? VERM : '#9B9A97',
+        taskBar: { height: (x.tasks / maxDay * 100) + '%', background: isToday ? VERM : INK, borderRadius: x.habits ? '0 0 3px 3px' : '3px', minHeight: x.tasks ? '3px' : '0' },
+        habitBar: { height: (x.habits / maxDay * 100) + '%', background: isToday ? '#9CC7EE' : '#D3D2CF', borderRadius: '3px 3px 0 0', minHeight: x.habits ? '3px' : '0' } };
+    });
+
+    const rangeLogs = d.logs.filter((l) => l.at >= days[0].key);
+    const totalMin = rangeLogs.reduce((a, l) => a + (l.minutes || 0), 0);
+    const bigStats = [
+      { label: 'Completed', value: String(rangeLogs.length), unit: 'items', color: INK },
+      { label: 'Tasks', value: String(rangeLogs.filter((l) => l.type === 'task').length), unit: 'done', color: INK },
+      { label: 'Habit check-ins', value: String(rangeLogs.filter((l) => l.type === 'habit').length), unit: '', color: '#787774' },
+      { label: 'Focus time', value: String(Math.round(totalMin / 60)), unit: 'hours', color: VERM },
+      { label: 'Per day', value: (Math.round(rangeLogs.length / range * 10) / 10).toFixed(1), unit: 'avg', color: INK }
+    ];
+
+    const bizBuckets = {};
+    const bucketFor = (l) => {
+      if (!l.projectId) return { k: 'inbox', name: 'Inbox & habits', color: '#9B9A97' };
+      const p = projById[l.projectId];
+      if (!p) return { k: 'inbox', name: 'Inbox & habits', color: '#9B9A97' };
+      if (p.businessId && bizById[p.businessId]) return { k: p.businessId, name: bizById[p.businessId].name, color: bizById[p.businessId].color || VERM };
+      return { k: 'solo:' + p.id, name: p.name + ' (standalone)', color: p.color || INK };
+    };
+    rangeLogs.forEach((l) => { const b = bucketFor(l); if (!bizBuckets[b.k]) bizBuckets[b.k] = { name: b.name, color: b.color, min: 0, n: 0 }; bizBuckets[b.k].min += l.minutes || 0; bizBuckets[b.k].n++; });
+    const bizArr = Object.keys(bizBuckets).map((k) => bizBuckets[k]).sort((a, b) => b.min - a.min);
+    const bizMax = Math.max(1, ...bizArr.map((b) => b.min));
+    const byBusiness = bizArr.map((b) => ({ name: b.name, hours: Math.round(b.min / 60), share: totalMin ? Math.round(b.min / totalMin * 100) + '%' : '0%', bar: { width: (b.min / bizMax * 100) + '%', height: '100%', background: b.color, borderRadius: '4px' } }));
+
+    const projectProgress = d.projects.map((p) => {
+      const openN = d.tasks.filter((t) => t.projectId === p.id && !t.done).length;
+      const doneN = d.logs.filter((l) => l.type === 'task' && l.projectId === p.id).length;
+      const pct = doneN + openN ? Math.round(doneN / (doneN + openN) * 100) : 0;
+      const lt = lastTouch[p.id];
+      const idle = lt ? -this.daysTo(lt) : 99;
+      return { name: p.name, note: idle >= nudgeDays ? 'idle ' + (idle === 99 ? 'always' : idle + 'd') : pct + '% · ' + openN + ' open',
+        noteColor: idle >= nudgeDays ? VERM : SOFT,
+        bar: { width: Math.max(2, pct) + '%', height: '100%', background: p.color || INK, borderRadius: '4px' } };
+    });
+
+    const habitConsistency = d.habits.map((x) => {
+      let sched = 0, hit = 0; const dots = [];
+      days.forEach((dd) => {
+        if (x.days.indexOf(dd.dow) < 0) { dots.push({ c: '#F7F7F5' }); return; }
+        sched++;
+        const ok = this.logDone(d.logs, x.id, dd.key);
+        if (ok) hit++;
+        dots.push({ c: ok ? (dd.key === this.tk ? '#2383E2' : '#9CC7EE') : '#EDEDEC' });
+      });
+      const pct = sched ? Math.round(hit / sched * 100) : 0;
+      return { name: x.name, dots: dots, pct: pct + '%', pctColor: pct >= 80 ? '#448361' : pct >= 50 ? '#787774' : '#C4554D' };
+    });
+
+    const wdCounts = [0, 0, 0, 0, 0, 0, 0], wdDays = [0, 0, 0, 0, 0, 0, 0];
+    days.forEach((dd) => { wdCounts[dd.dow] += dd.tasks + dd.habits; wdDays[dd.dow]++; });
+    const wdAvg = wdCounts.map((c, i) => wdDays[i] ? c / wdDays[i] : 0);
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    const wdMax = Math.max(0.1, ...wdAvg);
+    let bestI = order[0], worstI = order[0];
+    order.forEach((i) => { if (wdAvg[i] > wdAvg[bestI]) bestI = i; if (wdAvg[i] < wdAvg[worstI]) worstI = i; });
+    const weekdays = order.map((i) => ({ label: DAYL[i], count: Math.round(wdAvg[i] * 10) / 10, labelColor: i === bestI ? VERM : i === dow ? INK : '#9B9A97',
+      bar: { width: '100%', flex: 1, maxHeight: Math.max(3, wdAvg[i] / wdMax * 100) + '%', background: i === bestI ? VERM : i === worstI ? '#EDEDEC' : '#C7C6C2', borderRadius: '4px 4px 0 0' } }));
+    const weekdayNote = DAYN[bestI] + ' is your strongest day · ' + DAYN[worstI] + ' your weakest';
+
+    const buckets = [{ name: 'Morning', lo: 5, hi: 11 }, { name: 'Midday', lo: 12, hi: 16 }, { name: 'Evening', lo: 17, hi: 21 }, { name: 'Late night', lo: 22, hi: 28 }];
+    const bCounts = buckets.map((b) => rangeLogs.filter((l) => { const hr = l.hour == null ? 12 : (l.hour < 5 ? l.hour + 24 : l.hour); return hr >= b.lo && hr <= b.hi; }).length);
+    const bMax = Math.max(1, ...bCounts);
+    let peak = 0; bCounts.forEach((c, i) => { if (c > bCounts[peak]) peak = i; });
+    const timeOfDay = buckets.map((b, i) => ({ name: b.name, count: bCounts[i], bar: { width: Math.max(2, bCounts[i] / bMax * 100) + '%', height: '100%', background: i === peak ? VERM : '#C7C6C2', borderRadius: '5px' } }));
+
+    /* form */
+    const f = st.form || {};
+    const titles = { task: f.id ? 'Edit task' : 'New task', project: f.id ? 'Edit project' : 'New project', habit: f.id ? 'Edit habit' : 'New habit', business: f.id ? 'Edit business' : 'New business' };
+    const nameLabels = { task: 'Task', project: 'Project name', habit: 'Habit', business: 'Business name' };
+    const namePH = { task: 'What needs doing?', project: 'e.g. ClickML', habit: 'e.g. Post on Medium', business: 'e.g. Raqam Studio' };
+
+    return {
+      isDesktop: !st.isMobile, isMobile: st.isMobile,
+      isToday: st.view === 'today', isProjects: st.view === 'projects', isHabits: st.view === 'habits', isAnalytics: st.view === 'analytics',
+      search: st.q || '', searching: !!q, notSearching: !q, onSearch: (e) => this.setState({ q: e.target.value }), clearSearch: () => this.setState({ q: '' }),
+      crumb: st.view === 'today' ? 'Overview' : st.view === 'projects' ? 'Projects' : st.view === 'habits' ? 'Habits' : 'Analytics',
+      userInitial: (name || 'A').slice(0, 1).toUpperCase(), userRole: this.props.userRole || 'Operator',
+      userNameOut: name, workspace: this.props.workspaceName || 'Personal HQ',
+      goToday: () => this.setState({ view: 'today' }), goProjects: () => this.setState({ view: 'projects' }),
+      goHabits: () => this.setState({ view: 'habits' }), goAnalytics: () => this.setState({ view: 'analytics' }),
+      resetData: () => { try { localStorage.removeItem(LS); } catch (e) {} this.save(this.seed()); },
+
+      openCount: openTasks.length, projectCount: d.projects.length, habitCount: d.habits.length,
+      hasFilter: !!st.filter, allActive: !st.filter, filterName: st.filter && projById[st.filter] ? projById[st.filter].name : '',
+      clearFilter: () => this.setState({ filter: null }),
+      filterList: d.projects.map((p) => ({ name: p.name, color: p.color || INK, open: d.tasks.filter((t) => t.projectId === p.id && !t.done).length, active: st.filter === p.id, pick: () => this.setState({ filter: p.id, view: 'today' }) })),
+
+      streaksOn: showStreaks, streak: si.streak, streakDots: si.dots,
+
+      greeting: greeting, dateLine: dateLine,
+      subline: openTasks.length ? (schedToday.length - doneToday.length > 0 ? (schedToday.length - doneToday.length) + ' habits and ' : '') + openTasks.length + ' open tasks across ' + d.projects.length + ' projects.' : 'Everything is checked off. Close the laptop.',
+
+      quick: st.quick, onQuick: (e) => this.setState({ quick: e.target.value }),
+      quickProject: st.quickProject, onQuickProject: (e) => this.setState({ quickProject: e.target.value }),
+      quickDue: st.quickDue, onQuickDue: (e) => this.setState({ quickDue: e.target.value }),
+      onQuickKey: (e) => { if (e.key === 'Enter') this.addTask(st.quick, st.quickProject, st.quickDue); },
+      addQuick: () => this.addTask(st.quick, st.quickProject, st.quickDue),
+      projectOpts: d.projects.map((p) => ({ id: p.id, name: p.name })),
+      businessOpts: d.businesses.map((b) => ({ id: b.id, name: b.name })),
+
+      hasNudge: nudges.length > 0, nudges: nudges,
+      snapshot: snapshot,
+
+      todayHabits: todayHabits, noHabitsToday: schedToday.length === 0,
+      habitProgress: doneToday.length + '/' + schedToday.length + ' done',
+      habitBar: { width: hp + '%', height: '100%', background: hp === 100 ? '#448361' : '#2383E2', borderRadius: '3px', transition: 'width .3s ease' },
+
+      groups: groups, showInbox: !st.filter, inbox: inbox, inboxCount: inboxAll.filter((t) => !t.done).length, inboxEmpty: inbox.length === 0,
+
+      reviewLine: reviewLine,
+      reviewStats: [
+        { value: String(weekLogs.length), label: 'completed' },
+        { value: String(weekTasks), label: 'tasks' },
+        { value: Math.round(weekMin / 60) + 'h', label: 'focus time' }
+      ],
+
+      businessCards: d.businesses.map((b) => ({ name: b.name, logo: b.logo || '··', color: b.color || VERM, tint: (b.color || VERM) + '18', border: (b.color || VERM) + '33',
+        sub: d.projects.filter((p) => p.businessId === b.id).length + ' projects · ' + d.tasks.filter((t) => !t.done && projById[t.projectId] && projById[t.projectId].businessId === b.id).length + ' open',
+        edit: () => this.open('business', b) })),
+      newBusiness: () => this.open('business', null),
+      newProject: () => this.open('project', null),
+      newHabit: () => this.open('habit', null),
+
+      projectCards: d.projects.map((p) => {
+        const openN = d.tasks.filter((t) => t.projectId === p.id && !t.done).length;
+        const doneN = d.logs.filter((l) => l.type === 'task' && l.projectId === p.id).length;
+        const pct = doneN + openN ? Math.round(doneN / (doneN + openN) * 100) : 0;
+        const dl = p.deadline ? this.daysTo(p.deadline) : null;
+        const lt = lastTouch[p.id];
+        const idle = lt ? -this.daysTo(lt) : 99;
+        return {
+          name: p.name, desc: p.desc || 'No description yet.', logo: p.logo || '··', img: p.img || '', hasImg: !!p.img, noImg: !p.img,
+          color: p.color || INK, tint: (p.color || INK) + '18', border: (p.color || INK) + '33',
+          business: p.businessId && bizById[p.businessId] ? bizById[p.businessId].name : 'Standalone',
+          open: openN, doneCount: doneN, pctLabel: pct + '%',
+          bar: { width: Math.max(2, pct) + '%', height: '100%', background: p.color || INK, borderRadius: '3px' },
+          hasDeadline: dl !== null, dlDays: dl === null ? '' : (dl < 0 ? (-dl) + 'd late' : dl + 'd left'),
+          dlDate: p.deadline ? parseISO(p.deadline).getDate() + ' ' + MON[parseISO(p.deadline).getMonth()] : '', dlColor: dl === null ? SOFT : this.dlColor(dl),
+          milestones: (p.milestones || []).map((m) => {
+            const n = m.due ? this.daysTo(m.due) : null;
+            return { name: m.name, done: !!m.done, textColor: m.done ? '#9B9A97' : '#37352F',
+              dueLabel: n === null ? '' : m.done ? 'done' : n < 0 ? (-n) + 'd late' : n + 'd',
+              dueColor: m.done ? '#9B9A97' : n !== null && n < 0 ? '#C4554D' : n !== null && n <= 7 ? VERM : MUTE,
+              toggle: () => this.toggleMilestone(p.id, m.id) };
+          }),
+          noMilestones: !(p.milestones || []).length,
+          stalled: openN > 0 && idle >= nudgeDays, stalledLabel: (idle === 99 ? 'Never logged activity' : 'No activity for ' + idle + ' days') + ' · ' + openN + ' open',
+          edit: () => this.open('project', p), remove: () => this.open('project', p)
+        };
+      }),
+
+      habitCards: d.habits.map((x) => {
+        let sched = 0, hit = 0; const dots = [];
+        days.forEach((dd) => {
+          if (x.days.indexOf(dd.dow) < 0) { dots.push({ c: '#F1F1EF' }); return; }
+          sched++; const ok = this.logDone(d.logs, x.id, dd.key); if (ok) hit++;
+          dots.push({ c: ok ? (dd.key === this.tk ? '#2383E2' : '#9CC7EE') : '#EDEDEC' });
+        });
+        const pct = sched ? Math.round(hit / sched * 100) : 0;
+        return { name: x.name, logo: x.logo || '·', img: x.img || '', hasImg: !!x.img, noImg: !x.img,
+          scheduleLabel: x.days.length === 7 ? 'Every day' : x.days.length === 1 ? 'Weekly · ' + DAYN[x.days[0]] : x.days.length + ' days a week',
+          dayPills: [0, 1, 2, 3, 4, 5, 6].map((i) => ({ l: DAYL[i], on: x.days.indexOf(i) >= 0, off: x.days.indexOf(i) < 0 })),
+          dots: dots, pct: pct + '%', pctColor: pct >= 80 ? '#448361' : pct >= 50 ? '#787774' : '#C4554D',
+          edit: () => this.open('habit', x), remove: () => this.open('habit', x) };
+      }),
+
+      rangeLabel: 'Last ' + range + ' days',
+      analyticsLede: rangeLogs.length ? 'You logged ' + rangeLogs.length + ' completions and about ' + Math.round(totalMin / 60) + ' hours of focus. ' + weekdayNote.split(' · ')[0] + '.' : 'Nothing logged in this window yet.',
+      bigStats: bigStats, timeline: timeline, byBusiness: byBusiness, projectProgress: projectProgress,
+      habitConsistency: habitConsistency, weekdays: weekdays, weekdayNote: weekdayNote,
+      timeOfDay: timeOfDay, timeOfDayNote: 'Peak stretch: ' + buckets[peak].name.toLowerCase(),
+
+      modalOpen: !!st.modal, closeModal: () => this.setState({ modal: null }), stop: (e) => e.stopPropagation(),
+      modalTitle: titles[st.modal] || '', nameLabel: nameLabels[st.modal] || 'Name', namePlaceholder: namePH[st.modal] || '',
+      mTask: st.modal === 'task', mProject: st.modal === 'project', mHabit: st.modal === 'habit',
+      hasLogo: st.modal === 'project' || st.modal === 'habit' || st.modal === 'business',
+      canDelete: !!f.id, saveLabel: f.id ? 'Save' : 'Create',
+      fName: f.name || '', fDesc: f.desc || '', fProjectId: f.projectId || '', fBusinessId: f.businessId || '',
+      fDue: f.due || '', fDeadline: f.deadline || '', fEst: f.est === undefined ? '' : String(f.est),
+      fLogo: f.logo || '', fImg: f.img || '', fHasImg: !!f.img, fNoImg: !f.img,
+      fInitials: (f.logo || String(f.name || '··').slice(0, 2)).toUpperCase(),
+      onField: (e) => this.setField(e.target.name, e.target.value),
+      onLogoFile: (e) => { const file = e.target.files && e.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => this.setField('img', r.result); r.readAsDataURL(file); },
+      clearImg: () => this.setField('img', ''),
+      fDays: [0, 1, 2, 3, 4, 5, 6].map((i) => ({ l: DAYL[i], on: (f.days || []).indexOf(i) >= 0, off: (f.days || []).indexOf(i) < 0,
+        toggle: () => { const cur = (f.days || []).slice(); const k = cur.indexOf(i); if (k >= 0) cur.splice(k, 1); else cur.push(i); this.setField('days', cur.sort()); } })),
+      allDays: () => this.setField('days', [0, 1, 2, 3, 4, 5, 6]),
+      fMilestones: (f.milestones || []).map((m, i) => ({ name: m.name, due: m.due || '',
+        onName: (e) => { const arr = f.milestones.slice(); arr[i] = Object.assign({}, arr[i], { name: e.target.value }); this.setField('milestones', arr); },
+        onDue: (e) => { const arr = f.milestones.slice(); arr[i] = Object.assign({}, arr[i], { due: e.target.value }); this.setField('milestones', arr); },
+        remove: () => { const arr = f.milestones.slice(); arr.splice(i, 1); this.setField('milestones', arr); } })),
+      addMilestone: () => this.setField('milestones', (f.milestones || []).concat([{ id: '', name: '', due: '', done: false }])),
+      saveModal: () => this.commit(), deleteItem: () => this.removeItem()
+    };
+  }
+}
+</script>
+</body>
+</html>

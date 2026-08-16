@@ -3,15 +3,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-[3px] focus:ring-signal/14",
+  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        outline: "text-foreground",
+          "border-border bg-background text-foreground",
+        today:
+          "border-border bg-background text-foreground",
+        overdue:
+          "border-[#F2DFDE] bg-[#FBECEB] text-[#B0403C]",
+        done:
+          "border-[#D8EDE2] bg-[#EEF8F3] text-[#0C7C4E]",
+        muted:
+          "border-[#EDEDEC] bg-paper text-muted-foreground rounded",
+        filter:
+          "border-border bg-background text-foreground",
       },
     },
     defaultVariants: {
@@ -23,14 +30,26 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant,
+  dotColor,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof badgeVariants>) {
+}: React.ComponentProps<"span"> &
+  VariantProps<typeof badgeVariants> & {
+    dotColor?: string;
+  }) {
   return (
-    <div
+    <span
       data-slot="badge"
       className={cn(badgeVariants({ variant }), className)}
       {...props}
-    />
+    >
+      {dotColor && (
+        <span
+          className="h-[7px] w-[7px] rounded-full"
+          style={{ backgroundColor: dotColor }}
+        />
+      )}
+      {props.children}
+    </span>
   );
 }
 

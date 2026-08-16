@@ -42,6 +42,12 @@ export const updateProjectSchema = createProjectSchema.extend({
   id: z.string().min(1),
 });
 
+export const milestoneSchema = z.object({
+  name: z.string().min(1, "Milestone name is required").max(120),
+  dueDate: optionalDateSchema,
+  done: z.coerce.boolean().optional(),
+});
+
 export const createTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   notes: z.string().max(500).optional(),
@@ -49,6 +55,11 @@ export const createTaskSchema = z.object({
   projectId: z.string().optional().nullable(),
   priority: z.coerce.number().int().min(0).max(3).default(0),
   dueDate: optionalDateSchema,
+  estimatedMinutes: z.coerce.number().int().min(0).max(999).optional().nullable(),
+});
+
+export const updateTaskSchema = createTaskSchema.extend({
+  id: z.string().min(1),
 });
 
 export const createDailyTaskSchema = z.object({

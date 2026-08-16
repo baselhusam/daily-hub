@@ -1,179 +1,426 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
+import { Inbox, X } from "lucide-react";
 import type { DashboardData } from "@/lib/dashboard";
-import { formatDueDate } from "@/lib/dates";
-import { cn } from "@/lib/utils";
-import { EntityIcon } from "./entity-icon";
-import { TaskTable } from "./task-table";
+import { daysUntil, formatEstimate } from "@/lib/streak";
+import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
+import { getTodayDate } from "@/lib/dates";
+import { useSearchQuery } from "@/components/search-context";
+import { PageHeader } from "@/components/ui/page-header";
+import { QuickAdd } from "@/components/ui/quick-add";
+import { NudgeChip } from "@/components/ui/nudge-chip";
+import { SnapshotCard } from "@/components/ui/snapshot-card";
+import { SurfaceCard, SurfaceCardHeader } from "@/components/ui/surface-card";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { TaskRow } from "@/components/ui/task-row";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { completeTask } from "@/app/actions/tasks";
+
+type EditableTask = {
+  id: string;
+  title: string;
+  notes: string | null;
+  projectId: string | null;
+  businessId: string | null;
+  dueDate: Date | null;
+  estimatedMinutes: number | null;
+};
 
 type DashboardShellProps = {
   data: DashboardData;
 };
 
-function getGreeting(): string {
+function getGreeting(name: string): string {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+  const prefix =
+    hour < 5
+      ? "Still up, "
+      : hour < 12
+        ? "Good morning, "
+        : hour < 17
+          ? "Good afternoon, "
+          : "Good evening, ";
+  return `${prefix}${name}.`;
 }
 
 export function DashboardShell({ data }: DashboardShellProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const search = useSearchQuery().trim().toLowerCase();
   const projectFilter = searchParams.get("project");
+  const [pendingTaskId, setPendingTaskId] = React.useState<string | null>(null);
+  const [editingTask, setEditingTask] = React.useState<EditableTask | null>(null);
+  const today = getTodayDate();
 
   const filteredProjects =
-    projectFilter === "inbox"
-      ? []
-      : projectFilter && projectFilter !== "all"
-        ? data.projects.filter((project) => project.id === projectFilter)
-        : data.projects;
+    projectFilter && projectFilter !== "all" && projectFilter !== "inbox"
+      ? data.projects.filter((p) => p.id === projectFilter)
+      : data.projects;
 
   const showInbox =
     !projectFilter || projectFilter === "all" || projectFilter === "inbox";
-
   const showHabits = !projectFilter || projectFilter === "all";
-  const selectedProject = filteredProjects[0];
-  const heading =
-    projectFilter === "inbox"
-      ? "Inbox"
-      : selectedProject && projectFilter
-        ? selectedProject.name
-        : getGreeting();
+  const filterProject = data.projects.find((p) => p.id === projectFilter);
+
+  const habitProgress =
+    data.stats.dailyScheduled === 0
+      ? 0
+      : Math.round(
+          (data.stats.dailyCompleted / data.stats.dailyScheduled) * 100
+        );
+
+  function matchesSearch(title: string) {
+    return !search || title.toLowerCase().includes(search);
+  }
+
+  async function handleComplete(taskId: string) {
+    setPendingTaskId(taskId);
+    await completeTask(taskId);
+    setPendingTaskId(null);
+  }
 
   return (
-    <div className="px-5 py-8 sm:px-8 lg:px-10">
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[32px] leading-[1.1] tracking-[-0.04em]">
-              {heading}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {format(new Date(), "EEEE, MMMM d")}
-            </p>
+    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
+      {editingTask && (
+        <CreateTaskDialog
+          businesses={data.businesses}
+          projects={data.projects}
+          task={{
+            id: editingTask.id,
+            title: editingTask.title,
+            notes: editingTask.notes,
+            projectId: editingTask.projectId,
+            businessId: editingTask.businessId,
+            dueDate: editingTask.dueDate,
+            estimatedMinutes: editingTask.estimatedMinutes,
+          }}
+          open
+          onOpenChange={(next) => {
+            if (!next) setEditingTask(null);
+          }}
+        />
+      )}
+      <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
+        <PageHeader
+          eyebrow={format(today, "EEEE · MMMM d, yyyy")}
+          title={getGreeting(data.settings.displayName)}
+          description={
+            data.stats.overdueTasks > 0
+              ? `${data.stats.overdueTasks} overdue · ${data.stats.openTasks} still open today.`
+              : `${data.stats.openTasks} open · ${data.stats.dailyCompleted}/${data.stats.dailyScheduled} habits done.`
+          }
+          actions={
+            filterProject ? undefined : (
+              <CreateTaskDialog
+                businesses={data.businesses}
+                projects={data.projects}
+              />
+            )
+          }
+        />
+
+        {filterProject && (
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pr-2 pl-3.5">
+            <span className="text-[13px] font-semibold">
+              Filtered · {filterProject.name}
+            </span>
+            <Link
+              href="/"
+              className="grid h-[22px] w-[22px] place-items-center rounded-full bg-[#EFEEE9] text-[13px] text-muted-foreground hover:bg-hover"
+              aria-label="Clear filter"
+            >
+              <X className="h-3 w-3" />
+            </Link>
           </div>
-          <CreateTaskDialog
-            businesses={data.businesses}
-            projects={data.projects}
-            defaultProjectId={
-              selectedProject && projectFilter ? selectedProject.id : undefined
-            }
-          />
-        </header>
+        )}
 
         {showHabits && (
-          <dl className="mb-10 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <StatItem
-              label="Open"
-              value={String(data.stats.openTasks)}
-            />
-            <StatItem
-              label="Overdue"
-              value={String(data.stats.overdueTasks)}
-              highlight={data.stats.overdueTasks > 0}
-            />
-            <StatItem
-              label="Habits"
-              value={`${data.stats.dailyCompleted}/${data.stats.dailyScheduled}`}
-            />
-            <StatItem
-              label="This week"
-              value={String(data.stats.completionsThisWeek)}
-            />
-          </dl>
+          <QuickAdd
+            projects={data.projects.map((p) => ({ id: p.id, name: p.name }))}
+            defaultProjectId={filterProject?.id}
+          />
         )}
 
-        <div className="space-y-10">
-          {showHabits && (
-            <section>
-              <SectionTitle>Today</SectionTitle>
-              <DailyChecklist tasks={data.dailyTasks} />
-            </section>
-          )}
+        {showHabits && data.nudges.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {data.nudges.map((nudge, index) => (
+              <NudgeChip
+                key={index}
+                variant={nudge.variant}
+                action={
+                  nudge.actionLabel && nudge.projectId ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(`/?project=${nudge.projectId}`)
+                      }
+                      className="text-[12.5px] font-semibold text-signal whitespace-nowrap hover:text-[#1A7BD4]"
+                    >
+                      {nudge.actionLabel} →
+                    </button>
+                  ) : undefined
+                }
+              >
+                {nudge.text}
+              </NudgeChip>
+            ))}
+          </div>
+        )}
+
+        {showHabits && (
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(168px,1fr))] gap-3">
+            {data.snapshots.map((snapshot) => (
+              <SnapshotCard key={snapshot.label} {...snapshot} />
+            ))}
+          </div>
+        )}
+
+        {showHabits && (
+          <SurfaceCard>
+            <SurfaceCardHeader className="!py-3.5">
+              <div className="flex w-full items-center justify-between gap-3">
+                <div className="flex items-baseline gap-2.5">
+                  <h2 className="text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
+                    Today&apos;s habits
+                  </h2>
+                  <span className="text-[12px] font-medium text-faint tabular-nums">
+                    {data.stats.dailyCompleted}/{data.stats.dailyScheduled}
+                  </span>
+                </div>
+                <ProgressBar
+                  value={habitProgress}
+                  className="max-w-[180px] flex-1"
+                />
+              </div>
+            </SurfaceCardHeader>
+            <DailyChecklist tasks={data.dailyTasks} />
+          </SurfaceCard>
+        )}
+
+        <div className="flex flex-col gap-3.5">
+          <div className="flex items-baseline justify-between gap-3 px-0.5">
+            <h2 className="text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
+              Open work
+            </h2>
+            <span className="text-[11.5px] tracking-[0.1em] text-faint tabular-nums">
+              {data.stats.openTasks} open
+            </span>
+          </div>
 
           {filteredProjects
-            .filter((project) => projectFilter || project.tasks.length > 0)
-            .map((project) => (
-            <section key={project.id}>
-              {showHabits ? (
-                <div className="mb-2 flex items-baseline justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <EntityIcon
-                      iconKey={project.iconKey}
-                      logoUrl={project.logoUrl}
-                      size={16}
-                      className="shrink-0 text-muted-foreground"
+            .filter((project) => {
+              const visibleTasks = project.tasks.filter((t) =>
+                matchesSearch(t.title)
+              );
+              return visibleTasks.length > 0 || !search;
+            })
+            .map((project) => {
+              const dl = daysUntil(project.dueDate, today);
+              const visibleTasks = project.tasks.filter((t) =>
+                matchesSearch(t.title)
+              );
+
+              return (
+                <SurfaceCard key={project.id}>
+                  <SurfaceCardHeader sunk>
+                    <div className="flex w-full flex-wrap items-center gap-3">
+                      <EntityAvatar
+                        name={project.name}
+                        color={project.color}
+                        logoUrl={project.logoUrl}
+                        size={30}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[15px] font-semibold tracking-[-0.01em]">
+                            {project.name}
+                          </span>
+                          {project.business && (
+                            <Badge variant="muted" className="rounded px-1.5 py-0.5 text-[11.5px]">
+                              {project.business.name}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-[12px] text-faint">
+                          {project.openCount} open · {project.doneCount} logged
+                        </p>
+                      </div>
+                      {dl !== null && (
+                        <div className="text-right">
+                          <div
+                            className="text-[14px] font-semibold tabular-nums leading-none"
+                            style={{ color: getDeadlineColor(dl) }}
+                          >
+                            {dl < 0 ? `${Math.abs(dl)}d late` : `${dl}d`}
+                          </div>
+                          <div className="mt-0.5 text-[11.5px] text-faint">
+                            to deadline
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </SurfaceCardHeader>
+
+                  {project.milestones.filter((m) => !m.done).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 border-b border-rule-soft bg-canvas-sunk px-[18px] py-2.5">
+                      {project.milestones
+                        .filter((m) => !m.done)
+                        .slice(0, 3)
+                        .map((milestone) => {
+                          const md = daysUntil(milestone.dueDate, today);
+                          return (
+                            <Badge
+                              key={milestone.id}
+                              variant="filter"
+                              dotColor={
+                                md !== null && md <= 7 ? "#2383E2" : "#C7C6C2"
+                              }
+                              className="gap-1.5"
+                            >
+                              {milestone.name}
+                              {md !== null && (
+                                <span className="text-faint tabular-nums">
+                                  {md < 0 ? `${Math.abs(md)}d late` : `${md}d`}
+                                </span>
+                              )}
+                            </Badge>
+                          );
+                        })}
+                    </div>
+                  )}
+
+                  <div>
+                    {visibleTasks.map((task) => {
+                      const due = getDueMeta(task.dueDate, today);
+                      return (
+                        <TaskRow
+                          key={task.id}
+                          task={{
+                            id: task.id,
+                            title: task.title,
+                            done: task.doneToday,
+                            dueLabel: due?.label,
+                            dueColor: due?.color,
+                            dueBg: due?.bg,
+                            estimateLabel: formatEstimate(task.estimatedMinutes),
+                          }}
+                          pending={pendingTaskId === task.id}
+                          onToggle={() => void handleComplete(task.id)}
+                          onEdit={() => setEditingTask(task)}
+                        />
+                      );
+                    })}
+                    <CreateTaskDialog
+                      businesses={data.businesses}
+                      projects={data.projects}
+                      defaultProjectId={project.id}
+                      trigger={
+                        <button
+                          type="button"
+                          className="w-full px-[18px] py-3 text-left text-[13px] font-semibold text-faint transition-colors hover:bg-paper hover:text-signal"
+                        >
+                          + Add task to {project.name}
+                        </button>
+                      }
                     />
-                    <h2 className="truncate text-[21px] tracking-[-0.025em]">
-                      {project.name}
-                    </h2>
                   </div>
-                  <p className="shrink-0 text-sm text-muted-foreground">
-                    {project.tasks.length} open
-                    {project.dueDate ? ` · ${formatDueDate(project.dueDate)}` : ""}
-                  </p>
-                </div>
-              ) : (
-                project.description && (
-                  <p className="mb-3 text-sm text-muted-foreground">
-                    {project.description}
-                    {project.dueDate ? ` · due ${formatDueDate(project.dueDate)}` : ""}
-                  </p>
-                )
-              )}
-              <TaskTable
-                tasks={project.tasks}
-                emptyMessage="No open tasks."
-              />
-            </section>
-          ))}
-
-          {showInbox && (
-            <section>
-              {showHabits && <SectionTitle>Inbox</SectionTitle>}
-              <TaskTable
-                tasks={data.inboxTasks}
-                emptyMessage="Inbox is clear."
-              />
-            </section>
-          )}
+                </SurfaceCard>
+              );
+            })}
         </div>
-      </div>
-    </div>
-  );
-}
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="mb-2 text-[21px] tracking-[-0.025em]">{children}</h2>
-  );
-}
-
-function StatItem({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "font-medium tabular-nums",
-          highlight && "text-destructive font-semibold"
+        {showInbox && (
+          <SurfaceCard variant="paper">
+            <SurfaceCardHeader>
+              <div className="flex w-full items-center gap-3">
+                <span className="grid h-[30px] w-[30px] place-items-center rounded-md bg-border text-muted-foreground">
+                  <Inbox className="h-4 w-4" />
+                </span>
+                <div className="flex-1">
+                  <div className="text-[15px] font-semibold">Inbox</div>
+                  <div className="mt-0.5 text-[12px] text-faint">
+                    No project yet · file these or finish them
+                  </div>
+                </div>
+                <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
+                  {data.inboxTasks.filter((t) => !t.doneToday).length}
+                </span>
+              </div>
+            </SurfaceCardHeader>
+            {data.inboxTasks.filter((t) => matchesSearch(t.title)).length ===
+            0 ? (
+              <p className="px-[18px] py-5 text-[13.5px] text-faint">
+                Inbox clear.
+              </p>
+            ) : (
+              <div>
+                {data.inboxTasks
+                  .filter((t) => matchesSearch(t.title))
+                  .map((task) => {
+                    const due = getDueMeta(task.dueDate, today);
+                    return (
+                      <TaskRow
+                        key={task.id}
+                        task={{
+                          id: task.id,
+                          title: task.title,
+                          done: task.doneToday,
+                          dueLabel: due?.label,
+                          dueColor: due?.color,
+                          dueBg: due?.bg,
+                          estimateLabel: formatEstimate(task.estimatedMinutes),
+                        }}
+                        pending={pendingTaskId === task.id}
+                        onToggle={() => void handleComplete(task.id)}
+                        onEdit={() => setEditingTask(task)}
+                      />
+                    );
+                  })}
+              </div>
+            )}
+          </SurfaceCard>
         )}
-      >
-        {value}
-      </dd>
+
+        {showHabits && (
+          <section className="flex flex-wrap items-center gap-6 rounded-[10px] bg-foreground p-5 text-background">
+            <div className="min-w-[220px] flex-1">
+              <p className="text-[11.5px] font-semibold tracking-[0.02em] text-[#A3A29E]">
+                Week in review
+              </p>
+              <p className="mt-2 text-[26px] leading-snug text-pretty">
+                {data.weekReview.line}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-6">
+              {data.weekReview.stats.map((stat) => (
+                <div key={stat.label}>
+                  <div className="text-2xl font-semibold tabular-nums leading-none">
+                    {stat.value}
+                  </div>
+                  <div className="mt-1.5 text-[11.5px] text-[#A3A29E]">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/analytics">Full analytics →</Link>
+            </Button>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

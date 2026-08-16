@@ -7,14 +7,18 @@ import { uploadLogo } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  DialogInput,
+  DialogSelect,
+  FieldLabel,
+} from "@/components/ui/input";
 import { ICON_OPTIONS } from "@/lib/icons";
 
 export function CreateBusinessDialog() {
@@ -36,9 +40,7 @@ export function CreateBusinessDialog() {
         const uploadData = new FormData();
         uploadData.set("logo", logoFile);
         const logoUrl = await uploadLogo(uploadData);
-        if (logoUrl) {
-          formData.set("logoUrl", logoUrl);
-        }
+        if (logoUrl) formData.set("logoUrl", logoUrl);
       }
 
       const result = await createBusiness(formData);
@@ -63,41 +65,47 @@ export function CreateBusinessDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1">
+        <Button variant="outline" size="sm" className="h-9 gap-1 px-4 text-[13.5px] font-semibold">
           <Plus className="h-3.5 w-3.5" />
           Business
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create business</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="business-name">Name</Label>
-            <Input id="business-name" name="name" placeholder="Consulting" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="business-icon">Icon</Label>
-            <select
-              id="business-icon"
-              name="iconKey"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue="briefcase"
-            >
-              {ICON_OPTIONS.map((icon) => (
-                <option key={icon} value={icon}>{icon}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="business-logo">Logo (optional)</Label>
-            <Input id="business-logo" name="logo" type="file" accept="image/*" />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>New business</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Business name</FieldLabel>
+              <DialogInput
+                name="name"
+                placeholder="e.g. Raqam Studio"
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Icon</FieldLabel>
+              <DialogSelect name="iconKey" defaultValue="briefcase">
+                {ICON_OPTIONS.map((icon) => (
+                  <option key={icon} value={icon}>
+                    {icon}
+                  </option>
+                ))}
+              </DialogSelect>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Logo</FieldLabel>
+              <DialogInput name="logo" type="file" accept="image/*" />
+            </label>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </DialogBody>
+          <DialogFooter className="justify-end">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating..." : "Create business"}
+              {pending ? "Creating..." : "Create"}
             </Button>
           </DialogFooter>
         </form>

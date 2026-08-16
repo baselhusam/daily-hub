@@ -2,11 +2,14 @@
 
 import { Trash2, Pencil } from "lucide-react";
 import { deleteDailyTask } from "@/app/actions/daily-tasks";
+import { PageHeader } from "@/components/ui/page-header";
+import { SurfaceCard } from "@/components/ui/surface-card";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { DayPills } from "@/components/ui/day-pills";
+import { ChainDots } from "@/components/ui/chain-dots";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/brand-mark";
-import { EntityIcon } from "@/components/dashboard/entity-icon";
 import { DailyTaskFormDialog } from "./daily-task-form-dialog";
-import { formatWeekdays } from "@/lib/dates";
 
 type DailyTaskRecord = {
   id: string;
@@ -17,6 +20,9 @@ type DailyTaskRecord = {
   isActive: boolean;
   businessId: string | null;
   business: { id: string; name: string } | null;
+  scheduleLabel: string;
+  rate: number;
+  dots: Array<{ color: string }>;
 };
 
 type DailyShellProps = {
@@ -26,19 +32,14 @@ type DailyShellProps = {
 
 export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
   return (
-    <div className="px-5 py-8 sm:px-8 lg:px-10">
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[32px] leading-[1.1] tracking-[-0.04em]">
-              Habits
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Recurring check-ins for the week.
-            </p>
-          </div>
-          <DailyTaskFormDialog businesses={businesses} />
-        </header>
+    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
+      <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
+        <PageHeader
+          eyebrow="Recurring"
+          title="Habits"
+          description="Set the schedule here. Check them off on Today."
+          actions={<DailyTaskFormDialog businesses={businesses} />}
+        />
 
         {dailyTasks.length === 0 ? (
           <EmptyState
@@ -46,29 +47,43 @@ export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
             description="Create one to build your routine."
           />
         ) : (
-          <ul>
+          <SurfaceCard>
             {dailyTasks.map((task) => (
-              <li
+              <div
                 key={task.id}
-                className="group flex items-start gap-3 border-b border-border/70 py-4 last:border-0"
+                className="flex flex-wrap items-center gap-3.5 border-b border-rule-soft px-[18px] py-4 last:border-0"
               >
-                <EntityIcon
-                  iconKey={task.iconKey}
+                <EntityAvatar
+                  name={task.title}
                   logoUrl={task.logoUrl}
-                  size={20}
-                  className="mt-0.5 shrink-0 text-muted-foreground"
+                  size={36}
+                  rounded="lg"
                 />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-medium leading-snug">
-                    {task.title}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {formatWeekdays(task.weekdays)}
+                <div className="min-w-0 flex-1 basis-[180px]">
+                  <div className="text-[15px] font-semibold">{task.title}</div>
+                  <div className="mt-0.5 text-[12px] text-faint">
+                    {task.scheduleLabel}
                     {task.isActive ? "" : " · Paused"}
-                    {task.business ? ` · ${task.business.name}` : ""}
-                  </p>
+                  </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:focus-within:opacity-100">
+                <DayPills activeDays={task.weekdays} />
+                <div className="flex min-w-[150px] items-center gap-3.5">
+                  <ChainDots dots={task.dots} size="md" className="gap-[2.5px]" />
+                  <span
+                    className="text-[13px] font-semibold tabular-nums"
+                    style={{
+                      color:
+                        task.rate >= 80
+                          ? "#448361"
+                          : task.rate >= 50
+                            ? "#787774"
+                            : "#C4554D",
+                    }}
+                  >
+                    {task.rate}%
+                  </span>
+                </div>
+                <div className="flex gap-0.5">
                   <DailyTaskFormDialog
                     businesses={businesses}
                     task={{
@@ -81,8 +96,8 @@ export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
                       isActive: task.isActive,
                     }}
                     trigger={
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Pencil className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[#C7C6C2]">
+                        <Pencil className="h-4 w-4" />
                         <span className="sr-only">Edit habit</span>
                       </Button>
                     }
@@ -90,16 +105,16 @@ export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-[#C7C6C2] hover:text-destructive"
                     onClick={() => deleteDailyTask(task.id)}
                     aria-label="Delete habit"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </SurfaceCard>
         )}
       </div>
     </div>

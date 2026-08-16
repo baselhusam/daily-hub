@@ -1,24 +1,34 @@
 "use client";
 
 import * as React from "react";
-import { Plus } from "lucide-react";
-import { createProject, updateProject } from "@/app/actions/projects";
+import { Plus, Trash2 } from "lucide-react";
+import { createProject, deleteProject, updateProject } from "@/app/actions/projects";
 import { uploadLogo } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  DialogInput,
+  DialogSelect,
+  DialogTextarea,
+  FieldLabel,
+} from "@/components/ui/input";
 import { ICON_OPTIONS } from "@/lib/icons";
 import { toDateOnlyString } from "@/lib/dates";
 
 type BusinessOption = { id: string; name: string };
+
+type MilestoneForm = {
+  name: string;
+  dueDate: string;
+};
 
 export type ProjectFormValues = {
   id?: string;
@@ -29,6 +39,12 @@ export type ProjectFormValues = {
   dueDate: Date | null;
   status: "ACTIVE" | "PAUSED" | "DONE";
   businessId: string | null;
+  milestones?: Array<{
+    id: string;
+    name: string;
+    dueDate: Date | null;
+    done: boolean;
+  }>;
 };
 
 type ProjectFormDialogProps = {
@@ -45,7 +61,19 @@ export function ProjectFormDialog({
   const [open, setOpen] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  const [milestones, setMilestones] = React.useState<MilestoneForm[]>([]);
   const isEdit = Boolean(project?.id);
+
+  React.useEffect(() => {
+    if (open) {
+      setMilestones(
+        project?.milestones?.map((m) => ({
+          name: m.name,
+          dueDate: m.dueDate ? toDateOnlyString(m.dueDate) : "",
+        })) ?? []
+      );
+    }
+  }, [open, project?.milestones]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,15 +83,19 @@ export function ProjectFormDialog({
     const form = event.currentTarget;
     const formData = new FormData(form);
 
+    for (const milestone of milestones) {
+      if (!milestone.name.trim()) continue;
+      formData.append("milestoneName", milestone.name.trim());
+      formData.append("milestoneDue", milestone.dueDate);
+    }
+
     try {
       const logoFile = formData.get("logo") as File | null;
       if (logoFile && logoFile.size > 0) {
         const uploadData = new FormData();
         uploadData.set("logo", logoFile);
         const logoUrl = await uploadLogo(uploadData);
-        if (logoUrl) {
-          formData.set("logoUrl", logoUrl);
-        }
+        if (logoUrl) formData.set("logoUrl", logoUrl);
       } else if (project?.logoUrl) {
         formData.set("logoUrl", project.logoUrl);
       }
@@ -94,100 +126,158 @@ export function ProjectFormDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="sm" className="h-8 gap-1">
+          <Button size="sm" className="h-9 gap-1 px-4 text-[13.5px] font-semibold">
             <Plus className="h-3.5 w-3.5" />
             Project
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit project" : "New project"}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {project?.id && <input type="hidden" name="id" value={project.id} />}
-          <div className="space-y-2">
-            <Label htmlFor="project-name">Name</Label>
-            <Input
-              id="project-name"
-              name="name"
-              placeholder="DailyHub"
-              defaultValue={project?.name}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-description">Description</Label>
-            <Input
-              id="project-description"
-              name="description"
-              placeholder="Optional short description"
-              defaultValue={project?.description ?? ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-due-date">Due date</Label>
-            <Input
-              id="project-due-date"
-              name="dueDate"
-              type="date"
-              defaultValue={
-                project?.dueDate ? toDateOnlyString(project.dueDate) : ""
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-logo">Logo (optional)</Label>
-            <Input id="project-logo" name="logo" type="file" accept="image/*" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-icon">Icon</Label>
-            <select
-              id="project-icon"
-              name="iconKey"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue={project?.iconKey ?? "folder"}
-            >
-              {ICON_OPTIONS.map((icon) => (
-                <option key={icon} value={icon}>
-                  {icon}
-                </option>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>{isEdit ? "Edit project" : "New project"}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            {project?.id && <input type="hidden" name="id" value={project.id} />}
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Project name</FieldLabel>
+              <DialogInput
+                name="name"
+                placeholder="e.g. ClickML"
+                defaultValue={project?.name}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Description</FieldLabel>
+              <DialogTextarea
+                name="description"
+                placeholder="What is this, in one line?"
+                defaultValue={project?.description ?? ""}
+                rows={2}
+              />
+            </label>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
+              <label className="flex flex-col gap-1.5">
+                <FieldLabel>Business</FieldLabel>
+                <DialogSelect
+                  name="businessId"
+                  defaultValue={project?.businessId ?? "none"}
+                >
+                  <option value="none">Standalone</option>
+                  {businesses.map((business) => (
+                    <option key={business.id} value={business.id}>
+                      {business.name}
+                    </option>
+                  ))}
+                </DialogSelect>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <FieldLabel>Deadline</FieldLabel>
+                <DialogInput
+                  name="dueDate"
+                  type="date"
+                  defaultValue={
+                    project?.dueDate ? toDateOnlyString(project.dueDate) : ""
+                  }
+                />
+              </label>
+            </div>
+            <div className="flex flex-col gap-2 border-t border-rule-soft pt-4">
+              <FieldLabel>Milestones</FieldLabel>
+              {milestones.map((milestone, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <DialogInput
+                    value={milestone.name}
+                    onChange={(e) => {
+                      const next = [...milestones];
+                      next[index] = { ...next[index], name: e.target.value };
+                      setMilestones(next);
+                    }}
+                    placeholder="Milestone name"
+                    className="flex-1 rounded-md text-[13.5px]"
+                  />
+                  <DialogInput
+                    type="date"
+                    value={milestone.dueDate}
+                    onChange={(e) => {
+                      const next = [...milestones];
+                      next[index] = { ...next[index], dueDate: e.target.value };
+                      setMilestones(next);
+                    }}
+                    className="w-[145px] shrink-0 rounded-md text-[13px]"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[#C7C6C2] hover:text-destructive"
+                    onClick={() =>
+                      setMilestones(milestones.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-business">Business (optional)</Label>
-            <select
-              id="project-business"
-              name="businessId"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue={project?.businessId ?? "none"}
-            >
-              <option value="none">None</option>
-              {businesses.map((business) => (
-                <option key={business.id} value={business.id}>
-                  {business.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-status">Status</Label>
-            <select
-              id="project-status"
-              name="status"
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              defaultValue={project?.status ?? "ACTIVE"}
-            >
-              <option value="ACTIVE">Active</option>
-              <option value="PAUSED">Paused</option>
-              <option value="DONE">Done</option>
-            </select>
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button
+                type="button"
+                variant="outline"
+                className="self-start border-dashed text-[12.5px] font-semibold text-muted-foreground"
+                onClick={() =>
+                  setMilestones([...milestones, { name: "", dueDate: "" }])
+                }
+              >
+                + Add milestone
+              </Button>
+            </div>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Logo</FieldLabel>
+              <DialogInput name="logo" type="file" accept="image/*" />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Icon</FieldLabel>
+              <DialogSelect
+                name="iconKey"
+                defaultValue={project?.iconKey ?? "folder"}
+              >
+                {ICON_OPTIONS.map((icon) => (
+                  <option key={icon} value={icon}>
+                    {icon}
+                  </option>
+                ))}
+              </DialogSelect>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Status</FieldLabel>
+              <DialogSelect name="status" defaultValue={project?.status ?? "ACTIVE"}>
+                <option value="ACTIVE">Active</option>
+                <option value="PAUSED">Paused</option>
+                <option value="DONE">Done</option>
+              </DialogSelect>
+            </label>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </DialogBody>
           <DialogFooter>
+            {isEdit && project?.id && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="mr-auto text-faint hover:text-destructive"
+                onClick={() => deleteProject(project.id!)}
+              >
+                Delete
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : isEdit ? "Save changes" : "Create project"}
+              {pending ? "Saving..." : isEdit ? "Save" : "Create"}
             </Button>
           </DialogFooter>
         </form>

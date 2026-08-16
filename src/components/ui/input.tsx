@@ -1,13 +1,17 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function Input({
+  className,
+  type,
+  ...props
+}: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
       data-slot="input"
       className={cn(
-        "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-[13px] transition-colors duration-[120ms] file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-faint focus-visible:border-signal focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-[13px] transition-colors duration-[120ms] file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-faint focus-visible:border-signal focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/16 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -15,4 +19,60 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   );
 }
 
-export { Input };
+function DialogInput({
+  className,
+  ...props
+}: React.ComponentProps<"input">) {
+  return (
+    <Input
+      className={cn("h-auto rounded-[10px] px-3 py-[11px] text-[14.5px]", className)}
+      {...props}
+    />
+  );
+}
+
+function DialogTextarea({
+  className,
+  ...props
+}: React.ComponentProps<"textarea">) {
+  return (
+    <textarea
+      data-slot="textarea"
+      className={cn(
+        "flex min-h-[72px] w-full rounded-[10px] border border-input bg-background px-3 py-[11px] text-sm leading-relaxed transition-colors duration-[120ms] placeholder:text-faint focus-visible:border-signal focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/16 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function DialogSelect({
+  className,
+  ...props
+}: React.ComponentProps<"select">) {
+  return (
+    <select
+      data-slot="select"
+      className={cn(
+        "flex h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[11px] text-sm transition-colors duration-[120ms] focus-visible:border-signal focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/16 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function FieldLabel({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      className={cn("text-eyebrow", className)}
+      {...props}
+    />
+  );
+}
+
+export { Input, DialogInput, DialogTextarea, DialogSelect, FieldLabel };

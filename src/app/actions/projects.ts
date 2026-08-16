@@ -59,6 +59,35 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
     },
   });
 
+  const created = await prisma.project.findFirst({
+    where: { name, businessId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+
+  const milestoneNames = formData.getAll("milestoneName");
+  const milestoneDueDates = formData.getAll("milestoneDue");
+
+  if (created && milestoneNames.length > 0) {
+    const milestones = milestoneNames
+      .map((mName, index) => ({
+        name: String(mName).trim(),
+        dueDate: parseDateInput(String(milestoneDueDates[index] ?? "")),
+      }))
+      .filter((m) => m.name);
+
+    if (milestones.length > 0) {
+      await prisma.milestone.createMany({
+        data: milestones.map((milestone, index) => ({
+          projectId: created.id,
+          name: milestone.name,
+          dueDate: milestone.dueDate,
+          sortOrder: index,
+        })),
+      });
+    }
+  }
+
   revalidateAll();
   return { success: true };
 }
@@ -97,6 +126,33 @@ export async function updateProject(formData: FormData): Promise<ActionResult> {
       status,
     },
   });
+
+  const milestoneNames = formData.getAll("milestoneName");
+  const milestoneDueDates = formData.getAll("milestoneDue");
+  const milestoneDone = formData.getAll("milestoneDone");
+
+  if (milestoneNames.length > 0) {
+    await prisma.milestone.deleteMany({ where: { projectId: id } });
+    const milestones = milestoneNames
+      .map((name, index) => ({
+        name: String(name).trim(),
+        dueDate: parseDateInput(String(milestoneDueDates[index] ?? "")),
+        done: milestoneDone[index] === "on" || milestoneDone[index] === "true",
+      }))
+      .filter((m) => m.name);
+
+    if (milestones.length > 0) {
+      await prisma.milestone.createMany({
+        data: milestones.map((milestone, index) => ({
+          projectId: id,
+          name: milestone.name,
+          dueDate: milestone.dueDate,
+          done: milestone.done,
+          sortOrder: index,
+        })),
+      });
+    }
+  }
 
   revalidateAll();
   return { success: true };
