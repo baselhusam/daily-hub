@@ -1,21 +1,18 @@
 type BrandIconMarkProps = {
-  tileSize: number;
-  gap: number;
-  radius: number;
-  cornerRadius?: number;
+  size?: number;
+  inverse?: boolean;
   background?: string;
-  tileColor?: string;
 };
 
 export function BrandIconMark({
-  tileSize,
-  gap,
-  radius,
-  cornerRadius,
-  background = "#333333",
-  tileColor = "white",
+  size = 28,
+  inverse = false,
+  background = "#FFFFFF",
 }: BrandIconMarkProps) {
-  const gridSize = tileSize * 2 + gap;
+  const tile = inverse ? "#FFFFFF" : "#37352F";
+  const check = inverse ? "#37352F" : "#FFFFFF";
+  const halo = inverse ? "#37352F" : "#FFFFFF";
+  const dot = inverse ? "#6BAEE9" : "#2383E2";
 
   return (
     <div
@@ -26,31 +23,27 @@ export function BrandIconMark({
         alignItems: "center",
         justifyContent: "center",
         background,
-        borderRadius: cornerRadius,
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          width: gridSize,
-          height: gridSize,
-          gap,
-        }}
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 40 40"
+        fill="none"
+        style={{ display: "flex" }}
       >
-        {[0.95, 0.35, 0.35, 0.95].map((opacity, index) => (
-          <div
-            key={index}
-            style={{
-              width: tileSize,
-              height: tileSize,
-              borderRadius: radius,
-              background: tileColor,
-              opacity,
-            }}
-          />
-        ))}
-      </div>
+        <rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill={tile} />
+        <path
+          d="M10.5 21.2l5 5 10.5-11"
+          stroke={check}
+          strokeWidth="3.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <circle cx="32" cy="8" r="6" fill={halo} />
+        <circle cx="32" cy="8" r="4" fill={dot} />
+      </svg>
     </div>
   );
 }

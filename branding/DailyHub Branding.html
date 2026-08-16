@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#FFFFFF;color:#37352F;-webkit-font-smoothing:antialiased}
+  body{font-family:'Instrument Sans',system-ui,sans-serif}
+  a{color:#2383E2;text-decoration:none}
+  a:hover{color:#1A7BD4;text-decoration:underline}
+</style>
+</helmet>
+
+<div style="max-width:1100px;margin:0 auto;padding:56px clamp(18px,4vw,56px) 96px;display:flex;flex-direction:column;gap:52px">
+
+  <header style="display:flex;flex-direction:column;gap:22px;padding-bottom:34px;border-bottom:1px solid #E9E9E7">
+    <div style="display:flex;align-items:center;gap:13px">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+      <div style="font-size:27px;font-weight:600;letter-spacing:-.035em;line-height:1">Daily<span style="color:#2383E2">Hub</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="font-size:11.5px;font-weight:600;letter-spacing:.06em;color:#9B9A97">BRAND BASICS · v1</div>
+      <div style="font-size:38px;font-weight:600;letter-spacing:-.04em;line-height:1.05;max-width:660px;text-wrap:pretty">A quiet workspace that keeps the day in one place.</div>
+      <div style="font-size:15px;line-height:1.55;color:#787774;max-width:600px;text-wrap:pretty">Everything below is the whole system: one mark, two colors that matter, one typeface, and the rules for putting them together.</div>
+    </div>
+  </header>
+
+  <!-- LOGO -->
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:20px;font-weight:600;letter-spacing:-.02em">Logo</div>
+      <div style="font-size:13px;color:#9B9A97">an ink checkbox with the day marked</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+      <div style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:12px;box-shadow:0 1px 2px rgba(15,15,15,.04);padding:30px;display:flex;flex-direction:column;gap:22px;align-items:center;justify-content:center">
+        <div style="display:flex;align-items:center;gap:11px">
+          <svg width="34" height="34" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+          <div style="font-size:23px;font-weight:600;letter-spacing:-.035em">Daily<span style="color:#2383E2">Hub</span></div>
+        </div>
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">PRIMARY LOCKUP</div>
+      </div>
+      <div style="background:#F7F7F5;border:1px solid #E9E9E7;border-radius:12px;padding:30px;display:flex;flex-direction:column;gap:22px;align-items:center;justify-content:center">
+        <svg width="54" height="54" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#F7F7F5"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">MARK ALONE</div>
+      </div>
+      <div style="background:#37352F;border-radius:12px;padding:30px;display:flex;flex-direction:column;gap:22px;align-items:center;justify-content:center">
+        <div style="display:flex;align-items:center;gap:11px">
+          <svg width="34" height="34" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#FFFFFF"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#37352F" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#37352F"></circle><circle cx="32" cy="8" r="4" fill="#6BAEE9"></circle></svg>
+          <div style="font-size:23px;font-weight:600;letter-spacing:-.035em;color:#FFFFFF">Daily<span style="color:#6BAEE9">Hub</span></div>
+        </div>
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#8E8D8A">INVERSE</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:14px">
+      <div style="flex:1 1 300px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">CLEAR SPACE &amp; MINIMUM SIZE</div>
+        <div style="display:flex;align-items:flex-end;gap:22px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:7px">
+            <span style="padding:9px;border:1px dashed #C7C6C2;border-radius:8px;line-height:0">
+              <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+            </span>
+            <span style="font-size:10.5px;color:#9B9A97">padding = ¼ mark</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:16px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:7px">
+              <svg width="16" height="16" viewBox="0 0 40 40" fill="none"><rect x="2" y="5" width="31" height="31" rx="9" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="33" cy="7" r="6.5" fill="#FFFFFF"></circle><circle cx="33" cy="7" r="4.5" fill="#2383E2"></circle></svg>
+              <span style="font-size:10.5px;color:#9B9A97">16 min</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:7px">
+              <svg width="24" height="24" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+              <span style="font-size:10.5px;color:#9B9A97">24</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:7px">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+              <span style="font-size:10.5px;color:#9B9A97">32</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1 1 260px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:11px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">DON'T</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:#4F4D48">
+          <div style="display:flex;gap:9px"><span style="color:#D44C47;font-weight:600">×</span><span>Gradients, shadows or outlines on the mark</span></div>
+          <div style="display:flex;gap:9px"><span style="color:#D44C47;font-weight:600">×</span><span>Recoloring the check — it is always the background</span></div>
+          <div style="display:flex;gap:9px"><span style="color:#D44C47;font-weight:600">×</span><span>Accent on mark and wordmark at once</span></div>
+          <div style="display:flex;gap:9px"><span style="color:#D44C47;font-weight:600">×</span><span>Stretching, rotating or re-spacing the lockup</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLOR -->
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:20px;font-weight:600;letter-spacing:-.02em">Color</div>
+      <div style="font-size:13px;color:#9B9A97">paper, ink, one accent — accent only for what is live</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+      <div style="border:1px solid #E9E9E7;border-radius:12px;overflow:hidden">
+        <div style="height:92px;background:#37352F"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:13.5px;font-weight:600">Ink</div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#9B9A97">#37352F</div>
+          <div style="font-size:12px;color:#787774">Text, mark, primary buttons</div>
+        </div>
+      </div>
+      <div style="border:1px solid #E9E9E7;border-radius:12px;overflow:hidden">
+        <div style="height:92px;background:#2383E2"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:13.5px;font-weight:600">Signal blue</div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#9B9A97">#2383E2</div>
+          <div style="font-size:12px;color:#787774">Today, streaks, links only</div>
+        </div>
+      </div>
+      <div style="border:1px solid #E9E9E7;border-radius:12px;overflow:hidden">
+        <div style="height:92px;background:#F7F7F5;border-bottom:1px solid #E9E9E7"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:13.5px;font-weight:600">Paper</div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#9B9A97">#F7F7F5</div>
+          <div style="font-size:12px;color:#787774">Sidebar, wells, hover</div>
+        </div>
+      </div>
+      <div style="border:1px solid #E9E9E7;border-radius:12px;overflow:hidden">
+        <div style="height:92px;background:#FFFFFF;border-bottom:1px solid #E9E9E7"></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:13.5px;font-weight:600">Canvas</div>
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:12px;color:#9B9A97">#FFFFFF</div>
+          <div style="font-size:12px;color:#787774">Cards, sheets, content</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid #E9E9E7;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#4F4D48"><span style="width:14px;height:14px;border-radius:3px;background:#787774"></span>Muted <span style="color:#9B9A97;font-variant-numeric:tabular-nums">#787774</span></div>
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid #E9E9E7;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#4F4D48"><span style="width:14px;height:14px;border-radius:3px;background:#9B9A97"></span>Faint <span style="color:#9B9A97;font-variant-numeric:tabular-nums">#9B9A97</span></div>
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid #E9E9E7;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#4F4D48"><span style="width:14px;height:14px;border-radius:3px;background:#E9E9E7"></span>Rule <span style="color:#9B9A97;font-variant-numeric:tabular-nums">#E9E9E7</span></div>
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid #E9E9E7;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#4F4D48"><span style="width:14px;height:14px;border-radius:3px;background:#0F9960"></span>Done <span style="color:#9B9A97;font-variant-numeric:tabular-nums">#0F9960</span></div>
+      <div style="display:flex;align-items:center;gap:8px;border:1px solid #E9E9E7;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#4F4D48"><span style="width:14px;height:14px;border-radius:3px;background:#D44C47"></span>Overdue <span style="color:#9B9A97;font-variant-numeric:tabular-nums">#D44C47</span></div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:20px;font-weight:600;letter-spacing:-.02em">Typography</div>
+      <div style="font-size:13px;color:#9B9A97">Instrument Sans, three weights, nothing else</div>
+    </div>
+    <div style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:12px;padding:26px 28px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:38px;font-weight:600;letter-spacing:-.04em;line-height:1.1">Today is the only page that matters</div>
+        <div style="font-size:11.5px;color:#9B9A97">Display · 600 · −4% tracking · 32–40px</div>
+      </div>
+      <div style="height:1px;background:#E9E9E7"></div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:20px;font-weight:600;letter-spacing:-.02em">Section heading</div>
+        <div style="font-size:11.5px;color:#9B9A97">Heading · 600 · −2% · 18–22px</div>
+      </div>
+      <div style="height:1px;background:#E9E9E7"></div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:13.5px;line-height:1.6;max-width:560px;color:#37352F">Body copy sits at 13.5–15px with generous line height. Sentences stay short; the interface never explains itself twice.</div>
+        <div style="font-size:11.5px;color:#9B9A97">Body · 400/500 · 13.5–15px</div>
+      </div>
+      <div style="height:1px;background:#E9E9E7"></div>
+      <div style="display:flex;align-items:baseline;gap:26px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">EYEBROW LABEL</div>
+          <div style="font-size:11.5px;color:#9B9A97">600 · +4% · 11–12px</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="font-family:'Instrument Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:26px;font-weight:600;color:#2383E2;line-height:1">14 · 92% · 03</div>
+          <div style="font-size:11.5px;color:#9B9A97">Numerals · tabular · always accent or ink</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UI ELEMENTS -->
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:20px;font-weight:600;letter-spacing:-.02em">Elements</div>
+      <div style="font-size:13px;color:#9B9A97">6px radius on controls, 10–12px on cards, 1px #E9E9E7 rules</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px">
+      <div style="flex:1 1 300px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">BUTTONS</div>
+        <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">
+          <span style="background:#37352F;color:#FFFFFF;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:500">Add task</span>
+          <span style="background:#FFFFFF;border:1px solid #E9E9E7;box-shadow:0 1px 2px rgba(15,15,15,.04);border-radius:6px;padding:8px 14px;font-size:13px;font-weight:500">Secondary</span>
+          <span style="color:#2383E2;border-radius:6px;padding:8px 10px;font-size:13px;font-weight:600">Text link</span>
+          <span style="background:#F7F7F5;border:1px solid #EDEDEC;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:500;color:#787774">Chip</span>
+        </div>
+      </div>
+      <div style="flex:1 1 300px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">TASK ROW &amp; STREAK</div>
+        <div style="display:flex;align-items:center;gap:11px">
+          <span style="width:18px;height:18px;border-radius:5px;border:1.6px solid #C7C6C2"></span>
+          <span style="flex:1;font-size:13.5px">Draft the weekly review</span>
+          <span style="width:8px;height:8px;border-radius:2px;background:#2383E2"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:11px">
+          <span style="width:18px;height:18px;border-radius:5px;background:#0F9960;display:grid;place-items:center">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+          </span>
+          <span style="flex:1;font-size:13.5px;color:#9B9A97;text-decoration:line-through">Water the plants</span>
+        </div>
+        <div style="display:flex;gap:3px;padding-top:2px">
+          <span style="flex:1;height:6px;border-radius:2px;background:#2383E2"></span>
+          <span style="flex:1;height:6px;border-radius:2px;background:#2383E2"></span>
+          <span style="flex:1;height:6px;border-radius:2px;background:#2383E2"></span>
+          <span style="flex:1;height:6px;border-radius:2px;background:#2383E2"></span>
+          <span style="flex:1;height:6px;border-radius:2px;background:#D3E5F8"></span>
+          <span style="flex:1;height:6px;border-radius:2px;background:#E9E9E7"></span>
+          <span style="flex:1;height:6px;border-radius:2px;background:#E9E9E7"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPLICATION -->
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:20px;font-weight:600;letter-spacing:-.02em">In use</div>
+      <div style="font-size:13px;color:#9B9A97">where the mark actually appears</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+      <div style="background:#F7F7F5;border:1px solid #E9E9E7;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">SIDEBAR SWITCHER</div>
+        <div style="display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid #E9E9E7;border-radius:8px;padding:8px 9px;box-shadow:0 1px 2px rgba(15,15,15,.04)">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" style="flex:0 0 auto"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+          <span style="flex:1;min-width:0">
+            <span style="display:block;font-size:11px;font-weight:600;letter-spacing:.02em;color:#9B9A97;line-height:1.4">WORKSPACE</span>
+            <span style="display:block;font-size:13.5px;font-weight:600;letter-spacing:-.01em;line-height:1.3">DailyHub</span>
+          </span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9B9A97" stroke-width="2"><path d="M8 10l4-4 4 4M8 14l4 4 4-4"></path></svg>
+        </div>
+      </div>
+      <div style="background:#F7F7F5;border:1px solid #E9E9E7;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">APP ICON</div>
+        <div style="display:flex;align-items:flex-end;gap:14px">
+          <span style="width:60px;height:60px;border-radius:14px;background:#FFFFFF;border:1px solid #E9E9E7;display:grid;place-items:center">
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#FFFFFF"></circle><circle cx="32" cy="8" r="4" fill="#2383E2"></circle></svg>
+          </span>
+          <span style="width:44px;height:44px;border-radius:11px;background:#37352F;display:grid;place-items:center">
+            <svg width="26" height="26" viewBox="0 0 40 40" fill="none"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#FFFFFF"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#37352F" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="32" cy="8" r="6" fill="#37352F"></circle><circle cx="32" cy="8" r="4" fill="#6BAEE9"></circle></svg>
+          </span>
+        </div>
+      </div>
+      <div style="background:#F7F7F5;border:1px solid #E9E9E7;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">EMPTY STATE</div>
+        <div style="background:#FFFFFF;border:1px solid #E9E9E7;border-radius:10px;padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center">
+          <svg width="30" height="30" viewBox="0 0 40 40" fill="none" style="opacity:.28"><rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"></rect><path d="M10.5 21.2l5 5 10.5-11" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <div style="font-size:13.5px;font-weight:600">Nothing left for today</div>
+          <div style="font-size:12.5px;color:#9B9A97;max-width:190px;text-wrap:pretty">Add one thing for tomorrow, or close the laptop.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VOICE -->
+  <sc-if value="{{ voiceOn }}" hint-placeholder-val="{{ true }}">
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <div style="font-size:20px;font-weight:600;letter-spacing:-.02em">Voice</div>
+      <div style="font-size:13px;color:#9B9A97">plain, calm, never a coach</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">
+      <div style="border:1px solid #E9E9E7;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:11px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#0F9960">WE SAY</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.5">
+          <div>“4 left today.”</div>
+          <div>“Nothing left for today.”</div>
+          <div>“Chain: 14 days unbroken.”</div>
+        </div>
+      </div>
+      <div style="border:1px solid #E9E9E7;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:11px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#D44C47">WE DON'T</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.5;color:#787774">
+          <div>“You've got this! 💪”</div>
+          <div>“Uh oh, your streak is in danger!”</div>
+          <div>“Crush your goals today.”</div>
+        </div>
+      </div>
+      <div style="border:1px solid #E9E9E7;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:11px">
+        <div style="font-size:11.5px;font-weight:600;letter-spacing:.04em;color:#9B9A97">RULES</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.5;color:#4F4D48">
+          <div>Lowercase after the first word in labels.</div>
+          <div>Numbers before adjectives. No exclamation marks.</div>
+          <div>Never guilt the user for a broken chain.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showVoice&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Brand sheet&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return { voiceOn: this.props.showVoice ?? true };
+  }
+}
+</script>
+</body>
+</html>

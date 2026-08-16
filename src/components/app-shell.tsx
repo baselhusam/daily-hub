@@ -2,10 +2,8 @@
 
 import * as React from "react";
 import { Suspense } from "react";
-import { PanelLeft } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { MobileNav } from "@/components/mobile-nav";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
@@ -22,6 +20,7 @@ type AppSidebarProps = {
   stats: SidebarStats;
   expanded: boolean;
   onCollapse: () => void;
+  onExpand: () => void;
 };
 
 export function AppShell({ stats, children }: AppShellProps) {
@@ -34,26 +33,14 @@ export function AppShell({ stats, children }: AppShellProps) {
           stats={stats}
           expanded={expanded}
           onCollapse={() => setExpanded(false)}
+          onExpand={() => setExpanded(true)}
         />
       </Suspense>
-
-      {!expanded && (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="fixed left-3 top-3 z-40 hidden h-8 w-8 md:inline-flex"
-          onClick={() => setExpanded(true)}
-          aria-label="Open sidebar"
-        >
-          <PanelLeft className="h-4 w-4" />
-        </Button>
-      )}
 
       <div
         className={cn(
           "flex min-h-svh flex-col transition-[padding-left] duration-200 ease-in-out",
-          expanded ? "md:pl-56" : "md:pl-12"
+          expanded ? "md:pl-[216px]" : "md:pl-12"
         )}
       >
         <MobileNav />

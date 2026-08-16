@@ -1,92 +1,70 @@
 "use client";
 
-import { motion } from "motion/react";
-import {
-  ArrowDown,
-  ArrowUp,
-  CheckCircle2,
-  FolderKanban,
-  ListTodo,
-  TrendingUp,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import type { AnalyticsOverview } from "@/lib/analytics";
-
-type StatCardProps = {
-  label: string;
-  value: string | number;
-  hint?: string;
-  icon: React.ReactNode;
-  trend?: number;
-};
-
-function StatCard({ label, value, hint, icon, trend }: StatCardProps) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {label}
-        </CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-semibold tracking-tight">{value}</div>
-        {(hint || trend !== undefined) && (
-          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            {trend !== undefined && (
-              <span
-                className={
-                  trend >= 0 ? "text-foreground" : "text-muted-foreground"
-                }
-              >
-                {trend >= 0 ? (
-                  <ArrowUp className="mr-0.5 inline h-3 w-3" />
-                ) : (
-                  <ArrowDown className="mr-0.5 inline h-3 w-3" />
-                )}
-                {trend}%
-              </span>
-            )}
-            {hint && <span>{hint}</span>}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+import { cn } from "@/lib/utils";
 
 export function OverviewStats({ overview }: { overview: AnalyticsOverview }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-    >
-      <StatCard
-        label="Completions this week"
-        value={overview.completionsThisWeek}
+    <dl className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+      <Stat
+        label="This week"
+        value={String(overview.completionsThisWeek)}
+        hint={
+          overview.weekChangePercent !== undefined
+            ? `${overview.weekChangePercent >= 0 ? "+" : ""}${overview.weekChangePercent}% vs last week`
+            : undefined
+        }
         trend={overview.weekChangePercent}
-        hint="vs last week"
-        icon={<TrendingUp className="h-4 w-4" />}
       />
-      <StatCard
+      <Stat
         label="Open tasks"
-        value={overview.openTasks}
-        hint={`${overview.completedTasks} completed total`}
-        icon={<ListTodo className="h-4 w-4" />}
+        value={String(overview.openTasks)}
+        hint={`${overview.completedTasks} completed`}
       />
-      <StatCard
-        label="Task completion rate"
+      <Stat
+        label="Completion"
         value={`${overview.completionRate}%`}
-        hint="Across all tasks"
-        icon={<CheckCircle2 className="h-4 w-4" />}
       />
-      <StatCard
-        label="Daily consistency"
+      <Stat
+        label="Habits today"
         value={`${overview.dailyConsistencyToday}%`}
-        hint={`${overview.totalDailyTasks} daily habits`}
-        icon={<FolderKanban className="h-4 w-4" />}
       />
-    </motion.div>
+    </dl>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  hint,
+  trend,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  trend?: number;
+}) {
+  return (
+    <div>
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-[26px] font-semibold tabular-nums tracking-tight text-signal">
+        {value}
+      </dd>
+      {hint && (
+        <p className="mt-0.5 flex items-center gap-0.5 text-xs text-muted-foreground">
+          {trend !== undefined && (
+            <span className={cn(trend >= 0 ? "text-foreground" : undefined)}>
+              {trend >= 0 ? (
+                <ArrowUp className="mr-0.5 inline h-3 w-3" />
+              ) : (
+                <ArrowDown className="mr-0.5 inline h-3 w-3" />
+              )}
+            </span>
+          )}
+          {hint}
+        </p>
+      )}
+    </div>
   );
 }

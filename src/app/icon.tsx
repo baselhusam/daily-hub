@@ -6,7 +6,7 @@ export const contentType = "image/png";
 
 export default function Icon() {
   return new ImageResponse(
-    <BrandIconMark tileSize={9} gap={3} radius={2.5} cornerRadius={6} />,
+    <BrandIconMark size={28} />,
     { ...size },
   );
 }

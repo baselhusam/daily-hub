@@ -1,14 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Trash2 } from "lucide-react";
-import { toggleDailyTask, deleteDailyTask } from "@/app/actions/daily-tasks";
+import { toggleDailyTask } from "@/app/actions/daily-tasks";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { EntityIcon } from "./entity-icon";
+import { EmptyState } from "@/components/brand-mark";
 import type { DashboardDailyTask } from "@/lib/dashboard";
+import { cn } from "@/lib/utils";
 
 type DailyChecklistProps = {
   tasks: DashboardDailyTask[];
@@ -25,60 +23,50 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
 
   if (tasks.length === 0) {
     return (
-      <Card className="p-4 text-sm text-muted-foreground">
-        No habits scheduled for today.{" "}
-        <a href="/daily" className="underline underline-offset-2">
-          Manage daily tasks
-        </a>
-      </Card>
+      <EmptyState
+        title="Nothing scheduled for today"
+        description={
+          <>
+            Add one thing, or{" "}
+            <a href="/daily" className="font-semibold text-signal hover:text-[#1A7BD4]">
+              manage habits
+            </a>
+            .
+          </>
+        }
+      />
     );
   }
 
   return (
-    <Card className="p-3">
-      <ul className="space-y-2">
-        <AnimatePresence initial={false}>
-          {tasks.map((task) => (
-            <motion.li
-              key={task.id}
-              layout
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              className="flex items-center gap-3 rounded-lg border bg-background px-3 py-2"
-            >
-              <Checkbox
-                checked={task.completedToday}
-                disabled={pendingId === task.id}
-                onCheckedChange={() => handleToggle(task.id)}
-              />
-              <EntityIcon
-                iconKey={task.iconKey}
-                logoUrl={task.logoUrl}
-                size={16}
-              />
-              <span
-                className={
-                  task.completedToday
-                    ? "flex-1 text-sm text-muted-foreground line-through"
-                    : "flex-1 text-sm"
-                }
-              >
-                {task.title}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => deleteDailyTask(task.id)}
-                aria-label="Delete daily task"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </motion.li>
-          ))}
-        </AnimatePresence>
-      </ul>
-    </Card>
+    <ul>
+      {tasks.map((task) => (
+        <li
+          key={task.id}
+          className="flex items-center gap-3 border-b border-border/70 py-2.5 last:border-0"
+        >
+          <Checkbox
+            checked={task.completedToday}
+            disabled={pendingId === task.id}
+            onCheckedChange={() => handleToggle(task.id)}
+            aria-label={`Toggle ${task.title}`}
+          />
+          <EntityIcon
+            iconKey={task.iconKey}
+            logoUrl={task.logoUrl}
+            size={16}
+            className="shrink-0 text-muted-foreground"
+          />
+          <span
+            className={cn(
+              "text-[15px] leading-snug",
+              task.completedToday && "text-muted-foreground line-through"
+            )}
+          >
+            {task.title}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

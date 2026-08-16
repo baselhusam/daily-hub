@@ -60,7 +60,7 @@ export function CreateTaskDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create task</DialogTitle>
+          <DialogTitle>New task</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -107,21 +107,10 @@ export function CreateTaskDialog({
             <Label htmlFor="task-due-date">Due date</Label>
             <Input id="task-due-date" name="dueDate" type="date" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-priority">Priority (0-3)</Label>
-            <Input
-              id="task-priority"
-              name="priority"
-              type="number"
-              min={0}
-              max={3}
-              defaultValue={0}
-            />
-          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating..." : "Create task"}
+              {pending ? "Creating..." : "Add task"}
             </Button>
           </DialogFooter>
         </form>

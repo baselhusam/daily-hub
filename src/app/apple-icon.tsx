@@ -6,7 +6,7 @@ export const contentType = "image/png";
 
 export default function AppleIcon() {
   return new ImageResponse(
-    <BrandIconMark tileSize={52} gap={14} radius={12} cornerRadius={32} />,
+    <BrandIconMark size={112} />,
     { ...size },
   );
 }

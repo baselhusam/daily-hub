@@ -1,48 +1,38 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EntityIcon } from "@/components/dashboard/entity-icon";
 import type { DailyTaskAnalytics } from "@/lib/analytics";
 
 export function DailyHabitStats({ data }: { data: DailyTaskAnalytics[] }) {
+  if (data.length === 0) {
+    return <p className="text-sm text-muted-foreground">No habits yet.</p>;
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">
-          Daily habit consistency (7 days)
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No daily tasks yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {data.map((task) => (
-              <div key={task.id} className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <EntityIcon
-                      iconKey={task.iconKey}
-                      size={14}
-                      className="text-muted-foreground shrink-0"
-                    />
-                    <span className="truncate text-sm">{task.title}</span>
-                  </div>
-                  <span className="text-xs font-medium shrink-0">
-                    {task.completedDays}/{task.windowDays} · {task.rate}%
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-foreground/60 transition-all"
-                    style={{ width: `${task.rate}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+    <ul className="space-y-4">
+      {data.map((task) => (
+        <li key={task.id} className="space-y-1.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <EntityIcon
+                iconKey={task.iconKey}
+                size={14}
+                className="shrink-0 text-muted-foreground"
+              />
+              <span className="truncate text-[15px]">{task.title}</span>
+            </div>
+            <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+              {task.completedDays}/{task.windowDays} · {task.rate}%
+            </span>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div className="h-1.5 rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-signal"
+              style={{ width: `${task.rate}%` }}
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

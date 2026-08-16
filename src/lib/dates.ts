@@ -1,4 +1,11 @@
-import { format, startOfDay } from "date-fns";
+import {
+  format,
+  isThisYear,
+  isToday,
+  isTomorrow,
+  isYesterday,
+  startOfDay,
+} from "date-fns";
 
 export function getTodayDate(): Date {
   return startOfDay(new Date());
@@ -16,6 +23,10 @@ export function parseDateInput(value: string | null | undefined): Date | null {
 
 export function formatDueDate(date: Date | null | undefined): string {
   if (!date) return "No date";
+  if (isToday(date)) return "Today";
+  if (isTomorrow(date)) return "Tomorrow";
+  if (isYesterday(date)) return "Yesterday";
+  if (isThisYear(date)) return format(date, "EEE, MMM d");
   return format(date, "MMM d, yyyy");
 }
 
@@ -29,6 +40,28 @@ export function isScheduledOn(weekdays: number[], date = new Date()): boolean {
 }
 
 export const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"] as const;
+export const WEEKDAY_SHORT = [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+] as const;
+
+export function formatWeekdays(weekdays: number[]): string {
+  const unique = [...new Set(weekdays)].sort((a, b) => a - b);
+  if (unique.length === 7) return "Every day";
+  if (unique.join() === "1,2,3,4,5") return "Weekdays";
+  if (unique.join() === "0,6") return "Weekends";
+
+  const mondayFirst = [
+    ...unique.filter((day) => day !== 0),
+    ...unique.filter((day) => day === 0),
+  ];
+  return mondayFirst.map((day) => WEEKDAY_SHORT[day]).join(", ");
+}
 
 export function slugify(value: string): string {
   return value

@@ -4,83 +4,112 @@ Visual and interaction direction for DailyHub.
 
 ## Design intent
 
-DailyHub should feel **calm, minimal, and daily-use friendly** — something you open every morning without visual noise. It is not a marketing site or a dense enterprise dashboard.
+DailyHub should feel **quiet, readable, and daily-use friendly** — a morning list, not a dashboard of cards. Open it, see today, check things off, leave.
 
-**Keywords:** minimal, neutral, spacious, precise, subtle motion, trustworthy.
+**Keywords:** quiet, paper, ink, one accent, typographic, low chrome.
+
+Source of truth: `branding/DailyHub Branding.html` and `branding/DailyHub Design System.html`.
 
 ## Theme
 
 ### Color
 
-- **Light:** white backgrounds, near-black text, soft gray borders (`oklch` neutrals in `src/app/globals.css`)
-- **Dark:** deep gray backgrounds, off-white text, low-contrast borders
-- **No accent color system** in v1 — charts and badges use foreground opacity steps
-- Business `color` field exists for subtle border hints only
+Paper, ink, and one accent — accent only for what is live (today, streaks, links, focus).
+
+| Token | Hex | Role |
+|-------|-----|------|
+| Ink | `#37352F` | Text, mark, primary buttons |
+| Signal blue | `#2383E2` | Today, streaks, links, focus |
+| Paper | `#F7F7F5` | Sidebar, wells, hover |
+| Canvas | `#FFFFFF` | Cards, sheets, content |
+| Muted | `#787774` | Secondary copy |
+| Faint | `#9B9A97` | Labels, counts |
+| Rule | `#E9E9E7` | Dividers |
+| Done | `#0F9960` | Completed checkboxes only |
+| Overdue | `#D44C47` | Late, destructive |
+
+- **Dark:** ink canvas, inverse mark, signal `#6BAEE9`
+- Business `color` field exists for subtle hints only
+- No gradients. Green means completed. Red means late.
 
 ### Typography
 
-- **Geist Sans** — UI and headings (`--font-geist-sans`)
+- **Instrument Sans** only — 400 / 500 / 600 (`--font-instrument-sans`)
 - **Geist Mono** — available for monospace contexts
-- Headings: `text-2xl font-semibold tracking-tight` for page titles
-- Section labels: `text-sm font-medium`
-- Body/meta: `text-sm` / `text-xs text-muted-foreground`
+- Display: 32px / 600 / −4% tracking
+- Section heading: 21px / 600 / −2.5%
+- Body: 13.5–15px
+- Eyebrow labels: 11.5px / 600 / +4% / faint
+- Numerals: tabular, ink or signal — never a third color
 
 ## Layout
 
 ### App shell
 
-- **Desktop:** fixed left sidebar (~224px) — nav, project filter list, quick stats, theme toggle
-- **Mobile:** sidebar hidden; top tab bar for Dashboard / Projects / Daily / Analytics
-- Main content scrolls independently
+- **Desktop:** fixed left sidebar (216px, paper) — brand lockup, nav, project list, theme toggle
+- **Mobile:** lockup + theme in a top bar; tabs for Today / Projects / Habits / Analytics
+- Main column is narrow (`max-w-3xl`) so lists stay easy to scan
+- Selected nav is a white card with a 1px rule — hover is paper, never both
+- No duplicate stats in the sidebar; no floating card chrome
 
-### Dashboard (`/`)
+### Today (`/`)
 
-Bento-style home:
+A single readable column:
 
 | Section | Content |
 |---------|---------|
-| Stat row | Open tasks, overdue, daily today, completions this week |
-| Chart | Compact 14-day activity chart |
-| Filter chips | All, Inbox, per-project |
-| Task tables | Simple columns: checkbox, title, due date — grouped by project + inbox |
-| Side panel | Today's scheduled habits |
+| Header | Greeting (or filtered project name) + date + Add task |
+| Stats | Inline text: Open, Overdue, Habits, This week — not stat cards |
+| Today | Habit checklist |
+| Projects | Grouped task lists with a title row, not nested cards |
+| Inbox | Ungrouped tasks |
 
-Empty states use muted `Card` with one-line guidance — never blank panels.
+Project filters live in the **sidebar** only. Activity charts live on Analytics.
+
+Empty states use the brand mark at 28% opacity and one plain sentence — never blank panels or empty cards.
 
 ### Projects (`/projects`)
 
-Card grid for defining projects: logo, name, description, due date, status, optional business label.
+A list of workstreams: icon, name, description, then a meta line (open count, due date, status). Edit/delete appear on hover (always visible on mobile).
 
-### Daily (`/daily`)
+### Habits (`/daily`)
 
-Card grid for habits: logo, title, weekday toggles (M–S), active flag, optional business.
+The same list pattern: icon, title, schedule in plain language (`Every day` or `Mon, Wed, Fri`).
 
 ### Analytics (`/analytics`)
 
-- Top: page title + summary badges
-- Row of 4 stat cards
-- 2-column chart row (activity + business breakdown)
-- 2-column tables/bars (projects + daily habits)
+- Title + one-line summary
+- Four inline stats (not icon cards)
+- Activity chart, business chart, project list, habit consistency — each with a section heading, no card wrappers
 
 ## Components
 
-- **shadcn/ui** (new-york style) — Button, Card, Dialog, Checkbox, Badge, Input, ScrollArea, Table
+- **shadcn/ui** (new-york style) — Button, Dialog, Checkbox, Badge, Input, ScrollArea
+- Cards exist as primitives but should be rare; prefer lists and section headings
 - Composed patterns live in `src/components/dashboard/`, `src/components/projects/`, `src/components/daily/`, and `src/components/analytics/`
 - Do not add new UI libraries without reason; extend shadcn primitives
 
 ## Motion
 
-- **motion/react** for:
-  - Header fade-in on page load
-  - Staggered bento sections (`staggerChildren: 0.06`)
-  - Checklist item layout transitions
-  - Analytics stat card entrance
-- Keep durations short (~0.35s); no looping animations
+- Checking a box is instant — no animation longer than 160ms
+- Dialogs: 200ms scale + fade
+- Hover/press: color and border only, 120ms — never size
+- No staggered page-load choreography
+
+## Logo
+
+An ink checkbox with the day marked (`src/components/brand-mark.tsx`).
+
+- **Primary lockup:** mark + Daily**Hub** (Hub in signal)
+- **Mark alone:** collapsed sidebar, favicon, app icon
+- **Ghost mark:** empty states, no day-dot, 28% opacity
+- Clear space = ¼ mark; minimum 16px
+- Do not gradient, shadow, stretch, or recolor the check
 
 ## Iconography
 
 - Lucide icons referenced by string `iconKey` (see `src/lib/icons.ts` and `ICON_OPTIONS`)
-- Projects, daily tasks, and businesses can show custom logos via `EntityIcon`
+- Projects, habits, and businesses can show custom logos via `EntityIcon`
 - Optional **logo image** overrides icon when `logoUrl` is set
 
 ## Interaction patterns
@@ -88,21 +117,27 @@ Card grid for habits: logo, title, weekday toggles (M–S), active flag, optiona
 | Pattern | Behavior |
 |---------|----------|
 | Complete task | Checkbox → Server Action → row disappears |
-| Daily toggle | Checkbox → toggles today's completion log (only if scheduled today) |
+| Habit toggle | Checkbox → toggles today's completion log (only if scheduled today) |
 | Create entities | Dialog forms on relevant pages |
-| Project filter | Sidebar links or dashboard chips → `/?project=<id>` |
-| Delete | Trash icon on tasks/projects/habits (destructive, no confirm in v1) |
+| Project filter | Sidebar links → `/?project=<id>` |
+| Delete | Trash icon on hover (always visible on small screens); destructive, no confirm in v1 |
+| Due dates | Relative when close (`Today`, `Tomorrow`, `Yesterday`), otherwise `EEE, MMM d` |
 
 ## Accessibility
 
 - Radix primitives provide focus rings and keyboard support
 - Icon-only buttons include `aria-label`
 - Theme respects `prefers-color-scheme` via `next-themes` with manual override
+- Hover-only actions remain available on touch (`opacity-100` below `md`)
 
 ## What to avoid
 
 - Purple gradients, glassmorphism, neon accents
+- Nested cards, bento grids, and chart chrome on the home page
+- Accent fills larger than a button
+- Duplicate filters (sidebar + chips)
 - Multi-page wizards for simple creates
-- Side drawers that hide the main dashboard
-- Dense data tables without breathing room
-- Heavy chart chrome — keep Recharts minimal (grid lines, simple tooltips)
+- Side drawers that hide the main view
+- Dense data tables with header rows for short lists
+- Unexplained controls (e.g. numeric priority fields)
+- Coaching copy, exclamation marks, or guilt about a broken chain

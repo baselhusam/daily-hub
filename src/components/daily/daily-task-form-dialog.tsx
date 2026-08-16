@@ -126,14 +126,14 @@ export function DailyTaskFormDialog({
         {trigger ?? (
           <Button variant="outline" size="sm" className="h-8 gap-1">
             <Plus className="h-3.5 w-3.5" />
-            Daily task
+            Habit
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Edit daily task" : "Create daily task"}
+            {isEdit ? "Edit habit" : "New habit"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -218,7 +218,7 @@ export function DailyTaskFormDialog({
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : isEdit ? "Save changes" : "Create daily task"}
+              {pending ? "Saving..." : isEdit ? "Save changes" : "Create habit"}
             </Button>
           </DialogFooter>
         </form>
