@@ -195,7 +195,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               <div className="flex h-[110px] items-end gap-2">
                 {data.weekdays.map((w) => (
                   <div
-                    key={w.label}
+                    key={w.id}
                     className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
                   >
                     <span className="text-[10px] text-faint tabular-nums">

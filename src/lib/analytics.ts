@@ -51,6 +51,7 @@ export type HabitConsistencyAnalytics = {
 };
 
 export type WeekdayAnalytics = {
+  id: number;
   label: string;
   count: number;
   labelColor: string;
@@ -376,6 +377,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const dow = today.getDay();
 
   const weekdays: WeekdayAnalytics[] = order.map((i) => ({
+    id: i,
     label: dayLabels[i],
     count: Math.round(wdAvg[i] * 10) / 10,
     labelColor:
