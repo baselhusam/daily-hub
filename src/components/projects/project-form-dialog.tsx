@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { createProject, deleteProject, updateProject } from "@/app/actions/projects";
+import { createProject, updateProject } from "@/app/actions/projects";
+import {
+  DeleteProjectDialog,
+  type DeleteProjectTarget,
+} from "./delete-project-dialog";
 import { Button } from "@/components/ui/button";
 import { LogoField } from "@/components/ui/logo-field";
 import {
@@ -63,6 +67,8 @@ export function ProjectFormDialog({
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
   const [milestones, setMilestones] = React.useState<MilestoneForm[]>([]);
+  const [pendingDelete, setPendingDelete] =
+    React.useState<DeleteProjectTarget | null>(null);
   const isEdit = Boolean(project?.id);
 
   React.useEffect(() => {
@@ -132,8 +138,9 @@ export function ProjectFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
         {trigger ?? (
           <Button size="sm" className="h-9 gap-1 px-4 text-[13.5px] font-semibold">
             <Plus className="h-3.5 w-3.5" />
@@ -273,7 +280,17 @@ export function ProjectFormDialog({
                 type="button"
                 variant="ghost"
                 className="mr-auto text-faint hover:text-destructive"
-                onClick={() => deleteProject(project.id!)}
+                onClick={() => {
+                  const target: DeleteProjectTarget = {
+                    id: project.id!,
+                    name: project.name,
+                    logoUrl: project.logoUrl,
+                    milestoneCount: milestones.filter((m) => m.name.trim())
+                      .length,
+                  };
+                  setOpen(false);
+                  window.setTimeout(() => setPendingDelete(target), 160);
+                }}
               >
                 Delete
               </Button>
@@ -292,5 +309,13 @@ export function ProjectFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+      <DeleteProjectDialog
+        project={pendingDelete}
+        open={pendingDelete !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingDelete(null);
+        }}
+      />
+    </>
   );
 }

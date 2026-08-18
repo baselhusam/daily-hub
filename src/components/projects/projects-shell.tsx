@@ -1,7 +1,7 @@
 "use client";
 
+import * as React from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import { deleteProject } from "@/app/actions/projects";
 import { toggleMilestone } from "@/app/actions/milestones";
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard } from "@/components/ui/surface-card";
@@ -13,6 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/brand-mark";
 import { CreateBusinessDialog } from "@/components/dashboard/create-business-dialog";
 import { ProjectFormDialog } from "./project-form-dialog";
+import {
+  DeleteProjectDialog,
+  type DeleteProjectTarget,
+} from "./delete-project-dialog";
 import { formatDueDate } from "@/lib/dates";
 import { daysUntil } from "@/lib/streak";
 import { getDeadlineColor } from "@/lib/due-meta";
@@ -58,6 +62,8 @@ type ProjectsShellProps = {
 
 export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
   const today = getTodayDate();
+  const [pendingDelete, setPendingDelete] =
+    React.useState<DeleteProjectTarget | null>(null);
 
   return (
     <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
@@ -167,9 +173,18 @@ export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-[#C7C6C2] hover:text-destructive"
-                          onClick={() => deleteProject(project.id)}
-                          aria-label="Delete project"
+                          className="h-8 w-8 text-[#C7C6C2] hover:bg-[#FBECEB] hover:text-destructive"
+                          onClick={() =>
+                            setPendingDelete({
+                              id: project.id,
+                              name: project.name,
+                              logoUrl: project.logoUrl,
+                              color: project.color,
+                              openCount: project.openCount,
+                              milestoneCount: project.milestones.length,
+                            })
+                          }
+                          aria-label={`Delete ${project.name}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -279,6 +294,13 @@ export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
           </div>
         )}
       </div>
+      <DeleteProjectDialog
+        project={pendingDelete}
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }
