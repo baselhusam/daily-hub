@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import type { ActionResult } from "@/app/actions/businesses";
+import type { ActionResult } from "@/app/actions/types";
 
 const settingsSchema = z.object({
   displayName: z.string().min(1).max(80),

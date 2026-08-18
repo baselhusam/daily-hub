@@ -11,7 +11,6 @@ export type AnalyticsOverview = {
   completedTasks: number;
   completionRate: number;
   dailyConsistencyToday: number;
-  activeBusinesses: number;
   activeProjects: number;
   totalDailyTasks: number;
 };
@@ -25,12 +24,14 @@ export type CompletionDayPoint = {
   isToday: boolean;
 };
 
-export type BusinessHoursAnalytics = {
+export type FocusHoursAnalytics = {
   name: string;
   hours: number;
   share: string;
   color: string;
   barWidth: number;
+  logoUrl?: string | null;
+  iconKey?: string | null;
 };
 
 export type ProjectProgressAnalytics = {
@@ -40,6 +41,8 @@ export type ProjectProgressAnalytics = {
   noteColor: string;
   barWidth: number;
   color: string;
+  logoUrl: string | null;
+  iconKey: string;
 };
 
 export type HabitConsistencyAnalytics = {
@@ -48,6 +51,8 @@ export type HabitConsistencyAnalytics = {
   dots: Array<{ color: string }>;
   rate: number;
   rateColor: string;
+  logoUrl: string | null;
+  iconKey: string;
 };
 
 export type WeekdayAnalytics = {
@@ -77,7 +82,7 @@ export type AnalyticsData = {
   }>;
   overview: AnalyticsOverview;
   completionsByDay: CompletionDayPoint[];
-  byBusiness: BusinessHoursAnalytics[];
+  focusByProject: FocusHoursAnalytics[];
   byProject: ProjectProgressAnalytics[];
   dailyTaskStats: HabitConsistencyAnalytics[];
   weekdays: WeekdayAnalytics[];
@@ -113,7 +118,6 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     todayDailyCompletions,
     openTasksCount,
     completedTasksCount,
-    businesses,
     projects,
     dailyTasks,
     tasks,
@@ -146,13 +150,8 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     }),
     prisma.task.count({ where: { status: { not: "DONE" } } }),
     prisma.task.count({ where: { status: "DONE" } }),
-    prisma.business.findMany({
-      orderBy: { sortOrder: "asc" },
-      select: { id: true, name: true, color: true },
-    }),
     prisma.project.findMany({
       include: {
-        business: { select: { id: true, name: true } },
         tasks: { select: { id: true, status: true } },
       },
       orderBy: { sortOrder: "asc" },
@@ -164,9 +163,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     prisma.task.findMany({
       select: {
         id: true,
-        businessId: true,
         projectId: true,
-        project: { select: { businessId: true } },
       },
     }),
   ]);
@@ -223,63 +220,70 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
 
   const taskMap = new Map(tasks.map((t) => [t.id, t]));
   const projectMap = new Map(projects.map((p) => [p.id, p]));
-  const businessMap = new Map(businesses.map((b) => [b.id, b]));
 
-  const bizBuckets = new Map<
+  const hoursBuckets = new Map<
     string,
-    { name: string; color: string; minutes: number; count: number }
+    {
+      name: string;
+      color: string;
+      minutes: number;
+      count: number;
+      logoUrl: string | null;
+      iconKey: string | null;
+    }
   >();
 
   for (const log of windowCompletions) {
     let bucketKey = "inbox";
     let name = "Inbox & habits";
     let color = "#9B9A97";
+    let logoUrl: string | null = null;
+    let iconKey: string | null = null;
 
     if (log.entityType === "TASK") {
       const task = taskMap.get(log.entityId);
       if (task?.projectId) {
         const project = projectMap.get(task.projectId);
-        if (project?.businessId) {
-          const biz = businessMap.get(project.businessId);
-          if (biz) {
-            bucketKey = biz.id;
-            name = biz.name;
-            color = biz.color;
-          }
-        } else if (project) {
-          bucketKey = `solo:${project.id}`;
-          name = `${project.name} (standalone)`;
+        if (project) {
+          bucketKey = project.id;
+          name = project.name;
           color = project.color ?? "#37352F";
+          logoUrl = project.logoUrl;
+          iconKey = project.iconKey;
         }
       }
     }
 
-    const existing = bizBuckets.get(bucketKey) ?? {
+    const existing = hoursBuckets.get(bucketKey) ?? {
       name,
       color,
       minutes: 0,
       count: 0,
+      logoUrl,
+      iconKey,
     };
     existing.minutes += log.minutes ?? 0;
     existing.count += 1;
-    bizBuckets.set(bucketKey, existing);
+    hoursBuckets.set(bucketKey, existing);
   }
 
   const totalMinutes = windowCompletions.reduce(
     (sum, l) => sum + (l.minutes ?? 0),
     0
   );
-  const bizArr = [...bizBuckets.values()].sort((a, b) => b.minutes - a.minutes);
-  const bizMax = Math.max(1, ...bizArr.map((b) => b.minutes));
+  const hoursArr = [...hoursBuckets.values()].sort((a, b) => b.minutes - a.minutes);
+  const hoursMax = Math.max(1, ...hoursArr.map((b) => b.minutes));
 
-  const byBusiness: BusinessHoursAnalytics[] = bizArr.map((b) => ({
+  const focusByProject: FocusHoursAnalytics[] = hoursArr.map((b) => ({
     name: b.name,
     hours: Math.round(b.minutes / 60),
     share: totalMinutes
       ? `${Math.round((b.minutes / totalMinutes) * 100)}%`
       : "0%",
     color: b.color,
-    barWidth: Math.round((b.minutes / bizMax) * 100),
+    barWidth: Math.round((b.minutes / hoursMax) * 100),
+    logoUrl: b.logoUrl,
+    iconKey: b.iconKey,
   }));
 
   const projectLastTouch = new Map<string, string>();
@@ -314,6 +318,8 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       noteColor: idle >= 7 ? "#2383E2" : "#787774",
       barWidth: Math.max(2, pct),
       color: project.color ?? "#37352F",
+      logoUrl: project.logoUrl,
+      iconKey: project.iconKey,
     };
   });
 
@@ -347,6 +353,8 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       dots,
       rate,
       rateColor: rate >= 80 ? "#448361" : rate >= 50 ? "#787774" : "#C4554D",
+      logoUrl: task.logoUrl,
+      iconKey: task.iconKey,
     };
   });
 
@@ -466,12 +474,11 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       completedTasks: completedTasksCount,
       completionRate,
       dailyConsistencyToday,
-      activeBusinesses: businesses.length,
       activeProjects,
       totalDailyTasks: dailyTasks.length,
     },
     completionsByDay,
-    byBusiness,
+    focusByProject,
     byProject,
     dailyTaskStats,
     weekdays,

@@ -8,7 +8,7 @@ import {
   parseWeekdaysFromForm,
   updateDailyTaskSchema,
 } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/businesses";
+import type { ActionResult } from "@/app/actions/types";
 
 const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
 
@@ -18,22 +18,15 @@ function revalidateAll() {
   }
 }
 
-function parseOptionalBusinessId(value: FormDataEntryValue | null): string | null {
-  if (!value || value === "none") return null;
-  return String(value);
-}
-
 export async function createDailyTask(
   formData: FormData
 ): Promise<ActionResult> {
-  const businessId = parseOptionalBusinessId(formData.get("businessId"));
   const weekdays = parseWeekdaysFromForm(formData);
 
   const parsed = createDailyTaskSchema.safeParse({
     title: formData.get("title"),
     iconKey: formData.get("iconKey") || "check",
     logoUrl: formData.get("logoUrl") || undefined,
-    businessId,
     weekdays,
     isActive: formData.get("isActive") !== "false",
   });
@@ -50,7 +43,6 @@ export async function createDailyTask(
       title,
       iconKey,
       logoUrl: logoUrl || null,
-      businessId,
       weekdays: parsed.data.weekdays,
       isActive,
       sortOrder: count,
@@ -64,7 +56,6 @@ export async function createDailyTask(
 export async function updateDailyTask(
   formData: FormData
 ): Promise<ActionResult> {
-  const businessId = parseOptionalBusinessId(formData.get("businessId"));
   const weekdays = parseWeekdaysFromForm(formData);
 
   const parsed = updateDailyTaskSchema.safeParse({
@@ -72,7 +63,6 @@ export async function updateDailyTask(
     title: formData.get("title"),
     iconKey: formData.get("iconKey") || "check",
     logoUrl: formData.get("logoUrl") || undefined,
-    businessId,
     weekdays,
     isActive: formData.get("isActive") !== "false",
   });
@@ -89,7 +79,6 @@ export async function updateDailyTask(
       title,
       iconKey,
       logoUrl: logoUrl || null,
-      businessId,
       weekdays: parsed.data.weekdays,
       isActive,
     },

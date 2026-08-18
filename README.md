@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>A personal command center for businesses, projects, tasks, and daily habits.</strong><br>
+  <strong>A personal command center for projects, tasks, and daily habits.</strong><br>
   <sub>Single-user · self-hosted · Next.js 15 · PostgreSQL 16 · Docker</sub>
 </p>
 
@@ -19,7 +19,7 @@
 
 ---
 
-DailyHub is for people who work across **more than one business at a time** — founders, consultants, indie builders, anyone juggling client work, side projects, and a few non-negotiable daily habits.
+DailyHub is for people who juggle **more than one project at a time** — founders, consultants, indie builders, anyone with client work, side projects, and a few non-negotiable daily habits.
 
 It is not a replacement for Linear, Jira, or Notion. It is the **morning surface**: what is open, what belongs where, what must happen today, and what you already finished.
 
@@ -30,17 +30,16 @@ Local app: [http://localhost:9999](http://localhost:9999)
 | Page | Route | What you see |
 |------|-------|----------------|
 | **Today** | `/` | Greeting, quick add, nudges, snapshot stats, today’s habits, open work by project, inbox |
-| **Projects** | `/projects` | Business cards, projects with progress, due dates, milestones, stalled banners |
+| **Projects** | `/projects` | Projects with progress, due dates, milestones, stalled banners |
 | **Habits** | `/daily` | Recurring checklist with weekday schedules, 14-day consistency, completion % |
-| **Analytics** | `/analytics` | Completions over time, business and project breakdown, habit rates, weekday patterns |
+| **Analytics** | `/analytics` | Completions over time, project breakdown, habit rates, weekday patterns |
 
 Desktop uses a left sidebar; smaller screens use a bottom tab bar. Light and dark themes are built in.
 
 ## What you can track
 
-- **Businesses** — name, icon, optional logo
-- **Projects** — nested under a business (or standalone), status, due date, milestones
-- **Tasks** — attached to a project, a business, or the inbox
+- **Projects** — name, icon, optional logo, status, due date, milestones
+- **Tasks** — attached to a project or the inbox
 - **Daily tasks** — recurring habits with icons and weekday schedules
 - **Completion log** — written automatically when you check something off, then charted on Analytics
 

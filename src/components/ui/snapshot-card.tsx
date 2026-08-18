@@ -1,3 +1,4 @@
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { cn } from "@/lib/utils";
 
 type SnapshotCardProps = {
@@ -5,10 +6,15 @@ type SnapshotCardProps = {
   value: string;
   unit?: string;
   valueColor?: string;
+  color?: string;
   hint: string;
   hintColor?: string;
   foot?: string;
   bars?: Array<{ height: number; opacity?: number }>;
+  logoUrl?: string | null;
+  iconKey?: string | null;
+  entityName?: string;
+  entityColor?: string | null;
   className?: string;
 };
 
@@ -16,13 +22,21 @@ export function SnapshotCard({
   label,
   value,
   unit,
-  valueColor = "var(--foreground)",
+  valueColor,
+  color,
   hint,
   hintColor = "var(--faint)",
   foot,
   bars,
+  logoUrl,
+  iconKey,
+  entityName,
+  entityColor,
   className,
 }: SnapshotCardProps) {
+  const metricColor = valueColor ?? color ?? "var(--foreground)";
+  const showMark = Boolean(entityName && (logoUrl || iconKey));
+
   return (
     <div
       className={cn(
@@ -38,7 +52,7 @@ export function SnapshotCard({
           <div className="flex min-w-0 items-baseline gap-1.5">
             <span
               className="text-metric"
-              style={{ color: valueColor }}
+              style={{ color: metricColor }}
             >
               {value}
             </span>
@@ -63,10 +77,20 @@ export function SnapshotCard({
         </div>
       </div>
       <div className="flex items-center gap-1.5 border-t border-rule-soft px-[15px] py-2">
-        <span
-          className="h-[5px] w-[5px] shrink-0 rounded-full"
-          style={{ backgroundColor: hintColor }}
-        />
+        {showMark && entityName ? (
+          <EntityAvatar
+            name={entityName}
+            color={entityColor}
+            logoUrl={logoUrl}
+            iconKey={iconKey}
+            size={16}
+          />
+        ) : (
+          <span
+            className="h-[5px] w-[5px] shrink-0 rounded-full"
+            style={{ backgroundColor: hintColor }}
+          />
+        )}
         <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">
           {hint}
         </span>

@@ -8,10 +8,8 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/brand-mark";
-import { CreateBusinessDialog } from "@/components/dashboard/create-business-dialog";
 import { ProjectFormDialog } from "./project-form-dialog";
 import {
   DeleteProjectDialog,
@@ -31,8 +29,6 @@ type ProjectRecord = {
   color: string | null;
   dueDate: Date | null;
   status: "ACTIVE" | "PAUSED" | "DONE";
-  businessId: string | null;
-  business: { id: string; name: string } | null;
   milestones: Array<{
     id: string;
     name: string;
@@ -46,21 +42,11 @@ type ProjectRecord = {
   idleDays: number;
 };
 
-type BusinessRecord = {
-  id: string;
-  name: string;
-  iconKey: string;
-  logoUrl: string | null;
-  color: string;
-  _count: { projects: number };
-};
-
 type ProjectsShellProps = {
   projects: ProjectRecord[];
-  businesses: BusinessRecord[];
 };
 
-export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
+export function ProjectsShell({ projects }: ProjectsShellProps) {
   const today = getTodayDate();
   const [pendingDelete, setPendingDelete] =
     React.useState<DeleteProjectTarget | null>(null);
@@ -72,46 +58,8 @@ export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
           eyebrow="Workstreams"
           title="Projects"
           description="What each one still needs, and when it's due."
-          actions={
-            <>
-              <CreateBusinessDialog />
-              <ProjectFormDialog businesses={businesses} />
-            </>
-          }
+          actions={<ProjectFormDialog />}
         />
-
-        {businesses.length > 0 && (
-          <section className="flex flex-col gap-2">
-            <p className="px-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-faint">
-              Businesses
-            </p>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
-              {businesses.map((business) => (
-                <div
-                  key={business.id}
-                  className="flex items-center gap-3 rounded-[10px] border border-border bg-card px-[15px] py-3.5"
-                >
-                  <EntityAvatar
-                    name={business.name}
-                    color={business.color}
-                    logoUrl={business.logoUrl}
-                    size={34}
-                    rounded="lg"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[14.5px] font-semibold">
-                      {business.name}
-                    </div>
-                    <div className="mt-0.5 truncate text-[12px] text-faint">
-                      {business._count.projects} project
-                      {business._count.projects === 1 ? "" : "s"}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {projects.length === 0 ? (
           <EmptyState
@@ -130,19 +78,13 @@ export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
                         name={project.name}
                         color={project.color}
                         logoUrl={project.logoUrl}
+                        iconKey={project.iconKey}
                         size={38}
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[16.5px] font-semibold tracking-[-0.01em]">
-                            {project.name}
-                          </span>
-                          {project.business && (
-                            <Badge variant="muted" className="rounded px-1.5 py-0.5 text-[11.5px]">
-                              {project.business.name}
-                            </Badge>
-                          )}
-                        </div>
+                        <span className="text-[16.5px] font-semibold tracking-[-0.01em]">
+                          {project.name}
+                        </span>
                         {project.description && (
                           <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground text-pretty">
                             {project.description}
@@ -151,7 +93,6 @@ export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
                       </div>
                       <div className="flex shrink-0 gap-0.5">
                         <ProjectFormDialog
-                          businesses={businesses}
                           project={{
                             id: project.id,
                             name: project.name,
@@ -160,7 +101,6 @@ export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
                             logoUrl: project.logoUrl,
                             dueDate: project.dueDate,
                             status: project.status,
-                            businessId: project.businessId,
                             milestones: project.milestones,
                           }}
                           trigger={
@@ -179,6 +119,7 @@ export function ProjectsShell({ projects, businesses }: ProjectsShellProps) {
                               id: project.id,
                               name: project.name,
                               logoUrl: project.logoUrl,
+                              iconKey: project.iconKey,
                               color: project.color,
                               openCount: project.openCount,
                               milestoneCount: project.milestones.length,

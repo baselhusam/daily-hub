@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate, parseDateInput } from "@/lib/dates";
 import { createTaskSchema, updateTaskSchema } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/businesses";
+import type { ActionResult } from "@/app/actions/types";
 
 const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
 
@@ -15,14 +15,12 @@ function revalidateAll() {
 }
 
 function parseTaskForm(formData: FormData) {
-  const businessId = formData.get("businessId");
   const projectId = formData.get("projectId");
   const estimatedRaw = formData.get("estimatedMinutes");
 
   return {
     title: formData.get("title"),
     notes: formData.get("notes") || undefined,
-    businessId: businessId === "none" || !businessId ? null : businessId,
     projectId: projectId === "none" || !projectId ? null : projectId,
     priority: formData.get("priority") || 0,
     dueDate: formData.get("dueDate") || undefined,
@@ -33,26 +31,15 @@ function parseTaskForm(formData: FormData) {
   };
 }
 
-async function resolveBusinessId(
-  businessId: string | null | undefined,
-  projectId: string | null | undefined
-): Promise<string | null> {
-  let resolvedBusinessId = businessId ?? null;
-
-  if (projectId) {
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { businessId: true },
-    });
-    if (!project) {
-      throw new Error("Project not found.");
-    }
-    if (project.businessId) {
-      resolvedBusinessId = project.businessId;
-    }
+async function assertProjectExists(projectId: string | null) {
+  if (!projectId) return;
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true },
+  });
+  if (!project) {
+    throw new Error("Project not found.");
   }
-
-  return resolvedBusinessId;
 }
 
 export async function createTask(formData: FormData): Promise<ActionResult> {
@@ -66,16 +53,12 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
   const resolvedProjectId = parsed.data.projectId ?? null;
 
   try {
-    const resolvedBusinessId = await resolveBusinessId(
-      parsed.data.businessId,
-      resolvedProjectId
-    );
+    await assertProjectExists(resolvedProjectId);
 
     await prisma.task.create({
       data: {
         title,
         notes: notes || null,
-        businessId: resolvedBusinessId,
         projectId: resolvedProjectId,
         priority,
         estimatedMinutes: estimatedMinutes ?? null,
@@ -107,17 +90,13 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   const resolvedProjectId = parsed.data.projectId ?? null;
 
   try {
-    const resolvedBusinessId = await resolveBusinessId(
-      parsed.data.businessId,
-      resolvedProjectId
-    );
+    await assertProjectExists(resolvedProjectId);
 
     await prisma.task.update({
       where: { id },
       data: {
         title,
         notes: notes || null,
-        businessId: resolvedBusinessId,
         projectId: resolvedProjectId,
         priority,
         estimatedMinutes: estimatedMinutes ?? null,

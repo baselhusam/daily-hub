@@ -18,6 +18,7 @@ export type DeleteProjectTarget = {
   id: string;
   name: string;
   logoUrl?: string | null;
+  iconKey?: string | null;
   color?: string | null;
   openCount?: number;
   milestoneCount?: number;
@@ -110,6 +111,7 @@ export function DeleteProjectDialog({
                 name={project.name}
                 color={project.color}
                 logoUrl={project.logoUrl}
+                iconKey={project.iconKey}
                 size={34}
               />
               <div className="min-w-0 flex-1">

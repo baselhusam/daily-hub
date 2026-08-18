@@ -20,15 +20,13 @@ import {
 } from "@/components/ui/dialog";
 import {
   DialogInput,
-  DialogSelect,
   FieldLabel,
 } from "@/components/ui/input";
-import { ICON_OPTIONS } from "@/lib/icons";
+import { SelectMenu } from "@/components/ui/select-menu";
+import { getIcon, getIconLabel, ICON_OPTIONS } from "@/lib/icons";
 import { applyLogoToFormData } from "@/lib/logo";
 import { WEEKDAY_LABELS } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-
-type BusinessOption = { id: string; name: string };
 
 export type DailyTaskFormValues = {
   id?: string;
@@ -36,18 +34,15 @@ export type DailyTaskFormValues = {
   iconKey: string;
   logoUrl: string | null;
   weekdays: number[];
-  businessId: string | null;
   isActive: boolean;
 };
 
 type DailyTaskFormDialogProps = {
-  businesses: BusinessOption[];
   task?: DailyTaskFormValues;
   trigger?: React.ReactNode;
 };
 
 export function DailyTaskFormDialog({
-  businesses,
   task,
   trigger,
 }: DailyTaskFormDialogProps) {
@@ -57,13 +52,15 @@ export function DailyTaskFormDialog({
   const [selectedWeekdays, setSelectedWeekdays] = React.useState<number[]>(
     task?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]
   );
+  const [iconKey, setIconKey] = React.useState(task?.iconKey ?? "check");
   const isEdit = Boolean(task?.id);
 
   React.useEffect(() => {
     if (open) {
       setSelectedWeekdays(task?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]);
+      setIconKey(task?.iconKey ?? "check");
     }
-  }, [open, task?.weekdays]);
+  }, [open, task?.weekdays, task?.iconKey]);
 
   function toggleWeekday(day: number) {
     setSelectedWeekdays((current) =>
@@ -175,30 +172,20 @@ export function DailyTaskFormDialog({
             <LogoField key={String(open)} existingLogoUrl={task?.logoUrl} />
             <label className="flex flex-col gap-1.5">
               <FieldLabel>Icon</FieldLabel>
-              <DialogSelect
+              <SelectMenu
                 name="iconKey"
-                defaultValue={task?.iconKey ?? "check"}
-              >
-                {ICON_OPTIONS.map((icon) => (
-                  <option key={icon} value={icon}>
-                    {icon}
-                  </option>
-                ))}
-              </DialogSelect>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Business</FieldLabel>
-              <DialogSelect
-                name="businessId"
-                defaultValue={task?.businessId ?? "none"}
-              >
-                <option value="none">None</option>
-                {businesses.map((business) => (
-                  <option key={business.id} value={business.id}>
-                    {business.name}
-                  </option>
-                ))}
-              </DialogSelect>
+                value={iconKey}
+                onValueChange={setIconKey}
+                options={ICON_OPTIONS.map((icon) => {
+                  const Icon = getIcon(icon);
+                  return {
+                    value: icon,
+                    label: getIconLabel(icon),
+                    leading: <Icon className="h-4 w-4 text-muted-foreground" />,
+                  };
+                })}
+                ariaLabel="Habit icon"
+              />
             </label>
             <label className="flex items-center gap-2">
               <input

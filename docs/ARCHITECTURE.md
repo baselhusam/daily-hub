@@ -46,18 +46,18 @@ flowchart TB
 ### Read (dashboard)
 
 1. `src/app/(app)/page.tsx` calls `getDashboardData()` and `getAnalyticsData()` (chart subset)
-2. Parallel Prisma queries: businesses, projects+tasks, scheduled daily tasks, inbox, stats
+2. Parallel Prisma queries: projects+tasks, scheduled daily tasks, inbox, stats
 3. Data passed to client `DashboardShell` with URL-based project filter
 
 ### Read (projects / daily)
 
-1. `/projects` calls `getProjectsPageData()` — all projects with business + open task counts
+1. `/projects` calls `getProjectsPageData()` — all projects with open task counts
 2. `/daily` calls `getDailyPageData()` — all daily tasks with weekday schedules
 
 ### Read (analytics)
 
 1. `src/app/(app)/analytics/page.tsx` calls `getAnalyticsData()` in `src/lib/analytics.ts`
-2. Aggregates completions, task counts, business/project stats, weekday-aware daily habit rates
+2. Aggregates completions, task counts, project stats, weekday-aware daily habit rates
 3. Passed to `AnalyticsShell` with Recharts client components
 
 ### Write (mutations)
@@ -89,22 +89,11 @@ src/app/
 
 ```mermaid
 erDiagram
-  Business ||--o{ Project : "optional label"
-  Business ||--o{ Task : has
-  Business ||--o{ DailyTask : has
   Project ||--o{ Task : has
-
-  Business {
-    string id PK
-    string name
-    string slug UK
-    string iconKey
-    string logoUrl
-  }
+  Project ||--o{ Milestone : has
 
   Project {
     string id PK
-    string businessId FK "optional"
     string name
     string logoUrl
     date dueDate
@@ -113,7 +102,6 @@ erDiagram
 
   Task {
     string id PK
-    string businessId FK
     string projectId FK
     string title
     date dueDate
@@ -122,7 +110,6 @@ erDiagram
 
   DailyTask {
     string id PK
-    string businessId FK
     string title
     string logoUrl
     int_array weekdays
@@ -163,7 +150,7 @@ Daily tasks only appear on the dashboard when `weekdays` includes today's JS `ge
 - Server Action: `src/app/actions/upload.ts`
 - Writes to `public/uploads/` with UUID filename
 - Max 2MB; PNG, JPG, WEBP, SVG
-- Returns path like `/uploads/{uuid}.png` stored on `Business.logoUrl`, `Project.logoUrl`, or `DailyTask.logoUrl`
+- Returns path like `/uploads/{uuid}.png` stored on `Project.logoUrl` or `DailyTask.logoUrl`
 
 ## Docker services
 

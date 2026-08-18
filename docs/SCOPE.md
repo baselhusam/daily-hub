@@ -6,21 +6,20 @@ What DailyHub includes today and what is intentionally deferred.
 
 ### Entities & behavior
 
-- [x] **Businesses** — optional label; name, Lucide `iconKey`, optional logo upload, sort order
-- [x] **Projects** — first-class; name, description, icon, optional logo, due date, optional business, status (`ACTIVE` | `PAUSED` | `DONE`)
-- [x] **Tasks** — title, notes, due date, priority; link to project (or inbox with no project), optional business
+- [x] **Projects** — first-class; name, description, icon, optional logo, due date, status (`ACTIVE` | `PAUSED` | `DONE`)
+- [x] **Tasks** — title, notes, due date, priority; link to project (or inbox with no project)
 - [x] **Daily tasks** — habits with icons/logos and weekday schedules; toggle completes for **today**
 - [x] **Completion log** — records task completions and daily toggles for analytics
 
 ### UI
 
 - [x] Dashboard with bento stats, compact activity chart, project filter, simple task tables (title + due date), today's scheduled habits
-- [x] Projects page (`/projects`) — CRUD with logo, due date, description, optional business
+- [x] Projects page (`/projects`) — CRUD with logo, due date, description
 - [x] Daily page (`/daily`) — CRUD with logo and weekday scheduler
 - [x] Left sidebar with Dashboard, Projects, Daily, Analytics, project filter list, and quick stats
 - [x] Mobile top navigation
 - [x] Light / dark theme toggle
-- [x] Analytics: overview cards, 14-day chart, business/project breakdown, daily habit rates (weekday-aware)
+- [x] Analytics: overview cards, 14-day chart, project breakdown, daily habit rates (weekday-aware)
 
 ### Infrastructure
 
@@ -58,4 +57,4 @@ What DailyHub includes today and what is intentionally deferred.
 
 - Replace Jira, Linear, or Notion
 - Heavy customization or plugin ecosystem
-- Colorful/branded themes per business (neutral UI only in v1)
+- Colorful/branded themes per project (neutral UI only in v1)

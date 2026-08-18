@@ -18,8 +18,6 @@ type DailyTaskRecord = {
   logoUrl: string | null;
   weekdays: number[];
   isActive: boolean;
-  businessId: string | null;
-  business: { id: string; name: string } | null;
   scheduleLabel: string;
   rate: number;
   dots: Array<{ color: string }>;
@@ -27,10 +25,9 @@ type DailyTaskRecord = {
 
 type DailyShellProps = {
   dailyTasks: DailyTaskRecord[];
-  businesses: Array<{ id: string; name: string }>;
 };
 
-export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
+export function DailyShell({ dailyTasks }: DailyShellProps) {
   return (
     <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
       <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
@@ -38,7 +35,7 @@ export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
           eyebrow="Recurring"
           title="Habits"
           description="Set the schedule here. Check them off on Today."
-          actions={<DailyTaskFormDialog businesses={businesses} />}
+          actions={<DailyTaskFormDialog />}
         />
 
         {dailyTasks.length === 0 ? (
@@ -56,6 +53,7 @@ export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
                 <EntityAvatar
                   name={task.title}
                   logoUrl={task.logoUrl}
+                  iconKey={task.iconKey}
                   size={36}
                   rounded="lg"
                 />
@@ -85,14 +83,12 @@ export function DailyShell({ dailyTasks, businesses }: DailyShellProps) {
                 </div>
                 <div className="flex gap-0.5">
                   <DailyTaskFormDialog
-                    businesses={businesses}
                     task={{
                       id: task.id,
                       title: task.title,
                       iconKey: task.iconKey,
                       logoUrl: task.logoUrl,
                       weekdays: task.weekdays,
-                      businessId: task.businessId,
                       isActive: task.isActive,
                     }}
                     trigger={

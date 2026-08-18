@@ -38,3 +38,36 @@ export const ICON_OPTIONS = [
   "file-text",
   "target",
 ] as const;
+
+const ICON_LABELS: Record<string, string> = {
+  briefcase: "Briefcase",
+  building2: "Building",
+  folder: "Folder",
+  "folder-open": "Open folder",
+  check: "Check",
+  "check-circle": "Check circle",
+  circle: "Circle",
+  "pen-line": "Pen",
+  mail: "Mail",
+  "message-square": "Message",
+  calendar: "Calendar",
+  clock: "Clock",
+  star: "Star",
+  rocket: "Rocket",
+  code: "Code",
+  globe: "Globe",
+  "book-open": "Book",
+  newspaper: "Newspaper",
+  "file-text": "File",
+  target: "Target",
+};
+
+export function getIconLabel(iconKey: string): string {
+  return (
+    ICON_LABELS[iconKey] ??
+    iconKey
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ")
+  );
+}

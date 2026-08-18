@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { ChainDots } from "@/components/ui/chain-dots";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { cn } from "@/lib/utils";
-import { resolveEntityColor } from "@/lib/entity-colors";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
 const navItems = [
@@ -123,7 +123,7 @@ export function AppSidebar({ stats }: AppSidebarProps) {
                         : "text-foreground hover:bg-hover"
                     )}
                   >
-                    <span className="h-2 w-2 rounded-sm bg-foreground" />
+                    <span className="h-[18px] w-[18px] shrink-0 rounded-md bg-foreground" />
                     <span className="flex-1">Everything</span>
                     <span className="text-[11px] text-faint tabular-nums">
                       {stats.openTasks}
@@ -140,11 +140,12 @@ export function AppSidebar({ stats }: AppSidebarProps) {
                           : "hover:bg-hover"
                       )}
                     >
-                      <span
-                        className="h-2 w-2 shrink-0 rounded-sm"
-                        style={{
-                          backgroundColor: resolveEntityColor(project.color),
-                        }}
+                      <EntityAvatar
+                        name={project.name}
+                        color={project.color}
+                        logoUrl={project.logoUrl}
+                        iconKey={project.iconKey}
+                        size={18}
                       />
                       <span className="flex-1 truncate">{project.name}</span>
                       <span className="text-[11px] text-faint tabular-nums">

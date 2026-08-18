@@ -63,7 +63,7 @@ docker compose exec app npm run db:seed
 | Volume | Contents |
 |--------|----------|
 | `postgres_data` | Database files |
-| `uploads_data` | Uploaded business logos |
+| `uploads_data` | Uploaded project and habit logos |
 
 ## Option B — Local development
 

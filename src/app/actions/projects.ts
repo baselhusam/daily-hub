@@ -8,7 +8,7 @@ import {
   milestoneSchema,
   updateProjectSchema,
 } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/businesses";
+import type { ActionResult } from "@/app/actions/types";
 
 const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
 
@@ -16,11 +16,6 @@ function revalidateAll() {
   for (const path of REVALIDATE_PATHS) {
     revalidatePath(path);
   }
-}
-
-function parseOptionalBusinessId(value: FormDataEntryValue | null): string | null {
-  if (!value || value === "none") return null;
-  return String(value);
 }
 
 function parseMilestonesFromForm(formData: FormData) {
@@ -62,10 +57,7 @@ function parseMilestonesFromForm(formData: FormData) {
 }
 
 export async function createProject(formData: FormData): Promise<ActionResult> {
-  const businessId = parseOptionalBusinessId(formData.get("businessId"));
-
   const parsed = createProjectSchema.safeParse({
-    businessId,
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     iconKey: formData.get("iconKey") || "folder",
@@ -87,13 +79,10 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
   const { name, description, iconKey, logoUrl, color, status } = parsed.data;
 
   try {
-    const count = await prisma.project.count({
-      where: businessId ? { businessId } : { businessId: null },
-    });
+    const count = await prisma.project.count();
 
     const created = await prisma.project.create({
       data: {
-        businessId,
         name,
         description: description || null,
         iconKey,
@@ -125,11 +114,8 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
 }
 
 export async function updateProject(formData: FormData): Promise<ActionResult> {
-  const businessId = parseOptionalBusinessId(formData.get("businessId"));
-
   const parsed = updateProjectSchema.safeParse({
     id: formData.get("id"),
-    businessId,
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     iconKey: formData.get("iconKey") || "folder",
@@ -155,7 +141,6 @@ export async function updateProject(formData: FormData): Promise<ActionResult> {
     await prisma.project.update({
       where: { id },
       data: {
-        businessId,
         name,
         description: description || null,
         iconKey,

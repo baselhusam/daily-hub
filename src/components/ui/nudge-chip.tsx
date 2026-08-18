@@ -5,6 +5,7 @@ type NudgeChipProps = {
   children: ReactNode;
   variant?: "warn" | "neutral";
   action?: ReactNode;
+  leading?: ReactNode;
   className?: string;
 };
 
@@ -12,6 +13,7 @@ export function NudgeChip({
   children,
   variant = "neutral",
   action,
+  leading,
   className,
 }: NudgeChipProps) {
   return (
@@ -24,12 +26,14 @@ export function NudgeChip({
         className
       )}
     >
-      <span
-        className={cn(
-          "h-1.5 w-1.5 shrink-0 rounded-full",
-          variant === "warn" ? "bg-warn" : "bg-faint"
-        )}
-      />
+      {leading ?? (
+        <span
+          className={cn(
+            "h-1.5 w-1.5 shrink-0 rounded-full",
+            variant === "warn" ? "bg-warn" : "bg-faint"
+          )}
+        />
+      )}
       <span className="text-[13.5px] font-medium text-foreground">{children}</span>
       {action}
     </div>

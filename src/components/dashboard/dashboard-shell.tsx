@@ -29,7 +29,6 @@ type EditableTask = {
   title: string;
   notes: string | null;
   projectId: string | null;
-  businessId: string | null;
   dueDate: Date | null;
   estimatedMinutes: number | null;
 };
@@ -91,14 +90,12 @@ export function DashboardShell({ data }: DashboardShellProps) {
     <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
       {editingTask && (
         <CreateTaskDialog
-          businesses={data.businesses}
           projects={data.projects}
           task={{
             id: editingTask.id,
             title: editingTask.title,
             notes: editingTask.notes,
             projectId: editingTask.projectId,
-            businessId: editingTask.businessId,
             dueDate: editingTask.dueDate,
             estimatedMinutes: editingTask.estimatedMinutes,
           }}
@@ -120,7 +117,6 @@ export function DashboardShell({ data }: DashboardShellProps) {
           actions={
             filterProject ? undefined : (
               <CreateTaskDialog
-                businesses={data.businesses}
                 projects={data.projects}
               />
             )
@@ -128,7 +124,14 @@ export function DashboardShell({ data }: DashboardShellProps) {
         />
 
         {filterProject && (
-          <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pr-2 pl-3.5">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pr-2 pl-2">
+            <EntityAvatar
+              name={filterProject.name}
+              color={filterProject.color}
+              logoUrl={filterProject.logoUrl}
+              iconKey={filterProject.iconKey}
+              size={22}
+            />
             <span className="text-[13px] font-semibold">
               Filtered · {filterProject.name}
             </span>
@@ -144,7 +147,13 @@ export function DashboardShell({ data }: DashboardShellProps) {
 
         {showHabits && (
           <QuickAdd
-            projects={data.projects.map((p) => ({ id: p.id, name: p.name }))}
+            projects={data.projects.map((p) => ({
+              id: p.id,
+              name: p.name,
+              iconKey: p.iconKey,
+              logoUrl: p.logoUrl,
+              color: p.color,
+            }))}
             defaultProjectId={filterProject?.id}
           />
         )}
@@ -155,6 +164,17 @@ export function DashboardShell({ data }: DashboardShellProps) {
               <NudgeChip
                 key={index}
                 variant={nudge.variant}
+                leading={
+                  nudge.projectName ? (
+                    <EntityAvatar
+                      name={nudge.projectName}
+                      color={nudge.color}
+                      logoUrl={nudge.logoUrl}
+                      iconKey={nudge.iconKey}
+                      size={18}
+                    />
+                  ) : undefined
+                }
                 action={
                   nudge.actionLabel && nudge.projectId ? (
                     <button
@@ -236,19 +256,13 @@ export function DashboardShell({ data }: DashboardShellProps) {
                         name={project.name}
                         color={project.color}
                         logoUrl={project.logoUrl}
+                        iconKey={project.iconKey}
                         size={30}
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[15px] font-semibold tracking-[-0.01em]">
-                            {project.name}
-                          </span>
-                          {project.business && (
-                            <Badge variant="muted" className="rounded px-1.5 py-0.5 text-[11.5px]">
-                              {project.business.name}
-                            </Badge>
-                          )}
-                        </div>
+                        <span className="text-[15px] font-semibold tracking-[-0.01em]">
+                          {project.name}
+                        </span>
                         <p className="mt-0.5 text-[12px] text-faint">
                           {project.openCount} open · {project.doneCount} logged
                         </p>
@@ -319,7 +333,6 @@ export function DashboardShell({ data }: DashboardShellProps) {
                       );
                     })}
                     <CreateTaskDialog
-                      businesses={data.businesses}
                       projects={data.projects}
                       defaultProjectId={project.id}
                       trigger={

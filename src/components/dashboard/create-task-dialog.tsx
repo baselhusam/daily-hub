@@ -4,6 +4,7 @@ import * as React from "react";
 import { Plus } from "lucide-react";
 import { createTask, updateTask } from "@/app/actions/tasks";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogBody,
@@ -13,26 +14,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DialogInput,
-  DialogSelect,
-  FieldLabel,
-} from "@/components/ui/input";
+import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
+import { DialogInput, FieldLabel } from "@/components/ui/input";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { toDateOnlyString } from "@/lib/dates";
-import type { DashboardBusiness, DashboardProject } from "@/lib/dashboard";
+import type { DashboardProject } from "@/lib/dashboard";
 
 type TaskFormValues = {
   id: string;
   title: string;
   notes: string | null;
   projectId: string | null;
-  businessId: string | null;
   dueDate: Date | null;
   estimatedMinutes: number | null;
 };
 
 type CreateTaskDialogProps = {
-  businesses: DashboardBusiness[];
   projects: DashboardProject[];
   defaultProjectId?: string;
   task?: TaskFormValues;
@@ -43,7 +40,6 @@ type CreateTaskDialogProps = {
 };
 
 export function CreateTaskDialog({
-  businesses,
   projects,
   defaultProjectId,
   task,
@@ -57,7 +53,21 @@ export function CreateTaskDialog({
   const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  const [projectId, setProjectId] = React.useState(
+    task?.projectId ?? defaultProjectId ?? "none"
+  );
+  const [dueDate, setDueDate] = React.useState(
+    task?.dueDate ? toDateOnlyString(task.dueDate) : ""
+  );
   const isEdit = Boolean(task?.id);
+
+  React.useEffect(() => {
+    if (open) {
+      setProjectId(task?.projectId ?? defaultProjectId ?? "none");
+      setDueDate(task?.dueDate ? toDateOnlyString(task.dueDate) : "");
+      setError(null);
+    }
+  }, [open, task, defaultProjectId]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -77,6 +87,27 @@ export function CreateTaskDialog({
     event.currentTarget.reset();
     setOpen(false);
   }
+
+  const projectOptions = [
+    {
+      value: "none",
+      label: "Inbox (no project)",
+      leading: <InboxAvatar size={20} />,
+    },
+    ...projects.map((project) => ({
+      value: project.id,
+      label: project.name,
+      leading: (
+        <EntityAvatar
+          name={project.name}
+          color={project.color}
+          logoUrl={project.logoUrl}
+          iconKey={project.iconKey}
+          size={20}
+        />
+      ),
+    })),
+  ];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -117,26 +148,21 @@ export function CreateTaskDialog({
             <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
               <label className="flex flex-col gap-1.5">
                 <FieldLabel>Project</FieldLabel>
-                <DialogSelect
+                <SelectMenu
                   name="projectId"
-                  defaultValue={task?.projectId ?? defaultProjectId ?? "none"}
-                >
-                  <option value="none">Inbox (no project)</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </DialogSelect>
+                  value={projectId}
+                  onValueChange={setProjectId}
+                  options={projectOptions}
+                  ariaLabel="Project"
+                />
               </label>
               <label className="flex flex-col gap-1.5">
                 <FieldLabel>Due</FieldLabel>
-                <DialogInput
+                <DatePicker
                   name="dueDate"
-                  type="date"
-                  defaultValue={
-                    task?.dueDate ? toDateOnlyString(task.dueDate) : ""
-                  }
+                  value={dueDate}
+                  onValueChange={setDueDate}
+                  placeholder="No due date"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
@@ -150,20 +176,6 @@ export function CreateTaskDialog({
                 />
               </label>
             </div>
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Business</FieldLabel>
-              <DialogSelect
-                name="businessId"
-                defaultValue={task?.businessId ?? "none"}
-              >
-                <option value="none">None</option>
-                {businesses.map((business) => (
-                  <option key={business.id} value={business.id}>
-                    {business.name}
-                  </option>
-                ))}
-              </DialogSelect>
-            </label>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </DialogBody>
           <DialogFooter className="justify-end">

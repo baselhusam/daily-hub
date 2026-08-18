@@ -9,33 +9,11 @@ async function main() {
   await prisma.task.deleteMany();
   await prisma.dailyTask.deleteMany();
   await prisma.project.deleteMany();
-  await prisma.business.deleteMany();
 
   const today = getTodayDate();
 
-  const consulting = await prisma.business.create({
-    data: {
-      name: "Consulting",
-      slug: "consulting",
-      iconKey: "briefcase",
-      color: "#525252",
-      sortOrder: 0,
-    },
-  });
-
-  const content = await prisma.business.create({
-    data: {
-      name: "Content Studio",
-      slug: "content-studio",
-      iconKey: "pen-line",
-      color: "#737373",
-      sortOrder: 1,
-    },
-  });
-
   const dailyHub = await prisma.project.create({
     data: {
-      businessId: consulting.id,
       name: "DailyHub",
       description: "Personal productivity dashboard",
       iconKey: "rocket",
@@ -46,7 +24,6 @@ async function main() {
 
   const clientWork = await prisma.project.create({
     data: {
-      businessId: consulting.id,
       name: "Client Delivery",
       iconKey: "folder",
       dueDate: addDays(today, 14),
@@ -56,43 +33,38 @@ async function main() {
 
   const mediumSeries = await prisma.project.create({
     data: {
-      businessId: content.id,
       name: "Medium Series",
       iconKey: "newspaper",
       dueDate: addDays(today, 7),
-      sortOrder: 0,
+      sortOrder: 2,
     },
   });
 
-  // Standalone project with no business
   const personalSite = await prisma.project.create({
     data: {
       name: "Personal Site",
       description: "Portfolio and blog refresh",
       iconKey: "globe",
       dueDate: addDays(today, 21),
-      sortOrder: 2,
+      sortOrder: 3,
     },
   });
 
   await prisma.task.createMany({
     data: [
       {
-        businessId: consulting.id,
         projectId: dailyHub.id,
         title: "Polish dashboard layout",
         priority: 2,
         dueDate: addDays(today, 3),
       },
       {
-        businessId: consulting.id,
         projectId: clientWork.id,
         title: "Reply to client proposal email",
         priority: 3,
         dueDate: addDays(today, 1),
       },
       {
-        businessId: content.id,
         projectId: mediumSeries.id,
         title: "Draft outline for next Medium post",
         priority: 2,
@@ -121,7 +93,6 @@ async function main() {
       {
         title: "Publish Medium post",
         iconKey: "newspaper",
-        businessId: content.id,
         weekdays: [1, 3, 5],
         sortOrder: 0,
       },
@@ -140,7 +111,6 @@ async function main() {
       {
         title: "Deep work block",
         iconKey: "target",
-        businessId: consulting.id,
         weekdays: [1, 2, 3, 4, 5],
         sortOrder: 3,
       },

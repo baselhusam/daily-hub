@@ -4,7 +4,7 @@ import { getProjectsPageData } from "@/lib/dashboard";
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
-  const { projects, businesses } = await getProjectsPageData();
+  const { projects } = await getProjectsPageData();
 
-  return <ProjectsShell projects={projects} businesses={businesses} />;
+  return <ProjectsShell projects={projects} />;
 }

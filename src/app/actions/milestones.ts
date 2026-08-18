@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { parseDateInput } from "@/lib/dates";
 import { milestoneSchema } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/businesses";
+import type { ActionResult } from "@/app/actions/types";
 
 const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
 

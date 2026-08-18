@@ -4,7 +4,7 @@ Guidance for AI assistants (Claude, Cursor, etc.) working in the DailyHub reposi
 
 ## Project overview
 
-DailyHub is a **single-user, self-hosted** productivity web app for organizing work across multiple businesses and projects. Users track ad-hoc tasks, recurring daily habits, and see completion history — with a separate Analytics view for performance insights.
+DailyHub is a **single-user, self-hosted** productivity web app for organizing work across projects. Users track ad-hoc tasks, recurring daily habits, and see completion history — with a separate Analytics view for performance insights.
 
 **Repository:** https://github.com/baselhusam/daily-hub  
 **Local URL:** http://localhost:9999
@@ -77,9 +77,8 @@ prisma/
 
 ## Data model (summary)
 
-- **Business** → has Projects, Tasks, DailyTasks; optional logo (`logoUrl`) and icon (`iconKey`)
-- **Project** → belongs to Business; has Tasks
-- **Task** → optional `businessId`, optional `projectId`; inbox = no project
+- **Project** → first-class workstream; has Tasks and Milestones
+- **Task** → optional `projectId`; inbox = no project
 - **DailyTask** → recurring checklist item with icon; completion state is per-day in `CompletionLog`
 - **CompletionLog** → polymorphic via `entityType` (`TASK` | `DAILY_TASK`) + `entityId` + `completedOn` (date)
 

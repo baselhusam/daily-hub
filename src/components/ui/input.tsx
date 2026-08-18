@@ -52,22 +52,6 @@ function DialogTextarea({
   );
 }
 
-function DialogSelect({
-  className,
-  ...props
-}: React.ComponentProps<"select">) {
-  return (
-    <select
-      data-slot="select"
-      className={cn(
-        "flex h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[11px] text-sm transition-colors duration-[120ms] focus-visible:border-signal focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/16 disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-      {...props}
-    />
-  );
-}
-
 function FieldLabel({
   className,
   ...props
@@ -80,4 +64,4 @@ function FieldLabel({
   );
 }
 
-export { Input, DialogInput, DialogTextarea, DialogSelect, FieldLabel };
+export { Input, DialogInput, DialogTextarea, FieldLabel };

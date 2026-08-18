@@ -61,6 +61,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
           <EntityAvatar
             name={task.title}
             logoUrl={task.logoUrl}
+            iconKey={task.iconKey}
             size={28}
             rounded="lg"
           />

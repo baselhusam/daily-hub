@@ -3,13 +3,22 @@
 import * as React from "react";
 import { createTask } from "@/app/actions/tasks";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
+import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { DATE_INPUT_MAX, DATE_INPUT_MIN } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
-type ProjectOption = { id: string; name: string };
+export type QuickAddProject = {
+  id: string;
+  name: string;
+  iconKey: string;
+  logoUrl: string | null;
+  color: string | null;
+};
 
 type QuickAddProps = {
-  projects: ProjectOption[];
+  projects: QuickAddProject[];
   defaultProjectId?: string;
   className?: string;
 };
@@ -23,6 +32,10 @@ export function QuickAdd({
   const [projectId, setProjectId] = React.useState(defaultProjectId ?? "");
   const [dueDate, setDueDate] = React.useState("");
   const [pending, setPending] = React.useState(false);
+
+  React.useEffect(() => {
+    setProjectId(defaultProjectId ?? "");
+  }, [defaultProjectId]);
 
   async function submit() {
     const trimmed = title.trim();
@@ -50,6 +63,27 @@ export function QuickAdd({
     }
   }
 
+  const projectOptions = [
+    {
+      value: "",
+      label: "Inbox",
+      leading: <InboxAvatar size={18} />,
+    },
+    ...projects.map((project) => ({
+      value: project.id,
+      label: project.name,
+      leading: (
+        <EntityAvatar
+          name={project.name}
+          color={project.color}
+          logoUrl={project.logoUrl}
+          iconKey={project.iconKey}
+          size={18}
+        />
+      ),
+    })),
+  ];
+
   return (
     <div
       className={cn(
@@ -67,25 +101,23 @@ export function QuickAdd({
           className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-[15px] outline-none placeholder:text-faint"
         />
       </div>
-      <select
+      <SelectMenu
         value={projectId}
-        onChange={(e) => setProjectId(e.target.value)}
-        className="rounded-md border border-border bg-[#F1F1EF] px-2.5 py-2 text-[13.5px] font-medium outline-none dark:bg-muted"
-      >
-        <option value="">Inbox</option>
-        {projects.map((project) => (
-          <option key={project.id} value={project.id}>
-            {project.name}
-          </option>
-        ))}
-      </select>
-      <input
-        type="date"
+        onValueChange={setProjectId}
+        options={projectOptions}
+        variant="compact"
+        ariaLabel="Project"
+        className="min-w-[148px]"
+        contentClassName="min-w-[200px]"
+      />
+      <DatePicker
+        value={dueDate}
+        onValueChange={setDueDate}
         min={DATE_INPUT_MIN}
         max={DATE_INPUT_MAX}
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        className="rounded-md border border-border bg-[#F1F1EF] px-2.5 py-2 text-[13.5px] text-muted-foreground outline-none dark:bg-muted"
+        variant="compact"
+        placeholder="Due"
+        className="min-w-[148px]"
       />
       <Button
         type="button"

@@ -3,6 +3,7 @@
 import type { AnalyticsData } from "@/lib/analytics";
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard, SurfaceCardBody } from "@/components/ui/surface-card";
+import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { ChainDots } from "@/components/ui/chain-dots";
 import { ProgressBar } from "@/components/ui/progress-bar";
 
@@ -105,17 +106,30 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
             <SurfaceCardBody>
               <h2 className="text-section">Where the time went</h2>
               <p className="mb-4 text-[12.5px] text-faint">
-                Focus hours by business
+                Focus hours by project
               </p>
               <div className="flex flex-col gap-3.5">
-                {data.byBusiness.length === 0 ? (
+                {data.focusByProject.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No data yet.</p>
                 ) : (
-                  data.byBusiness.map((b) => (
+                  data.focusByProject.map((b) => (
                     <div key={b.name}>
-                      <div className="mb-1.5 flex items-baseline justify-between">
-                        <span className="text-[13.5px] font-semibold">
-                          {b.name}
+                      <div className="mb-1.5 flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-2">
+                          {b.iconKey || b.logoUrl ? (
+                            <EntityAvatar
+                              name={b.name}
+                              color={b.color}
+                              logoUrl={b.logoUrl}
+                              iconKey={b.iconKey}
+                              size={18}
+                            />
+                          ) : (
+                            <InboxAvatar size={18} />
+                          )}
+                          <span className="truncate text-[13.5px] font-semibold">
+                            {b.name}
+                          </span>
                         </span>
                         <span className="text-[12px] text-muted-foreground tabular-nums">
                           {b.hours}h · {b.share}
@@ -140,9 +154,18 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               <div className="flex flex-col gap-3.5">
                 {data.byProject.map((p) => (
                   <div key={p.id}>
-                    <div className="mb-1.5 flex items-baseline justify-between">
-                      <span className="text-[13.5px] font-semibold">
-                        {p.name}
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <EntityAvatar
+                          name={p.name}
+                          color={p.color}
+                          logoUrl={p.logoUrl}
+                          iconKey={p.iconKey}
+                          size={18}
+                        />
+                        <span className="truncate text-[13.5px] font-semibold">
+                          {p.name}
+                        </span>
                       </span>
                       <span
                         className="text-[12px] tabular-nums"
@@ -171,8 +194,17 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                   key={h.id}
                   className="flex flex-wrap items-center gap-3.5"
                 >
-                  <span className="min-w-0 flex-1 basis-[150px] truncate text-[13.5px] font-semibold">
-                    {h.title}
+                  <span className="flex min-w-0 flex-1 basis-[150px] items-center gap-2">
+                    <EntityAvatar
+                      name={h.title}
+                      logoUrl={h.logoUrl}
+                      iconKey={h.iconKey}
+                      size={22}
+                      rounded="lg"
+                    />
+                    <span className="truncate text-[13.5px] font-semibold">
+                      {h.title}
+                    </span>
                   </span>
                   <ChainDots dots={h.dots} size="md" />
                   <span

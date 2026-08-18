@@ -39,7 +39,6 @@ export type DashboardTaskItem = {
   completedAt: Date | null;
   estimatedMinutes: number | null;
   projectId: string | null;
-  businessId: string | null;
   doneToday: boolean;
 };
 
@@ -53,7 +52,6 @@ export type DashboardProject = {
   dueDate: Date | null;
   status: ProjectStatus;
   sortOrder: number;
-  business: { id: string; name: string } | null;
   milestones: DashboardMilestone[];
   tasks: DashboardTaskItem[];
   openCount: number;
@@ -66,7 +64,6 @@ export type DashboardDailyTask = {
   iconKey: string;
   logoUrl: string | null;
   weekdays: number[];
-  businessId: string | null;
   sortOrder: number;
   completedToday: boolean;
   scheduleLabel: string;
@@ -81,9 +78,7 @@ export type DashboardTask = {
   dueDate: Date | null;
   completedAt: Date | null;
   estimatedMinutes: number | null;
-  businessId: string | null;
   projectId: string | null;
-  business: { id: string; name: string } | null;
   project: { id: string; name: string } | null;
   doneToday: boolean;
 };
@@ -97,6 +92,10 @@ export type DashboardSnapshot = {
   hintColor: string;
   foot: string;
   bars?: Array<{ height: number; opacity?: number }>;
+  logoUrl?: string | null;
+  iconKey?: string | null;
+  entityName?: string;
+  entityColor?: string | null;
 };
 
 export type DashboardNudge = {
@@ -104,16 +103,10 @@ export type DashboardNudge = {
   variant: "warn" | "neutral";
   actionLabel?: string;
   projectId?: string;
-};
-
-export type DashboardBusiness = {
-  id: string;
-  name: string;
-  slug: string;
-  iconKey: string;
-  logoUrl: string | null;
-  color: string;
-  sortOrder: number;
+  logoUrl?: string | null;
+  iconKey?: string | null;
+  color?: string | null;
+  projectName?: string;
 };
 
 export type DashboardData = {
@@ -124,7 +117,6 @@ export type DashboardData = {
     showStreaks: boolean;
     nudgeDays: number;
   };
-  businesses: DashboardBusiness[];
   projects: DashboardProject[];
   dailyTasks: DashboardDailyTask[];
   inboxTasks: DashboardTask[];
@@ -155,7 +147,6 @@ function mapTaskItem(
     completedAt: Date | null;
     estimatedMinutes: number | null;
     projectId: string | null;
-    businessId: string | null;
   },
   today: Date
 ): DashboardTaskItem {
@@ -172,7 +163,6 @@ export async function getDashboardData(): Promise<DashboardData> {
   const settings = await getSettings();
 
   const [
-    businesses,
     projects,
     dailyTasks,
     inboxTasksRaw,
@@ -182,23 +172,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     streakInfo,
     allOpenTasks,
   ] = await Promise.all([
-    prisma.business.findMany({
-      orderBy: { sortOrder: "asc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        iconKey: true,
-        logoUrl: true,
-        color: true,
-        sortOrder: true,
-      },
-    }),
     prisma.project.findMany({
       where: { status: { not: "DONE" } },
       orderBy: { sortOrder: "asc" },
       include: {
-        business: { select: { id: true, name: true } },
         milestones: { orderBy: { sortOrder: "asc" } },
         tasks: {
           where: {
@@ -225,7 +202,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       },
       orderBy: [{ priority: "desc" }, { dueDate: "asc" }, { createdAt: "asc" }],
       include: {
-        business: { select: { id: true, name: true } },
         project: { select: { id: true, name: true } },
       },
     }),
@@ -273,7 +249,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       dueDate: project.dueDate,
       status: project.status,
       sortOrder: project.sortOrder,
-      business: project.business,
       milestones: project.milestones,
       tasks: project.tasks.map((t) => mapTaskItem(t, today)),
       openCount: openTasks.length,
@@ -293,13 +268,27 @@ export async function getDashboardData(): Promise<DashboardData> {
     return days !== null && days >= 0 && days <= 6;
   });
 
-  let nearest: { days: number; label: string; project: string } | null = null;
+  let nearest: {
+    days: number;
+    label: string;
+    project: string;
+    logoUrl: string | null;
+    iconKey: string;
+    color: string | null;
+  } | null = null;
   for (const project of projects) {
     for (const milestone of project.milestones) {
       if (milestone.done || !milestone.dueDate) continue;
       const n = daysUntil(milestone.dueDate, today);
       if (n !== null && n >= 0 && (!nearest || n < nearest.days)) {
-        nearest = { days: n, label: milestone.name, project: project.name };
+        nearest = {
+          days: n,
+          label: milestone.name,
+          project: project.name,
+          logoUrl: project.logoUrl,
+          iconKey: project.iconKey,
+          color: project.color,
+        };
       }
     }
     if (project.dueDate) {
@@ -309,6 +298,9 @@ export async function getDashboardData(): Promise<DashboardData> {
           days: n,
           label: `${project.name} ships`,
           project: project.name,
+          logoUrl: project.logoUrl,
+          iconKey: project.iconKey,
+          color: project.color,
         };
       }
     }
@@ -393,6 +385,10 @@ export async function getDashboardData(): Promise<DashboardData> {
       hint: nearest ? nearest.label : "no dated milestones",
       hintColor: "var(--faint)",
       foot: nearest ? nearest.project : "nothing scheduled",
+      logoUrl: nearest?.logoUrl,
+      iconKey: nearest?.iconKey,
+      entityName: nearest?.project,
+      entityColor: nearest?.color,
     },
   ];
 
@@ -428,6 +424,10 @@ export async function getDashboardData(): Promise<DashboardData> {
         variant: "neutral",
         actionLabel: "Focus",
         projectId: project.id,
+        logoUrl: project.logoUrl,
+        iconKey: project.iconKey,
+        color: project.color,
+        projectName: project.name,
       });
     }
   }
@@ -453,7 +453,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       showStreaks: settings.showStreaks,
       nudgeDays: settings.nudgeDays,
     },
-    businesses,
     projects: mappedProjects,
     dailyTasks: scheduledToday.map((task) => ({
       id: task.id,
@@ -461,7 +460,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       iconKey: task.iconKey,
       logoUrl: task.logoUrl,
       weekdays: task.weekdays,
-      businessId: task.businessId,
       sortOrder: task.sortOrder,
       completedToday: completedDailyIds.has(task.id),
       scheduleLabel: formatWeekdays(task.weekdays),
@@ -504,24 +502,12 @@ export async function getProjectsPageData() {
   const nudgeDays = settings.nudgeDays;
   const today = getTodayDate();
 
-  const [projects, businesses, completionLogs] = await Promise.all([
+  const [projects, completionLogs] = await Promise.all([
     prisma.project.findMany({
       orderBy: { sortOrder: "asc" },
       include: {
-        business: { select: { id: true, name: true } },
         milestones: { orderBy: { sortOrder: "asc" } },
         tasks: { select: { status: true, id: true, projectId: true } },
-      },
-    }),
-    prisma.business.findMany({
-      orderBy: { sortOrder: "asc" },
-      select: {
-        id: true,
-        name: true,
-        iconKey: true,
-        logoUrl: true,
-        color: true,
-        _count: { select: { projects: true } },
       },
     }),
     prisma.completionLog.findMany({
@@ -568,7 +554,6 @@ export async function getProjectsPageData() {
         idleDays: idle,
       };
     }),
-    businesses,
   };
 }
 
@@ -576,16 +561,9 @@ export async function getDailyPageData() {
   const today = getTodayDate();
   const windowStart = subDays(today, 13);
 
-  const [dailyTasks, businesses, completions] = await Promise.all([
+  const [dailyTasks, completions] = await Promise.all([
     prisma.dailyTask.findMany({
       orderBy: { sortOrder: "asc" },
-      include: {
-        business: { select: { id: true, name: true } },
-      },
-    }),
-    prisma.business.findMany({
-      orderBy: { sortOrder: "asc" },
-      select: { id: true, name: true },
     }),
     prisma.completionLog.findMany({
       where: {
@@ -637,6 +615,5 @@ export async function getDailyPageData() {
         dots,
       };
     }),
-    businesses,
   };
 }

@@ -32,7 +32,7 @@ Paper, ink, and one accent — accent only for what is live (today, streaks, lin
 | Warn | `#D9730D` | Stalled, nudges |
 
 - **Dark:** ink canvas, inverse mark, signal `#6BAEE9`
-- Business `color` field exists for subtle entity tints only
+- Project `color` field exists for subtle entity tints only
 - No gradients. Green means completed. Red means late. Orange means stalled.
 
 ### Typography
@@ -77,7 +77,7 @@ Empty states use the brand mark at 28% opacity and one plain sentence.
 
 ### Projects (`/projects`)
 
-Business cards grid + project cards with progress bars, milestones, stalled banners.
+Project cards with progress bars, milestones, stalled banners.
 
 ### Habits (`/daily`)
 
@@ -85,7 +85,7 @@ Single surface list with day pills, 14-day consistency dots, and completion %.
 
 ### Analytics (`/analytics`)
 
-Stat cards, CSS bar charts (activity, business hours, project progress, habit dots, weekdays, time of day).
+Stat cards, CSS bar charts (activity, project hours, project progress, habit dots, weekdays, time of day).
 
 ## Components
 

@@ -26,15 +26,7 @@ const weekdaysSchema = z
   .min(1, "Select at least one weekday")
   .default([0, 1, 2, 3, 4, 5, 6]);
 
-export const createBusinessSchema = z.object({
-  name: z.string().min(1, "Name is required").max(80),
-  iconKey: z.string().min(1).max(40).default("briefcase"),
-  logoUrl: logoUrlSchema,
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-});
-
 export const createProjectSchema = z.object({
-  businessId: z.string().optional().nullable(),
   name: z.string().min(1, "Name is required").max(80),
   description: z.string().max(200).optional(),
   iconKey: z.string().min(1).max(40).default("folder"),
@@ -57,7 +49,6 @@ export const milestoneSchema = z.object({
 export const createTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   notes: z.string().max(500).optional(),
-  businessId: z.string().optional().nullable(),
   projectId: z.string().optional().nullable(),
   priority: z.coerce.number().int().min(0).max(3).default(0),
   dueDate: optionalDateSchema,
@@ -72,7 +63,6 @@ export const createDailyTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(120),
   iconKey: z.string().min(1).max(40).default("check"),
   logoUrl: logoUrlSchema,
-  businessId: z.string().optional().nullable(),
   weekdays: weekdaysSchema,
   isActive: z.coerce.boolean().default(true),
 });

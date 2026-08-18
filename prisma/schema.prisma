@@ -24,25 +24,8 @@ enum EntityType {
   TASK
 }
 
-model Business {
-  id         String      @id @default(cuid())
-  name       String
-  slug       String      @unique
-  iconKey    String      @default("briefcase")
-  logoUrl    String?
-  color      String      @default("#737373")
-  sortOrder  Int         @default(0)
-  projects   Project[]
-  tasks      Task[]
-  dailyTasks DailyTask[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-}
-
 model Project {
   id          String        @id @default(cuid())
-  businessId  String?
-  business    Business?     @relation(fields: [businessId], references: [id], onDelete: SetNull)
   name        String
   description String?
   iconKey     String        @default("folder")
@@ -79,15 +62,13 @@ model Settings {
 }
 
 model Task {
-  id          String     @id @default(cuid())
-  businessId  String?
-  business    Business?  @relation(fields: [businessId], references: [id], onDelete: SetNull)
-  projectId   String?
-  project     Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  title       String
-  notes       String?
-  dueDate     DateTime?
-  status      TaskStatus @default(TODO)
+  id               String     @id @default(cuid())
+  projectId        String?
+  project          Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title            String
+  notes            String?
+  dueDate          DateTime?
+  status           TaskStatus @default(TODO)
   priority         Int        @default(0)
   estimatedMinutes Int?
   completedAt      DateTime?
@@ -96,17 +77,15 @@ model Task {
 }
 
 model DailyTask {
-  id          String    @id @default(cuid())
-  businessId  String?
-  business    Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
-  title       String
-  iconKey     String    @default("check")
-  logoUrl     String?
-  weekdays    Int[]     @default([0, 1, 2, 3, 4, 5, 6])
-  sortOrder   Int       @default(0)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  title     String
+  iconKey   String    @default("check")
+  logoUrl   String?
+  weekdays  Int[]     @default([0, 1, 2, 3, 4, 5, 6])
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model CompletionLog {
