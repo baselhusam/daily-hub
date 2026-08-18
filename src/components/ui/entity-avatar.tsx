@@ -44,6 +44,7 @@ export function EntityAvatar({
           height={size}
           className="h-full w-full object-cover"
           unoptimized
+          referrerPolicy="no-referrer"
         />
       </span>
     );

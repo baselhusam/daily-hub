@@ -7,8 +7,8 @@ import {
   deleteDailyTask,
   updateDailyTask,
 } from "@/app/actions/daily-tasks";
-import { uploadLogo } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
+import { LogoField } from "@/components/ui/logo-field";
 import {
   Dialog,
   DialogBody,
@@ -24,6 +24,7 @@ import {
   FieldLabel,
 } from "@/components/ui/input";
 import { ICON_OPTIONS } from "@/lib/icons";
+import { applyLogoToFormData } from "@/lib/logo";
 import { WEEKDAY_LABELS } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
@@ -91,15 +92,7 @@ export function DailyTaskFormDialog({
     }
 
     try {
-      const logoFile = formData.get("logo") as File | null;
-      if (logoFile && logoFile.size > 0) {
-        const uploadData = new FormData();
-        uploadData.set("logo", logoFile);
-        const logoUrl = await uploadLogo(uploadData);
-        if (logoUrl) formData.set("logoUrl", logoUrl);
-      } else if (task?.logoUrl) {
-        formData.set("logoUrl", task.logoUrl);
-      }
+      await applyLogoToFormData(formData, task?.logoUrl);
 
       const result = isEdit
         ? await updateDailyTask(formData)
@@ -116,7 +109,7 @@ export function DailyTaskFormDialog({
       setError(
         uploadError instanceof Error
           ? uploadError.message
-          : "Failed to upload logo."
+          : "Failed to save logo."
       );
     } finally {
       setPending(false);
@@ -179,10 +172,7 @@ export function DailyTaskFormDialog({
                 </button>
               </div>
             </div>
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Logo</FieldLabel>
-              <DialogInput name="logo" type="file" accept="image/*" />
-            </label>
+            <LogoField key={String(open)} existingLogoUrl={task?.logoUrl} />
             <label className="flex flex-col gap-1.5">
               <FieldLabel>Icon</FieldLabel>
               <DialogSelect

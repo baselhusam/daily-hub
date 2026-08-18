@@ -3,7 +3,8 @@ import { z } from "zod";
 const logoUrlSchema = z
   .string()
   .refine(
-    (value) => value === "" || value.startsWith("/") || value.startsWith("http"),
+    (value) =>
+      value === "" || value.startsWith("/") || /^https?:\/\//i.test(value),
     "Logo must be a valid path or URL"
   )
   .optional()

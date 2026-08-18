@@ -24,6 +24,7 @@ export function EntityIcon({
         height={size}
         className={cn("rounded-sm object-cover", className)}
         unoptimized
+        referrerPolicy="no-referrer"
       />
     );
   }

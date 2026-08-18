@@ -3,8 +3,8 @@
 import * as React from "react";
 import { Plus } from "lucide-react";
 import { createBusiness } from "@/app/actions/businesses";
-import { uploadLogo } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
+import { LogoField } from "@/components/ui/logo-field";
 import {
   Dialog,
   DialogBody,
@@ -20,6 +20,7 @@ import {
   FieldLabel,
 } from "@/components/ui/input";
 import { ICON_OPTIONS } from "@/lib/icons";
+import { applyLogoToFormData } from "@/lib/logo";
 
 export function CreateBusinessDialog() {
   const [open, setOpen] = React.useState(false);
@@ -35,13 +36,7 @@ export function CreateBusinessDialog() {
     const formData = new FormData(form);
 
     try {
-      const logoFile = formData.get("logo") as File | null;
-      if (logoFile && logoFile.size > 0) {
-        const uploadData = new FormData();
-        uploadData.set("logo", logoFile);
-        const logoUrl = await uploadLogo(uploadData);
-        if (logoUrl) formData.set("logoUrl", logoUrl);
-      }
+      await applyLogoToFormData(formData);
 
       const result = await createBusiness(formData);
       if (!result.success) {
@@ -55,7 +50,7 @@ export function CreateBusinessDialog() {
       setError(
         uploadError instanceof Error
           ? uploadError.message
-          : "Failed to upload logo."
+          : "Failed to save logo."
       );
     } finally {
       setPending(false);
@@ -94,10 +89,7 @@ export function CreateBusinessDialog() {
                 ))}
               </DialogSelect>
             </label>
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Logo</FieldLabel>
-              <DialogInput name="logo" type="file" accept="image/*" />
-            </label>
+            <LogoField key={String(open)} />
             {error && <p className="text-sm text-destructive">{error}</p>}
           </DialogBody>
           <DialogFooter className="justify-end">
