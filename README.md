@@ -1,48 +1,66 @@
-# DailyHub
+<p align="center">
+  <img src="docs/assets/banner.png" alt="DailyHub — a quiet workspace that keeps the day in one place." width="100%">
+</p>
 
-A minimal daily dashboard for organizing businesses, projects, ad-hoc tasks, and recurring daily checklists — with analytics for tracking performance over time.
+<p align="center">
+  <strong>A personal command center for businesses, projects, tasks, and daily habits.</strong><br>
+  <sub>Single-user · self-hosted · Next.js 15 · PostgreSQL 16 · Docker</sub>
+</p>
 
-**Live local:** http://localhost:9999 · **Repo:** https://github.com/baselhusam/daily-hub
+<p align="center">
+  <a href="https://github.com/baselhusam/daily-hub">Repository</a>
+  ·
+  <a href="docs/DEPLOYMENT.md">Deploy</a>
+  ·
+  <a href="docs/DESIGN.md">Design</a>
+  ·
+  <a href="https://baselhusam.com">Author</a>
+</p>
 
-## What it does
+---
 
-DailyHub is a **single-user, self-hosted** hub for people working across multiple businesses and projects. See open work at a glance, complete daily habits, and review what you finished — without heavy project-management overhead.
+DailyHub is for people who work across **more than one business at a time** — founders, consultants, indie builders, anyone juggling client work, side projects, and a few non-negotiable daily habits.
 
-| Area | Description |
-|------|-------------|
-| **Dashboard** (`/`) | Businesses, projects, inbox tasks, daily checklist, completion feed |
-| **Analytics** (`/analytics`) | Charts and stats for tasks, businesses, projects, and daily habits |
+It is not a replacement for Linear, Jira, or Notion. It is the **morning surface**: what is open, what belongs where, what must happen today, and what you already finished.
 
-## Features
+Local app: [http://localhost:9999](http://localhost:9999)
 
-- Businesses with name, icon, and optional logo upload
-- Projects nested under businesses
-- Tasks attached to a business, project, or inbox (none)
-- Daily tasks with icons (e.g. Medium post habit)
-- Automatic completion logging
-- Light / dark theme, minimal neutral UI
-- Left sidebar navigation + mobile top nav
-- Docker Compose full stack on port **9999**
+## Surfaces
 
-## Tech stack
+| Page | Route | What you see |
+|------|-------|----------------|
+| **Today** | `/` | Greeting, quick add, nudges, snapshot stats, today’s habits, open work by project, inbox |
+| **Projects** | `/projects` | Business cards, projects with progress, due dates, milestones, stalled banners |
+| **Habits** | `/daily` | Recurring checklist with weekday schedules, 14-day consistency, completion % |
+| **Analytics** | `/analytics` | Completions over time, business and project breakdown, habit rates, weekday patterns |
 
-Next.js 15 · PostgreSQL 16 · Prisma · Tailwind CSS v4 · shadcn/ui · Motion · Recharts
+Desktop uses a left sidebar; smaller screens use a bottom tab bar. Light and dark themes are built in.
+
+## What you can track
+
+- **Businesses** — name, icon, optional logo
+- **Projects** — nested under a business (or standalone), status, due date, milestones
+- **Tasks** — attached to a project, a business, or the inbox
+- **Daily tasks** — recurring habits with icons and weekday schedules
+- **Completion log** — written automatically when you check something off, then charted on Analytics
+
+Create and edit from dialogs. Check a box and it is done for today — no ceremony.
 
 ## Quick start
 
-**Docker (full stack):**
+**Docker (app + Postgres) — recommended**
 
 ```bash
 docker compose up --build
 ```
 
-Open http://localhost:9999. Optional seed:
+Open [http://localhost:9999](http://localhost:9999). Optional sample data:
 
 ```bash
 docker compose exec app npm run db:seed
 ```
 
-**Local development:**
+**Local development** (Postgres in Docker, Next.js on the host)
 
 ```bash
 docker compose up -d db
@@ -53,16 +71,21 @@ npm run db:seed
 npm run dev
 ```
 
-## Documentation
+v1 has **no authentication**. Keep it on localhost, a private network, or behind a VPN / reverse-proxy. Details and self-hosting notes live in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-| Document | Contents |
-|----------|----------|
-| [CLAUDE.md](CLAUDE.md) | AI assistant guide (commands, structure, conventions) |
-| [docs/PROJECT.md](docs/PROJECT.md) | Purpose, goals, target user |
-| [docs/SCOPE.md](docs/SCOPE.md) | In scope / out of scope for v1 |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data model, request flow, Docker services |
-| [docs/DESIGN.md](docs/DESIGN.md) | Visual direction, layout, UX patterns |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker, env vars, self-hosting, troubleshooting |
+## Stack
+
+| Layer | Choice |
+|-------|--------|
+| App | Next.js 15 (App Router, Server Actions) |
+| Language | TypeScript |
+| Database | PostgreSQL 16 |
+| ORM | Prisma |
+| UI | Tailwind CSS v4, shadcn/ui, Motion |
+| Charts | Recharts |
+| Runtime | Node 22, port **9999** |
+
+There is no separate API server. Reads go through Server Components; writes go through Server Actions.
 
 ## Scripts
 
@@ -77,27 +100,27 @@ npm run dev
 | `npm run db:seed` | Seed sample data |
 | `npm run db:studio` | Prisma Studio |
 
-## Project structure
+## Documentation
+
+| Document | Read when you need… |
+|----------|---------------------|
+| [CLAUDE.md](CLAUDE.md) | Commands, layout, and conventions for AI assistants |
+| [docs/PROJECT.md](docs/PROJECT.md) | Purpose, goals, and who it is for |
+| [docs/SCOPE.md](docs/SCOPE.md) | What is in v1 — and what is intentionally out |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data model, request flow, Docker services |
+| [docs/DESIGN.md](docs/DESIGN.md) | Visual direction, layout, and UX patterns |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker, env vars, self-hosting, troubleshooting |
+
+## Layout
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx
-│   ├── (app)/
-│   │   ├── layout.tsx       # Sidebar shell
-│   │   ├── page.tsx         # Dashboard
-│   │   └── analytics/       # Analytics page
-│   └── actions/             # Server Actions
-├── components/
-│   ├── app-sidebar.tsx
-│   ├── dashboard/
-│   ├── analytics/
-│   └── ui/                  # shadcn/ui
-└── lib/
-    ├── dashboard.ts
-    ├── analytics.ts
-    ├── prisma.ts
-    └── validations.ts
+│   ├── layout.tsx            # Fonts, theme
+│   ├── (app)/                # Today, Projects, Habits, Analytics
+│   └── actions/              # Server Actions
+├── components/               # Shell, dashboard, projects, daily, analytics, ui
+└── lib/                      # Data loaders, Prisma, validation
 prisma/
 ├── schema.prisma
 └── seed.ts
@@ -105,10 +128,6 @@ docker-compose.yml
 Dockerfile
 ```
 
-## Author
-
-Built by [Basel Husam](https://baselhusam.com).
-
 ## License
 
-MIT
+MIT © [Basel Husam](https://baselhusam.com)

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DailyHub README banner</title>
+<!--
+  Source for docs/assets/banner.png
+  Render at 1280×520, 2× device scale:
+
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+    --headless=new --disable-gpu --hide-scrollbars \
+    --force-device-scale-factor=2 --window-size=1280,520 \
+    --default-background-color=F7F7F5 --virtual-time-budget=4000 \
+    --screenshot=docs/assets/banner.png \
+    branding/readme-banner.html
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1280px;
+    height: 520px;
+    overflow: hidden;
+    background: #F7F7F5;
+    color: #37352F;
+    font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .banner {
+    position: relative;
+    width: 1280px;
+    height: 520px;
+    background: #F7F7F5;
+    overflow: hidden;
+  }
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(233,233,231,0.7) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(233,233,231,0.7) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+    mask-image: radial-gradient(120% 90% at 78% 46%, #000 18%, transparent 72%);
+    pointer-events: none;
+  }
+  .frame {
+    position: absolute;
+    inset: 18px;
+    border: 1px solid #E9E9E7;
+    border-radius: 18px;
+    background: #F7F7F5;
+  }
+  .inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 64px 8px 68px;
+    gap: 48px;
+  }
+  .left {
+    flex: 1 1 auto;
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .lockup {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .wordmark {
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+  .hub { color: #2383E2; }
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #9B9A97;
+    text-transform: uppercase;
+  }
+  .tagline {
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    max-width: 560px;
+    text-wrap: pretty;
+  }
+  .sub {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #787774;
+    max-width: 500px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 11px;
+    border: 1px solid #E9E9E7;
+    border-radius: 999px;
+    background: #FFFFFF;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #4F4D48;
+    letter-spacing: -0.01em;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: #2383E2;
+  }
+  .dot.ink { background: #37352F; }
+  .dot.done { background: #0F9960; }
+  .right { flex: 0 0 372px; }
+  .card {
+    background: #FFFFFF;
+    border: 1px solid #E9E9E7;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15,15,15,0.05), 0 18px 40px -28px rgba(15,15,15,0.28);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid #F1F1EF;
+  }
+  .card-kicker {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #2383E2;
+    text-transform: uppercase;
+  }
+  .card-date {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #9B9A97;
+    font-variant-numeric: tabular-nums;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 18px;
+    border-bottom: 1px solid #F1F1EF;
+  }
+  .row:last-of-type { border-bottom: 0; }
+  .check {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid #C7C6C2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 18px;
+  }
+  .check.on {
+    background: #0F9960;
+    border-color: #0F9960;
+  }
+  .title {
+    font-size: 14.5px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #37352F;
+  }
+  .title.done {
+    color: #9B9A97;
+    text-decoration: line-through;
+    text-decoration-color: #E9E9E7;
+  }
+  .meta {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #9B9A97;
+    font-variant-numeric: tabular-nums;
+  }
+  .foot {
+    padding: 14px 18px 16px;
+    background: #FBFBFA;
+    border-top: 1px solid #F1F1EF;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .bar {
+    flex: 1;
+    height: 6px;
+    background: #E9E9E7;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .bar > span {
+    display: block;
+    width: 66.666%;
+    height: 100%;
+    background: #2383E2;
+    border-radius: 99px;
+  }
+  .pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: #37352F;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="frame">
+      <div class="grid"></div>
+      <div class="inner">
+        <div class="left">
+          <div class="lockup">
+            <svg width="44" height="44" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"/>
+              <path d="M10.5 21.2l5 5 10.5-11" stroke="#F7F7F5" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="32" cy="8" r="6" fill="#F7F7F5"/>
+              <circle cx="32" cy="8" r="4" fill="#2383E2"/>
+            </svg>
+            <div class="wordmark">Daily<span class="hub">Hub</span></div>
+          </div>
+          <div class="eyebrow">Personal command center</div>
+          <h1 class="tagline">A quiet workspace that keeps the day in one place.</h1>
+          <p class="sub">Organize businesses, projects, inbox tasks, and daily habits — then see what actually got done.</p>
+          <div class="chips">
+            <span class="chip"><span class="dot"></span>Self-hosted</span>
+            <span class="chip"><span class="dot ink"></span>Single-user</span>
+            <span class="chip"><span class="dot done"></span>Docker on :9999</span>
+          </div>
+        </div>
+        <div class="right">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-kicker">Today</div>
+              <div class="card-date">Wed 19 Aug</div>
+            </div>
+            <div class="row">
+              <div class="check on">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.2 6.2l2.4 2.4 5.2-5.4" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="title done">Morning review</div>
+              <div class="meta">Habit</div>
+            </div>
+            <div class="row">
+              <div class="check on">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.2 6.2l2.4 2.4 5.2-5.4" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="title done">Publish Medium post</div>
+              <div class="meta">Daily</div>
+            </div>
+            <div class="row">
+              <div class="check"></div>
+              <div class="title">Client follow-up</div>
+              <div class="meta">Inbox</div>
+            </div>
+            <div class="foot">
+              <div class="bar"><span></span></div>
+              <div class="pct">2 / 3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
