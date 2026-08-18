@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { parseDateInput } from "@/lib/dates";
+import { milestoneSchema } from "@/lib/validations";
 import type { ActionResult } from "@/app/actions/businesses";
 
 const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
@@ -43,16 +44,34 @@ export async function saveProjectMilestones(
     return { success: false, error: "Project not found." };
   }
 
+  const valid: Array<{ name: string; dueDate: Date | null; done: boolean }> = [];
+  for (const milestone of milestones) {
+    if (!milestone.name.trim()) continue;
+    const parsed = milestoneSchema.safeParse(milestone);
+    if (!parsed.success) {
+      return {
+        success: false,
+        error:
+          parsed.error.issues[0]?.message ??
+          "Enter a valid date with a 4-digit year",
+      };
+    }
+    valid.push({
+      name: parsed.data.name.trim(),
+      dueDate: parseDateInput(parsed.data.dueDate),
+      done: parsed.data.done ?? false,
+    });
+  }
+
   await prisma.milestone.deleteMany({ where: { projectId } });
 
-  const valid = milestones.filter((m) => m.name.trim());
   if (valid.length > 0) {
     await prisma.milestone.createMany({
       data: valid.map((milestone, index) => ({
         projectId,
-        name: milestone.name.trim(),
-        dueDate: parseDateInput(milestone.dueDate),
-        done: milestone.done ?? false,
+        name: milestone.name,
+        dueDate: milestone.dueDate,
+        done: milestone.done,
         sortOrder: index,
       })),
     });

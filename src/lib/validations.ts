@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseDateInput } from "@/lib/dates";
 
 const logoUrlSchema = z
   .string()
@@ -14,7 +15,11 @@ const optionalDateSchema = z
   .string()
   .optional()
   .or(z.literal(""))
-  .transform((value) => (value && value !== "" ? value : undefined));
+  .transform((value) => (value && value !== "" ? value : undefined))
+  .refine(
+    (value) => value === undefined || parseDateInput(value) !== null,
+    "Enter a valid date with a 4-digit year"
+  );
 
 const weekdaysSchema = z
   .array(z.coerce.number().int().min(0).max(6))

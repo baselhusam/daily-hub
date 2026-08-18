@@ -3,6 +3,7 @@
 import * as React from "react";
 import { createTask } from "@/app/actions/tasks";
 import { Button } from "@/components/ui/button";
+import { DATE_INPUT_MAX, DATE_INPUT_MIN } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
 type ProjectOption = { id: string; name: string };
@@ -80,6 +81,8 @@ export function QuickAdd({
       </select>
       <input
         type="date"
+        min={DATE_INPUT_MIN}
+        max={DATE_INPUT_MAX}
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
         className="rounded-md border border-border bg-[#F1F1EF] px-2.5 py-2 text-[13.5px] text-muted-foreground outline-none dark:bg-muted"

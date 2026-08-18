@@ -11,14 +11,40 @@ export function getTodayDate(): Date {
   return startOfDay(new Date());
 }
 
+/** Prisma DateTime cannot serialize years outside 0001–9999. */
+export const MIN_CALENDAR_YEAR = 1900;
+export const MAX_CALENDAR_YEAR = 9999;
+export const DATE_INPUT_MIN = "1900-01-01";
+export const DATE_INPUT_MAX = "9999-12-31";
+
+const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
 export function toDateOnlyString(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
 export function parseDateInput(value: string | null | undefined): Date | null {
   if (!value || value === "") return null;
-  const parsed = startOfDay(new Date(value));
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+  const match = DATE_ONLY_RE.exec(value.trim());
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < MIN_CALENDAR_YEAR || year > MAX_CALENDAR_YEAR) return null;
+
+  const parsed = startOfDay(new Date(year, month - 1, day));
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsed;
 }
 
 export function formatDueDate(date: Date | null | undefined): string {

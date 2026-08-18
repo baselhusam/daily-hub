@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/input";
 import { ICON_OPTIONS } from "@/lib/icons";
 import { applyLogoToFormData } from "@/lib/logo";
-import { toDateOnlyString } from "@/lib/dates";
+import { parseDateInput, toDateOnlyString } from "@/lib/dates";
 
 type BusinessOption = { id: string; name: string };
 
@@ -82,6 +82,22 @@ export function ProjectFormDialog({
     setError(null);
 
     const form = event.currentTarget;
+    const dueDate = String(new FormData(form).get("dueDate") ?? "");
+    if (dueDate && parseDateInput(dueDate) === null) {
+      setError("Enter a valid date with a 4-digit year.");
+      setPending(false);
+      return;
+    }
+
+    for (const milestone of milestones) {
+      if (!milestone.name.trim()) continue;
+      if (milestone.dueDate && parseDateInput(milestone.dueDate) === null) {
+        setError("Each milestone needs a valid date with a 4-digit year.");
+        setPending(false);
+        return;
+      }
+    }
+
     const formData = new FormData(form);
 
     for (const milestone of milestones) {
