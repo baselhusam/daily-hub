@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopBar, MobileTabBar } from "@/components/app-top-bar";
 import { BrandLockup } from "@/components/brand-mark";
 import { SearchProvider } from "@/components/search-context";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
 type AppShellProps = {
@@ -55,13 +56,16 @@ export function AppShell({ stats, children }: AppShellProps) {
             <Link href="/" aria-label="DailyHub">
               <BrandLockup size={24} wordmarkClassName="text-[15px] leading-none" />
             </Link>
-            {stats.showStreaks && (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
-                <span className="text-[12px] font-semibold text-signal tabular-nums">
-                  {stats.streak}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {stats.showStreaks && (
+                <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
+                  <span className="text-[12px] font-semibold text-signal tabular-nums">
+                    {stats.streak}
+                  </span>
+                </div>
+              )}
+              <ThemeToggle />
+            </div>
           </header>
         </div>
 

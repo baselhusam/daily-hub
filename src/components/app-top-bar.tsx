@@ -13,6 +13,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
 type AppTopBarProps = {
@@ -72,6 +73,7 @@ export function AppTopBar({
           </span>
         )}
       </div>
+      <ThemeToggle />
       <Link
         href="/analytics"
         className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-[#D3D2CF] hover:text-foreground"
