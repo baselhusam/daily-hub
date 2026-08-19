@@ -1,17 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate, parseDateInput } from "@/lib/dates";
 import { createTaskSchema, updateTaskSchema } from "@/lib/validations";
 import type { ActionResult } from "@/app/actions/types";
 
-const REVALIDATE_PATHS = ["/", "/projects", "/analytics", "/daily"] as const;
-
 function revalidateAll() {
-  for (const path of REVALIDATE_PATHS) {
-    revalidatePath(path);
-  }
+  revalidateApp();
 }
 
 function parseTaskForm(formData: FormData) {

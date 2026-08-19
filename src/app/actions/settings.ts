@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { ActionResult } from "@/app/actions/types";
@@ -32,10 +32,7 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
     update: parsed.data,
   });
 
-  revalidatePath("/");
-  revalidatePath("/projects");
-  revalidatePath("/daily");
-  revalidatePath("/analytics");
+  revalidateApp();
 
   return { success: true };
 }

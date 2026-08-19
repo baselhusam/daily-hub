@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  Bell,
   CalendarCheck,
   ChevronRight,
   FolderKanban,
@@ -13,6 +12,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
@@ -81,16 +81,7 @@ export function AppTopBar({
       >
         <BarChart3 className="h-4 w-4" />
       </Link>
-      <Link
-        href="/daily"
-        className="relative grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-[#D3D2CF] hover:text-foreground"
-        aria-label="Habits"
-      >
-        <Bell className="h-4 w-4" />
-        {stats.hasNudges && (
-          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-background bg-signal" />
-        )}
-      </Link>
+      <NotificationBell notifications={stats.notifications} />
     </div>
   );
 }

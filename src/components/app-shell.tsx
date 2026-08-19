@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopBar, MobileTabBar } from "@/components/app-top-bar";
 import { BrandLockup } from "@/components/brand-mark";
+import { NotificationBell } from "@/components/notification-bell";
 import { SearchProvider } from "@/components/search-context";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -120,6 +121,7 @@ export function AppShell({ stats, children }: AppShellProps) {
                   </span>
                 </div>
               )}
+              <NotificationBell notifications={stats.notifications} />
               <ThemeToggle />
             </div>
           </header>

@@ -1,6 +1,12 @@
-import { startOfWeek } from "date-fns";
+import { addDays, startOfWeek } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate, isScheduledOn } from "@/lib/dates";
+import {
+  buildNotifications,
+  getProjectLastTouchMap,
+  getStalledProjects,
+  type AppNotification,
+} from "@/lib/notifications";
 import { getStreakInfo } from "@/lib/streak";
 import { getSettings } from "@/lib/settings";
 
@@ -23,7 +29,7 @@ export type SidebarStats = {
   streak: number;
   streakDots: Array<{ color: string }>;
   showStreaks: boolean;
-  hasNudges: boolean;
+  notifications: AppNotification[];
   settings: {
     displayName: string;
     role: string;
@@ -46,6 +52,9 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     projects,
     projectTaskCounts,
     habitCount,
+    overdueCount,
+    dueTodayCount,
+    lastTouch,
   ] = await Promise.all([
     prisma.task.count({ where: { status: { not: "DONE" } } }),
     prisma.completionLog.count({
@@ -79,6 +88,19 @@ export async function getSidebarStats(): Promise<SidebarStats> {
       _count: { id: true },
     }),
     prisma.dailyTask.count({ where: { isActive: true } }),
+    prisma.task.count({
+      where: {
+        status: { not: "DONE" },
+        dueDate: { lt: today },
+      },
+    }),
+    prisma.task.count({
+      where: {
+        status: { not: "DONE" },
+        dueDate: { gte: today, lt: addDays(today, 1) },
+      },
+    }),
+    getProjectLastTouchMap(),
   ]);
 
   const countMap = new Map(
@@ -101,11 +123,24 @@ export async function getSidebarStats(): Promise<SidebarStats> {
 
   const streakInfo = await getStreakInfo(dailyTasks);
 
-  const overdueCount = await prisma.task.count({
-    where: {
-      status: { not: "DONE" },
-      dueDate: { lt: today },
-    },
+  const remainingHabits = scheduledToday.filter(
+    (task) => !completedIds.has(task.id)
+  ).length;
+
+  const notifications = buildNotifications({
+    overdueCount,
+    dueTodayCount,
+    remainingHabits,
+    nudgeDays: settings.nudgeDays,
+    stalled: getStalledProjects(
+      projects.map((project) => ({
+        ...project,
+        openCount: countMap.get(project.id) ?? 0,
+      })),
+      lastTouch,
+      today,
+      settings.nudgeDays
+    ),
   });
 
   return {
@@ -121,7 +156,7 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     streak: streakInfo.streak,
     streakDots: streakInfo.dots,
     showStreaks: settings.showStreaks,
-    hasNudges: overdueCount > 0,
+    notifications,
     settings: {
       displayName: settings.displayName,
       role: settings.role,

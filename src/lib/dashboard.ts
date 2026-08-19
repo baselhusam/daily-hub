@@ -15,6 +15,13 @@ import {
 import { getDueMeta, isCompletedToday } from "@/lib/due-meta";
 import { getSettings } from "@/lib/settings";
 import {
+  buildNotifications,
+  getProjectLastTouchMap,
+  getStalledProjects,
+  idleDaysSince,
+  type AppNotification,
+} from "@/lib/notifications";
+import {
   daysUntil,
   formatEstimate,
   getStreakInfo,
@@ -157,6 +164,27 @@ function mapTaskItem(
   };
 }
 
+function toDashboardNudge(item: AppNotification): DashboardNudge[] {
+  if (item.kind !== "overdue" && item.kind !== "stalled") return [];
+
+  const detail =
+    item.detail.charAt(0).toLowerCase() + item.detail.slice(1);
+
+  return [
+    {
+      text:
+        item.kind === "stalled" ? `${item.title} ${detail}` : item.title,
+      variant: item.tone === "warn" ? "warn" : "neutral",
+      actionLabel: item.actionLabel,
+      projectId: item.project?.id,
+      logoUrl: item.project?.logoUrl,
+      iconKey: item.project?.iconKey,
+      color: item.project?.color,
+      projectName: item.project?.name,
+    },
+  ];
+}
+
 export async function getDashboardData(): Promise<DashboardData> {
   const today = getTodayDate();
   const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -171,6 +199,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     last14Completions,
     streakInfo,
     allOpenTasks,
+    lastTouch,
   ] = await Promise.all([
     prisma.project.findMany({
       where: { status: { not: "DONE" } },
@@ -229,6 +258,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         status: true,
       },
     }),
+    getProjectLastTouchMap(),
   ]);
 
   const completedDailyIds = new Set(todayCompletions.map((c) => c.entityId));
@@ -263,6 +293,9 @@ export async function getDashboardData(): Promise<DashboardData> {
   }));
 
   const overdueTasks = allOpenTasks.filter((t) => isOverdue(t.dueDate, today));
+  const dueTodayTasks = allOpenTasks.filter(
+    (t) => t.dueDate && toDateOnlyString(t.dueDate) === toDateOnlyString(today)
+  );
   const dueThisWeek = allOpenTasks.filter((t) => {
     const days = daysUntil(t.dueDate, today);
     return days !== null && days >= 0 && days <= 6;
@@ -392,45 +425,29 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
   ];
 
-  const projectLastTouch = new Map<string, string>();
-  for (const log of last14Completions) {
-    if (log.entityType !== "TASK") continue;
-    const task = allOpenTasks.find((t) => t.id === log.entityId);
-    if (!task?.projectId) continue;
-    const key = toDateOnlyString(log.completedOn);
-    const prev = projectLastTouch.get(task.projectId);
-    if (!prev || key > prev) projectLastTouch.set(task.projectId, key);
-  }
-
-  const nudges: DashboardNudge[] = [];
-  if (overdueTasks.length > 0) {
-    nudges.push({
-      text: `${overdueTasks.length} task${overdueTasks.length === 1 ? " is" : "s are"} past due`,
-      variant: "warn",
-    });
-  }
-
-  for (const project of mappedProjects) {
-    if (project.openCount === 0) continue;
-    const last = projectLastTouch.get(project.id);
-    const idle = last
-      ? Math.floor(
-          (today.getTime() - new Date(last).getTime()) / 86400000
-        )
-      : settings.nudgeDays + 1;
-    if (idle >= settings.nudgeDays) {
-      nudges.push({
-        text: `${project.name} untouched for ${last ? `${idle}` : `${settings.nudgeDays}+`} days`,
-        variant: "neutral",
-        actionLabel: "Focus",
-        projectId: project.id,
+  const remainingHabits = scheduledToday.filter(
+    (task) => !completedDailyIds.has(task.id)
+  ).length;
+  const notifications = buildNotifications({
+    overdueCount: overdueTasks.length,
+    dueTodayCount: dueTodayTasks.length,
+    remainingHabits,
+    nudgeDays: settings.nudgeDays,
+    stalled: getStalledProjects(
+      mappedProjects.map((project) => ({
+        id: project.id,
+        name: project.name,
         logoUrl: project.logoUrl,
         iconKey: project.iconKey,
         color: project.color,
-        projectName: project.name,
-      });
-    }
-  }
+        openCount: project.openCount,
+      })),
+      lastTouch,
+      today,
+      settings.nudgeDays
+    ),
+  });
+  const nudges = notifications.flatMap(toDashboardNudge);
 
   const weekTaskCount = weekCompletions.filter(
     (l) => l.entityType === "TASK"
@@ -502,7 +519,7 @@ export async function getProjectsPageData() {
   const nudgeDays = settings.nudgeDays;
   const today = getTodayDate();
 
-  const [projects, completionLogs] = await Promise.all([
+  const [projects, lastTouch] = await Promise.all([
     prisma.project.findMany({
       orderBy: { sortOrder: "asc" },
       include: {
@@ -510,27 +527,8 @@ export async function getProjectsPageData() {
         tasks: { select: { status: true, id: true, projectId: true } },
       },
     }),
-    prisma.completionLog.findMany({
-      where: { entityType: "TASK" },
-      select: { entityId: true, completedOn: true },
-    }),
+    getProjectLastTouchMap(),
   ]);
-
-  const taskProjectMap = new Map<string, string>();
-  for (const project of projects) {
-    for (const task of project.tasks) {
-      taskProjectMap.set(task.id, project.id);
-    }
-  }
-
-  const lastTouch = new Map<string, string>();
-  for (const log of completionLogs) {
-    const projectId = taskProjectMap.get(log.entityId);
-    if (!projectId) continue;
-    const key = toDateOnlyString(log.completedOn);
-    const prev = lastTouch.get(projectId);
-    if (!prev || key > prev) lastTouch.set(projectId, key);
-  }
 
   return {
     projects: projects.map((project) => {
@@ -539,11 +537,7 @@ export async function getProjectsPageData() {
       const total = open + done;
       const pct = total === 0 ? 0 : Math.round((done / total) * 100);
       const last = lastTouch.get(project.id);
-      const idle = last
-        ? Math.floor(
-            (today.getTime() - new Date(last).getTime()) / 86400000
-          )
-        : 99;
+      const idle = idleDaysSince(last, today, 99);
 
       return {
         ...project,
