@@ -163,6 +163,23 @@
   scrollbar-color: rgb(255 255 255 / 18%) transparent;
 }
 
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  isolation: isolate;
+  height: 100%;
+  overflow: clip;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
 @keyframes dh-fade {
   from {
     opacity: 0;
