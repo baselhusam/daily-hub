@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="240" viewBox="0 0 150 40" fill="none">
+  <title>DailyHub logo</title>
+  <rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F"/>
+  <path d="M10.5 21.2l5 5 10.5-11" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="8" r="6" fill="#fff"/>
+  <circle cx="32" cy="8" r="4" fill="#2383E2"/>
+  <text x="43" y="27" fill="#37352F" font-family="Instrument Sans, Arial, sans-serif" font-size="22" font-weight="600" letter-spacing="-.77">Daily<tspan fill="#2383E2">Hub</tspan></text>
+</svg>
