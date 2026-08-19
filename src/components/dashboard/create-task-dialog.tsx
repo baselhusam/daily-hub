@@ -139,7 +139,7 @@ export function CreateTaskDialog({
               <FieldLabel>Task</FieldLabel>
               <DialogInput
                 name="title"
-                placeholder="What needs doing?"
+                placeholder="What needs doing…"
                 defaultValue={task?.title}
                 required
               />
@@ -148,7 +148,7 @@ export function CreateTaskDialog({
               <FieldLabel>Notes</FieldLabel>
               <DialogInput
                 name="notes"
-                placeholder="Optional notes"
+                placeholder="Optional notes…"
                 defaultValue={task?.notes ?? ""}
               />
             </label>
@@ -178,19 +178,19 @@ export function CreateTaskDialog({
                   name="estimatedMinutes"
                   type="number"
                   min={0}
-                  placeholder="30"
+                  placeholder="e.g. 30"
                   defaultValue={task?.estimatedMinutes ?? ""}
                 />
               </label>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
           </DialogBody>
           <DialogFooter className="justify-end">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : isEdit ? "Save" : "Add"}
+              {pending ? "Saving…" : isEdit ? "Save" : "Add"}
             </Button>
           </DialogFooter>
         </form>

@@ -50,6 +50,10 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
   const today = getTodayDate();
   const [pendingDelete, setPendingDelete] =
     React.useState<DeleteProjectTarget | null>(null);
+  const [pendingMilestoneId, setPendingMilestoneId] = React.useState<
+    string | null
+  >(null);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const id = window.location.hash.replace("#", "");
@@ -59,6 +63,23 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
     });
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  async function handleToggleMilestone(id: string) {
+    setPendingMilestoneId(id);
+    setActionError(null);
+    try {
+      const result = await toggleMilestone(id);
+      if (!result.success) {
+        setActionError(
+          result.error ?? "Could not update this milestone. Try again."
+        );
+      }
+    } catch {
+      setActionError("Could not update this milestone. Try again.");
+    } finally {
+      setPendingMilestoneId(null);
+    }
+  }
 
   return (
     <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
@@ -70,11 +91,29 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
           actions={<ProjectFormDialog />}
         />
 
+        {actionError ? (
+          <p
+            role="alert"
+            aria-live="polite"
+            className="rounded-[10px] border border-destructive/25 bg-destructive-wash px-3.5 py-2.5 text-[13px] text-destructive"
+          >
+            {actionError}
+          </p>
+        ) : null}
+
         {projects.length === 0 ? (
           <EmptyState
             title="No projects yet"
             description="Create one to start organizing tasks."
-          />
+          >
+            <ProjectFormDialog
+              trigger={
+                <Button size="sm" className="mt-1 h-9 px-4 text-[13.5px] font-semibold">
+                  Create project
+                </Button>
+              }
+            />
+          </EmptyState>
         ) : (
           <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
             {projects.map((project) => {
@@ -195,8 +234,9 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                             >
                               <Checkbox
                                 checked={milestone.done}
+                                disabled={pendingMilestoneId === milestone.id}
                                 onCheckedChange={() =>
-                                  toggleMilestone(milestone.id)
+                                  void handleToggleMilestone(milestone.id)
                                 }
                                 className="size-[17px]"
                                 aria-label={`Toggle ${milestone.name}`}

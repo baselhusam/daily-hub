@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Trash2, Pencil } from "lucide-react";
-import { deleteDailyTask } from "@/app/actions/daily-tasks";
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
@@ -11,6 +10,10 @@ import { ChainDots } from "@/components/ui/chain-dots";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/brand-mark";
 import { DailyTaskFormDialog } from "./daily-task-form-dialog";
+import {
+  DeleteDailyTaskDialog,
+  type DeleteDailyTaskTarget,
+} from "./delete-daily-task-dialog";
 
 type DailyTaskRecord = {
   id: string;
@@ -29,6 +32,8 @@ type DailyShellProps = {
 };
 
 export function DailyShell({ dailyTasks }: DailyShellProps) {
+  const [pendingDelete, setPendingDelete] =
+    React.useState<DeleteDailyTaskTarget | null>(null);
   React.useEffect(() => {
     const id = window.location.hash.replace("#", "");
     if (!id) return;
@@ -52,7 +57,15 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
           <EmptyState
             title="No habits yet"
             description="Create one to build your routine."
-          />
+          >
+            <DailyTaskFormDialog
+              trigger={
+                <Button size="sm" className="mt-1 h-9 px-4 text-[13.5px] font-semibold">
+                  Create habit
+                </Button>
+              }
+            />
+          </EmptyState>
         ) : (
           <SurfaceCard>
             {dailyTasks.map((task) => (
@@ -124,7 +137,14 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-hairline hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
-                    onClick={() => deleteDailyTask(task.id)}
+                    onClick={() =>
+                      setPendingDelete({
+                        id: task.id,
+                        title: task.title,
+                        iconKey: task.iconKey,
+                        logoUrl: task.logoUrl,
+                      })
+                    }
                     aria-label="Delete habit"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -135,6 +155,13 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
           </SurfaceCard>
         )}
       </div>
+      <DeleteDailyTaskDialog
+        task={pendingDelete}
+        open={pendingDelete !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }

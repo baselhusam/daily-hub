@@ -19,9 +19,11 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { TaskRow } from "@/components/ui/task-row";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/brand-mark";
 import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { completeTask } from "@/app/actions/tasks";
+import { isTypingTarget } from "@/lib/utils";
 
 type EditableTask = {
   id: string;
@@ -55,6 +57,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const projectFilter = searchParams.get("project");
   const [pendingTaskId, setPendingTaskId] = React.useState<string | null>(null);
   const [editingTask, setEditingTask] = React.useState<EditableTask | null>(null);
+  const [actionError, setActionError] = React.useState<string | null>(null);
   const today = getTodayDate();
 
   React.useEffect(() => {
@@ -66,6 +69,25 @@ export function DashboardShell({ data }: DashboardShellProps) {
     return () => cancelAnimationFrame(frame);
   }, [projectFilter]);
 
+  React.useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape" || !projectFilter) return;
+      if (isTypingTarget(event.target)) return;
+      if (
+        document.querySelector(
+          "[data-slot='dialog-content'], [data-slot='popover-content']"
+        )
+      ) {
+        return;
+      }
+      event.preventDefault();
+      router.push("/");
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [projectFilter, router]);
+
   const filteredProjects =
     projectFilter && projectFilter !== "all" && projectFilter !== "inbox"
       ? data.projects.filter((p) => p.id === projectFilter)
@@ -75,6 +97,10 @@ export function DashboardShell({ data }: DashboardShellProps) {
     !projectFilter || projectFilter === "all" || projectFilter === "inbox";
   const showHabits = !projectFilter || projectFilter === "all";
   const filterProject = data.projects.find((p) => p.id === projectFilter);
+  const isFreshWorkspace =
+    !filterProject &&
+    data.projects.length === 0 &&
+    data.inboxTasks.length === 0;
 
   const habitProgress =
     data.stats.dailyScheduled === 0
@@ -85,8 +111,19 @@ export function DashboardShell({ data }: DashboardShellProps) {
 
   async function handleComplete(taskId: string) {
     setPendingTaskId(taskId);
-    await completeTask(taskId);
-    setPendingTaskId(null);
+    setActionError(null);
+    try {
+      const result = await completeTask(taskId);
+      if (!result.success) {
+        setActionError(
+          result.error ?? "Could not complete this task. Try again."
+        );
+      }
+    } catch {
+      setActionError("Could not complete this task. Try again.");
+    } finally {
+      setPendingTaskId(null);
+    }
   }
 
   return (
@@ -125,6 +162,16 @@ export function DashboardShell({ data }: DashboardShellProps) {
             )
           }
         />
+
+        {actionError ? (
+          <p
+            role="alert"
+            aria-live="polite"
+            className="rounded-[10px] border border-destructive/25 bg-destructive-wash px-3.5 py-2.5 text-[13px] text-destructive"
+          >
+            {actionError}
+          </p>
+        ) : null}
 
         {filterProject && (
           <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pr-2 pl-2">
@@ -241,6 +288,17 @@ export function DashboardShell({ data }: DashboardShellProps) {
             </span>
           </div>
 
+          {isFreshWorkspace ? (
+            <SurfaceCard>
+              <EmptyState
+                title="No open work"
+                description="Add a task, or create a project to group related work."
+              >
+                <CreateTaskDialog projects={data.projects} />
+              </EmptyState>
+            </SurfaceCard>
+          ) : (
+            <>
           {filteredProjects.map((project) => {
             const dl = daysUntil(project.dueDate, today);
             const visibleTasks = project.tasks;
@@ -345,9 +403,11 @@ export function DashboardShell({ data }: DashboardShellProps) {
                 </SurfaceCard>
               );
             })}
+            </>
+          )}
         </div>
 
-        {showInbox && (
+        {showInbox && !isFreshWorkspace && (
           <SurfaceCard variant="paper">
             <SurfaceCardHeader>
               <div className="flex w-full items-center gap-3">

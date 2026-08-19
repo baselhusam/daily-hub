@@ -113,32 +113,40 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
 export async function completeTask(taskId: string): Promise<ActionResult> {
   const today = getTodayDate();
 
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
-  if (!task) {
-    return { success: false, error: "Task not found." };
-  }
+  try {
+    const task = await prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) {
+      return { success: false, error: "Task not found." };
+    }
 
-  if (task.status === "DONE") {
-    return { success: true };
-  }
+    if (task.status === "DONE") {
+      return { success: true };
+    }
 
-  await prisma.$transaction([
-    prisma.task.update({
-      where: { id: taskId },
-      data: {
-        status: "DONE",
-        completedAt: new Date(),
-      },
-    }),
-    prisma.completionLog.create({
-      data: {
-        entityType: "TASK",
-        entityId: taskId,
-        completedOn: today,
-        minutes: task.estimatedMinutes,
-      },
-    }),
-  ]);
+    await prisma.$transaction([
+      prisma.task.update({
+        where: { id: taskId },
+        data: {
+          status: "DONE",
+          completedAt: new Date(),
+        },
+      }),
+      prisma.completionLog.create({
+        data: {
+          entityType: "TASK",
+          entityId: taskId,
+          completedOn: today,
+          minutes: task.estimatedMinutes,
+        },
+      }),
+    ]);
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to complete task.",
+    };
+  }
 
   revalidateAll();
   return { success: true };

@@ -79,7 +79,7 @@ export function EmptyState({
       <BrandMark size={30} ghost className="text-foreground opacity-[0.28]" />
       <p className="text-[13.5px] font-semibold tracking-tight">{title}</p>
       {description && (
-        <p className="max-w-56 text-[12.5px] leading-relaxed text-faint text-pretty">
+        <p className="max-w-[28ch] text-[12.5px] leading-relaxed text-faint text-pretty">
           {description}
         </p>
       )}

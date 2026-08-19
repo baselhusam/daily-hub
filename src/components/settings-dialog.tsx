@@ -57,18 +57,25 @@ export function SettingsDialog({
               <FieldLabel>Display name</FieldLabel>
               <DialogInput
                 name="displayName"
+                autoComplete="nickname"
                 defaultValue={settings.displayName}
                 required
               />
             </label>
             <label className="flex flex-col gap-1.5">
               <FieldLabel>Role</FieldLabel>
-              <DialogInput name="role" defaultValue={settings.role} required />
+              <DialogInput
+                name="role"
+                autoComplete="organization-title"
+                defaultValue={settings.role}
+                required
+              />
             </label>
             <label className="flex flex-col gap-1.5">
               <FieldLabel>Workspace name</FieldLabel>
               <DialogInput
                 name="workspaceName"
+                autoComplete="organization"
                 defaultValue={settings.workspaceName}
                 required
               />
@@ -97,7 +104,7 @@ export function SettingsDialog({
               <span className="text-sm">Theme</span>
               <ThemeToggle />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
           </DialogBody>
           <DialogFooter className="justify-end">
             <Button
@@ -108,7 +115,7 @@ export function SettingsDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              Save
+              {pending ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
         </form>

@@ -89,24 +89,32 @@ export async function toggleDailyTask(
 ): Promise<ActionResult> {
   const today = getTodayDate();
 
-  const existing = await prisma.completionLog.findFirst({
-    where: {
-      entityType: "DAILY_TASK",
-      entityId: dailyTaskId,
-      completedOn: today,
-    },
-  });
-
-  if (existing) {
-    await prisma.completionLog.delete({ where: { id: existing.id } });
-  } else {
-    await prisma.completionLog.create({
-      data: {
+  try {
+    const existing = await prisma.completionLog.findFirst({
+      where: {
         entityType: "DAILY_TASK",
         entityId: dailyTaskId,
         completedOn: today,
       },
     });
+
+    if (existing) {
+      await prisma.completionLog.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.completionLog.create({
+        data: {
+          entityType: "DAILY_TASK",
+          entityId: dailyTaskId,
+          completedOn: today,
+        },
+      });
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update habit.",
+    };
   }
 
   revalidateAll();

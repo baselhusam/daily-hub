@@ -442,7 +442,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               </p>
               <div className="flex flex-col gap-1">
                 {data.focusByProject.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No data yet.</p>
+                  <p className="text-[13.5px] text-faint">
+                    No focus time logged yet.
+                  </p>
                 ) : (
                   data.focusByProject.map((bucket) => {
                     const selected = sameFocus(focus, {
@@ -534,7 +536,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 Done vs. still open — click to compare
               </p>
               <div className="flex flex-col gap-1">
-                {data.byProject.map((project) => {
+                {data.byProject.length === 0 ? (
+                  <p className="text-[13.5px] text-faint">No projects yet.</p>
+                ) : (
+                  data.byProject.map((project) => {
                   const selected = sameFocus(focus, {
                     kind: "project",
                     id: project.id,
@@ -602,7 +607,8 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       />
                     </button>
                   );
-                })}
+                })
+                )}
               </div>
             </SurfaceCardBody>
           </InteractiveCard>
@@ -615,7 +621,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               Scheduled days only · hover a square, click a habit
             </p>
             <div className="flex flex-col gap-1">
-              {data.dailyTaskStats.map((habit) => {
+              {data.dailyTaskStats.length === 0 ? (
+                <p className="text-[13.5px] text-faint">No habits yet.</p>
+              ) : (
+                data.dailyTaskStats.map((habit) => {
                 const selected = sameFocus(focus, {
                   kind: "habit",
                   id: habit.id,
@@ -728,7 +737,8 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     </button>
                   </div>
                 );
-              })}
+              })
+              )}
             </div>
           </SurfaceCardBody>
         </InteractiveCard>

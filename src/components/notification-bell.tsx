@@ -64,7 +64,7 @@ export function NotificationBell({ notifications }: NotificationBellProps) {
             Nothing needs attention.
           </p>
         ) : (
-          <div className="max-h-[360px] overflow-y-auto py-1">
+          <div className="max-h-[360px] overflow-y-auto overscroll-contain py-1">
             {notifications.map((item) => (
               <button
                 key={item.id}

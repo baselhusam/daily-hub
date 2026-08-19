@@ -32,6 +32,12 @@ export default function RootLayout({
       <body
         className={`${instrumentSans.variable} ${geistMono.variable} antialiased`}
       >
+        <a
+          href="#main-content"
+          className="sr-only fixed top-3 left-3 z-[100] rounded-md bg-foreground px-3 py-2 text-[13px] font-semibold text-background focus-visible:not-sr-only focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal"
+        >
+          Skip to content
+        </a>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

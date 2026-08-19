@@ -88,6 +88,7 @@ export function AppSidebar({
                   ? "h-9 w-full justify-center"
                   : "min-w-0 flex-1 gap-2.5 px-2 py-2"
               )}
+              aria-label="Workspace settings"
               title={collapsed ? stats.settings.workspaceName : undefined}
             >
               <BrandMark size={collapsed ? 22 : 28} className="text-foreground" />
@@ -139,6 +140,7 @@ export function AppSidebar({
                   key={item.href}
                   href={item.href}
                   title={item.label}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "relative flex items-center rounded-md text-[13.5px] font-medium transition-colors duration-[120ms]",
                     collapsed

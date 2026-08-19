@@ -26,10 +26,12 @@ function Input({
 
 function DialogInput({
   className,
+  autoComplete = "off",
   ...props
 }: React.ComponentProps<"input">) {
   return (
     <Input
+      autoComplete={autoComplete}
       className={cn("h-auto rounded-[10px] px-3 py-[11px] text-[14.5px]", className)}
       {...props}
     />

@@ -11,15 +11,23 @@ function revalidateAll() {
 }
 
 export async function toggleMilestone(id: string): Promise<ActionResult> {
-  const milestone = await prisma.milestone.findUnique({ where: { id } });
-  if (!milestone) {
-    return { success: false, error: "Milestone not found." };
-  }
+  try {
+    const milestone = await prisma.milestone.findUnique({ where: { id } });
+    if (!milestone) {
+      return { success: false, error: "Milestone not found." };
+    }
 
-  await prisma.milestone.update({
-    where: { id },
-    data: { done: !milestone.done },
-  });
+    await prisma.milestone.update({
+      where: { id },
+      data: { done: !milestone.done },
+    });
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update milestone.",
+    };
+  }
 
   revalidateAll();
   return { success: true };

@@ -15,11 +15,21 @@ type DailyChecklistProps = {
 
 export function DailyChecklist({ tasks }: DailyChecklistProps) {
   const [pendingId, setPendingId] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   async function handleToggle(taskId: string) {
     setPendingId(taskId);
-    await toggleDailyTask(taskId);
-    setPendingId(null);
+    setError(null);
+    try {
+      const result = await toggleDailyTask(taskId);
+      if (!result.success) {
+        setError(result.error ?? "Could not update this habit. Try again.");
+      }
+    } catch {
+      setError("Could not update this habit. Try again.");
+    } finally {
+      setPendingId(null);
+    }
   }
 
   if (tasks.length === 0) {
@@ -46,6 +56,15 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
 
   return (
     <div>
+      {error ? (
+        <p
+          role="alert"
+          aria-live="polite"
+          className="border-b border-destructive/20 bg-destructive-wash px-[18px] py-2.5 text-[13px] text-destructive"
+        >
+          {error}
+        </p>
+      ) : null}
       {tasks.map((task) => (
         <div
           key={task.id}

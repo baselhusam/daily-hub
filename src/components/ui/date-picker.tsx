@@ -111,7 +111,7 @@ export function DatePicker({
           <div className="mb-2 flex items-center justify-between gap-2">
             <button
               type="button"
-              className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+              className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14"
               onClick={() => setVisibleMonth((month) => subMonths(month, 1))}
               aria-label="Previous month"
             >
@@ -122,7 +122,7 @@ export function DatePicker({
             </p>
             <button
               type="button"
-              className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+              className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14"
               onClick={() => setVisibleMonth((month) => addMonths(month, 1))}
               aria-label="Next month"
             >
@@ -157,7 +157,7 @@ export function DatePicker({
                     setOpen(false);
                   }}
                   className={cn(
-                    "grid h-8 place-items-center rounded-md text-[12.5px] tabular-nums transition-colors duration-[120ms] disabled:opacity-30",
+                    "grid h-8 place-items-center rounded-md text-[12.5px] tabular-nums transition-colors duration-[120ms] disabled:opacity-30 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14",
                     inMonth ? "text-foreground" : "text-faint",
                     isSelected
                       ? "bg-signal font-semibold text-white"

@@ -48,6 +48,7 @@ export function AppTopBar({
         onClick={onSearchOpen}
         className="flex max-w-[320px] flex-[0_1_320px] items-center gap-2 rounded-md border border-border bg-paper px-2.5 py-1.5 text-left transition-colors duration-[120ms] hover:border-border-strong"
         aria-label="Search"
+        title="Search (⌘K or /)"
       >
         <Search className="h-3.5 w-3.5 shrink-0 text-faint" />
         <span className="min-w-0 flex-1 truncate text-[13px] text-faint">
@@ -93,6 +94,7 @@ export function MobileTabBar() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={
               "relative flex min-h-14 flex-col items-center justify-center gap-1 py-2 transition-colors duration-[120ms] " +
               (isActive ? "text-foreground" : "text-faint hover:text-foreground")

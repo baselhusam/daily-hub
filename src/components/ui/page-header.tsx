@@ -29,7 +29,9 @@ export function PageHeader({
         {eyebrow && (
           <div className="text-eyebrow mb-2 tabular-nums">{eyebrow}</div>
         )}
-        <h1 className={cn("text-display-lg m-0", titleClassName)}>{title}</h1>
+        <h1 className={cn("text-display-lg m-0 text-balance", titleClassName)}>
+          {title}
+        </h1>
         {description && (
           <p className="mt-2 max-w-[54ch] text-[14.5px] leading-relaxed text-muted-foreground text-pretty">
             {description}

@@ -169,7 +169,7 @@ export function ProjectFormDialog({
               <FieldLabel>Project name</FieldLabel>
               <DialogInput
                 name="name"
-                placeholder="e.g. ClickML"
+                placeholder="e.g. ClickML…"
                 defaultValue={project?.name}
                 required
               />
@@ -178,7 +178,7 @@ export function ProjectFormDialog({
               <FieldLabel>Description</FieldLabel>
               <DialogTextarea
                 name="description"
-                placeholder="What is this, in one line?"
+                placeholder="What is this, in one line…"
                 defaultValue={project?.description ?? ""}
                 rows={2}
               />
@@ -203,7 +203,7 @@ export function ProjectFormDialog({
                       next[index] = { ...next[index], name: e.target.value };
                       setMilestones(next);
                     }}
-                    placeholder="Milestone name"
+                    placeholder="Milestone name…"
                     className="flex-1 rounded-md text-[13.5px]"
                   />
                   <DatePicker
@@ -224,6 +224,7 @@ export function ProjectFormDialog({
                     onClick={() =>
                       setMilestones(milestones.filter((_, i) => i !== index))
                     }
+                    aria-label="Remove milestone"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -277,7 +278,7 @@ export function ProjectFormDialog({
                 ariaLabel="Project status"
               />
             </label>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
           </DialogBody>
           <DialogFooter>
             {isEdit && project?.id && (
@@ -309,7 +310,7 @@ export function ProjectFormDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : isEdit ? "Save" : "Create"}
+              {pending ? "Saving…" : isEdit ? "Save" : "Create"}
             </Button>
           </DialogFooter>
         </form>

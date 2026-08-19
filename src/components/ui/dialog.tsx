@@ -65,7 +65,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-dialog data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:max-w-[520px]",
+          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[min(88dvh,740px)] translate-x-[-50%] translate-y-[-50%] gap-0 overflow-y-auto overscroll-contain rounded-xl border border-border bg-card shadow-dialog data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:max-w-[520px]",
           className
         )}
         onPointerDownOutside={(event) => {
@@ -84,7 +84,7 @@ function DialogContent({
       >
         {children}
         {showClose && (
-          <DialogPrimitive.Close className="absolute top-[18px] right-5 grid h-[27px] w-[27px] place-items-center rounded-full bg-track text-[15px] leading-none text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus:outline-none focus:ring-[3px] focus:ring-signal/14 disabled:pointer-events-none">
+          <DialogPrimitive.Close className="absolute top-[18px] right-5 grid h-[27px] w-[27px] place-items-center rounded-full bg-track text-[15px] leading-none text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14 disabled:pointer-events-none">
             <X className="h-3.5 w-3.5" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>

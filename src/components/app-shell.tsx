@@ -10,7 +10,7 @@ import { BrandLockup } from "@/components/brand-mark";
 import { NotificationBell } from "@/components/notification-bell";
 import { SearchPalette } from "@/components/search-palette";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { cn } from "@/lib/utils";
+import { cn, isTypingTarget } from "@/lib/utils";
 import type { SearchIndex } from "@/lib/search";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
@@ -75,6 +75,24 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setPaletteOpen((open) => !open);
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+
+      if (event.key === "/") {
+        event.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
+
+      if (event.key.toLowerCase() === "n") {
+        const composer = document.getElementById("quick-add-title");
+        if (composer instanceof HTMLElement) {
+          event.preventDefault();
+          composer.focus();
+        }
       }
     }
 
@@ -131,6 +149,7 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
                 onClick={() => setPaletteOpen(true)}
                 className="grid h-9 w-9 place-items-center rounded-md border border-border bg-card text-muted-foreground shadow-raised transition-colors hover:border-border-strong hover:text-foreground"
                 aria-label="Search"
+                title="Search (⌘K or /)"
               >
                 <Search className="h-4 w-4" />
               </button>
@@ -140,7 +159,13 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
           </header>
         </div>
 
-        <main className="flex-1 overflow-y-auto pb-24 dh:pb-0">{children}</main>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto pb-24 outline-none dh:pb-0"
+        >
+          {children}
+        </main>
 
         <MobileTabBar />
       </div>

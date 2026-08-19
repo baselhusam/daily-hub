@@ -444,7 +444,7 @@ export function SearchPalette({
           <div
             id="search-palette-results"
             role="listbox"
-            className="max-h-[min(360px,52vh)] overflow-y-auto py-1.5"
+            className="max-h-[min(360px,52vh)] overflow-y-auto overscroll-contain py-1.5"
           >
             {items.length === 0 ? (
               <p className="px-3.5 py-8 text-center text-[13px] text-muted-foreground">

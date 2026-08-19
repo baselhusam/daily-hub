@@ -104,7 +104,7 @@ export function CreateMilestoneDialog({
                 <FieldLabel>Milestone</FieldLabel>
                 <DialogInput
                   name="name"
-                  placeholder="e.g. Beta launch"
+                  placeholder="e.g. Beta launch…"
                   required
                 />
               </label>
@@ -139,7 +139,7 @@ export function CreateMilestoneDialog({
                   placeholder="No due date"
                 />
               </label>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
             </DialogBody>
             <DialogFooter>
               <Button
@@ -150,7 +150,7 @@ export function CreateMilestoneDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={pending}>
-                {pending ? "Saving..." : "Create"}
+                {pending ? "Saving…" : "Create"}
               </Button>
             </DialogFooter>
           </form>
