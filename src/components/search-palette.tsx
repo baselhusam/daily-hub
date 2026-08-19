@@ -426,7 +426,8 @@ export function SearchPalette({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           showClose={false}
-          className="top-[14%] w-[min(calc(100%-1.5rem),480px)] max-w-[480px] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-[480px]"
+          placement="top"
+          className="w-[min(calc(100%-1.5rem),480px)] max-w-[480px] gap-0 overflow-hidden p-0 sm:max-w-[480px]"
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
         >
@@ -442,7 +443,7 @@ export function SearchPalette({
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={onKeyDown}
               placeholder="Search everything…"
-              className="min-w-0 flex-1 border-0 bg-transparent text-[14.5px] outline-none placeholder:text-faint"
+              className="min-w-0 flex-1 border-0 bg-transparent text-base outline-none placeholder:text-faint dh:text-[14.5px]"
               role="combobox"
               aria-expanded
               aria-controls="search-palette-results"
@@ -457,7 +458,7 @@ export function SearchPalette({
           <div
             id="search-palette-results"
             role="listbox"
-            className="max-h-[min(360px,52vh)] overflow-y-auto overscroll-contain py-1.5"
+            className="max-h-[min(360px,50dvh)] overflow-y-auto overscroll-contain py-1.5"
           >
             {items.length === 0 ? (
               <p className="px-3.5 py-8 text-center text-[13px] text-muted-foreground">

@@ -15,6 +15,7 @@ import type { AppNotification } from "@/lib/notifications";
 
 type NotificationBellProps = {
   notifications: AppNotification[];
+  className?: string;
 };
 
 function toneDot(tone: AppNotification["tone"]) {
@@ -23,7 +24,7 @@ function toneDot(tone: AppNotification["tone"]) {
   return "bg-faint";
 }
 
-export function NotificationBell({ notifications }: NotificationBellProps) {
+export function NotificationBell({ notifications, className }: NotificationBellProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const count = notifications.length;
@@ -39,7 +40,10 @@ export function NotificationBell({ notifications }: NotificationBellProps) {
         <Button
           variant="outline"
           size="icon"
-          className="relative h-8 w-8 border-border bg-card text-muted-foreground shadow-none hover:text-foreground"
+          className={cn(
+            "relative h-8 w-8 border-border bg-card text-muted-foreground shadow-none hover:text-foreground",
+            className
+          )}
           aria-label={
             count === 0
               ? "Notifications"
@@ -52,7 +56,7 @@ export function NotificationBell({ notifications }: NotificationBellProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[320px] p-0">
+      <PopoverContent align="end" className="w-[min(320px,calc(100vw-1.25rem))] p-0">
         <div className="flex items-center justify-between border-b border-border px-3.5 py-2.5">
           <p className="text-[13px] font-semibold">Notifications</p>
           <span className="text-[11.5px] font-semibold tabular-nums text-faint">

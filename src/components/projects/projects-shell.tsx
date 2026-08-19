@@ -23,7 +23,7 @@ import {
 import { formatDueDate } from "@/lib/dates";
 import { daysUntil } from "@/lib/streak";
 import { getDeadlineColor } from "@/lib/due-meta";
-import { getTodayDate } from "@/lib/dates";
+import { useDisplayDay } from "@/lib/hydration";
 import type { ProjectStatus } from "@/lib/status";
 
 type ProjectRecord = {
@@ -50,10 +50,11 @@ type ProjectRecord = {
 
 type ProjectsShellProps = {
   projects: ProjectRecord[];
+  todayISO: string;
 };
 
-export function ProjectsShell({ projects }: ProjectsShellProps) {
-  const today = getTodayDate();
+export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
+  const { today, mode } = useDisplayDay(todayISO);
   const [statusFilter, setStatusFilter] = React.useState<"all" | ProjectStatus>(
     "all"
   );
@@ -95,7 +96,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
   }
 
   return (
-    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
+    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)]">
       <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
         <PageHeader
           eyebrow="Workstreams"
@@ -112,7 +113,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                   options={projectStatusFilterOptions()}
                   variant="compact"
                   ariaLabel="Filter by status"
-                  className="min-w-[148px]"
+                  className="min-w-0 w-full sm:w-auto sm:min-w-[148px]"
                   contentClassName="min-w-[180px]"
                 />
               ) : null}
@@ -152,7 +153,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
         ) : (
           <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
             {visibleProjects.map((project) => {
-              const dl = daysUntil(project.dueDate, today);
+              const dl = daysUntil(project.dueDate, today, mode);
               return (
                 <SurfaceCard
                   key={project.id}
@@ -245,7 +246,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                     </div>
 
                     <div className="flex flex-col gap-2 border-t border-rule-soft pt-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                         <span className="text-[11.5px] font-semibold tracking-[0.02em] text-faint">
                           Milestones
                         </span>
@@ -254,7 +255,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                             className="text-[11.5px] font-semibold tabular-nums"
                             style={{ color: getDeadlineColor(dl) }}
                           >
-                            Ships {formatDueDate(project.dueDate)} ·{" "}
+                            Ships {formatDueDate(project.dueDate, today, mode)} ·{" "}
                             {dl < 0 ? `${Math.abs(dl)}d late` : `${dl}d`}
                           </span>
                         )}
@@ -263,7 +264,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                         <p className="text-[12.5px] text-faint">No milestones yet.</p>
                       ) : (
                         project.milestones.map((milestone) => {
-                          const md = daysUntil(milestone.dueDate, today);
+                          const md = daysUntil(milestone.dueDate, today, mode);
                           return (
                             <div
                               id={`milestone-${milestone.id}`}

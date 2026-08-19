@@ -198,7 +198,7 @@ export function ProjectFormDialog({
             <div className="flex flex-col gap-2 border-t border-rule-soft pt-4">
               <FieldLabel>Milestones</FieldLabel>
               {milestones.map((milestone, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <DialogInput
                     value={milestone.name}
                     onChange={(e) => {
@@ -207,30 +207,32 @@ export function ProjectFormDialog({
                       setMilestones(next);
                     }}
                     placeholder="Milestone name…"
-                    className="flex-1 rounded-md text-[13.5px]"
+                    className="min-w-0 flex-1 rounded-md text-[13.5px]"
                   />
-                  <DatePicker
-                    value={milestone.dueDate}
-                    onValueChange={(nextDate) => {
-                      const next = [...milestones];
-                      next[index] = { ...next[index], dueDate: nextDate };
-                      setMilestones(next);
-                    }}
-                    placeholder="Due"
-                    className="w-[158px] shrink-0 rounded-md py-2 text-[13px]"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-hairline hover:text-destructive"
-                    onClick={() =>
-                      setMilestones(milestones.filter((_, i) => i !== index))
-                    }
-                    aria-label="Remove milestone"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <DatePicker
+                      value={milestone.dueDate}
+                      onValueChange={(nextDate) => {
+                        const next = [...milestones];
+                        next[index] = { ...next[index], dueDate: nextDate };
+                        setMilestones(next);
+                      }}
+                      placeholder="Due"
+                      className="min-w-0 flex-1 rounded-md py-2 text-[13px] sm:w-[158px] sm:flex-none"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 text-hairline hover:text-destructive sm:h-8 sm:w-8"
+                      onClick={() =>
+                        setMilestones(milestones.filter((_, i) => i !== index))
+                      }
+                      aria-label="Remove milestone"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
               <Button

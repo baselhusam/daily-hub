@@ -93,8 +93,8 @@ export function QuickAdd({
         void submit();
       }}
     >
-      <div className="group grid grid-cols-2 items-stretch gap-2 rounded-[12px] border border-border bg-card p-2 shadow-raised transition-[border-color,box-shadow] duration-[120ms] focus-within:border-signal focus-within:shadow-[0_0_0_3px_var(--signal-wash)] sm:flex sm:flex-wrap">
-        <div className="col-span-2 flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2.5 sm:min-w-[180px]">
+      <div className="group grid grid-cols-1 items-stretch gap-2 rounded-[12px] border border-border bg-card p-2 shadow-raised transition-[border-color,box-shadow] duration-[120ms] focus-within:border-signal focus-within:shadow-[0_0_0_3px_var(--signal-wash)] sm:flex sm:flex-wrap">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2.5 sm:min-w-[180px]">
           <span className="h-[15px] w-[15px] shrink-0 rounded border-[1.6px] border-dashed border-hairline" />
           <input
             id="quick-add-title"
@@ -105,7 +105,7 @@ export function QuickAdd({
             spellCheck={false}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Add a task and hit enter…"
-            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-[15px] outline-none placeholder:text-faint"
+            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-base outline-none placeholder:text-faint dh:text-[15px]"
           />
           <kbd className="hidden shrink-0 rounded border border-border bg-paper px-1.5 py-0.5 text-[11px] font-semibold text-faint group-focus-within:hidden sm:inline">
             N
@@ -132,7 +132,7 @@ export function QuickAdd({
         <Button
           type="submit"
           disabled={pending || !title.trim()}
-          className="col-span-2 h-auto min-h-10 px-4 py-2.5 text-[13.5px] font-semibold sm:col-auto sm:px-5"
+          className="h-auto min-h-10 w-full px-4 py-2.5 text-[13.5px] font-semibold sm:w-auto sm:px-5"
         >
           {pending ? "Adding…" : "Add"}
         </Button>

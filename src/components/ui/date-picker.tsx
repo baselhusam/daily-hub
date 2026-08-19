@@ -90,7 +90,7 @@ export function DatePicker({
             className={cn(
               "flex min-w-0 items-center gap-2 text-left outline-none transition-colors duration-[120ms] disabled:cursor-not-allowed disabled:opacity-50",
               variant === "field" &&
-                "h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[9px] text-[14.5px] focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
+                "h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[9px] text-base focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16 dh:text-[14.5px]",
               variant === "compact" &&
                 "rounded-md border border-border bg-muted px-2.5 py-2 text-[13.5px] focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
               className
@@ -112,7 +112,7 @@ export function DatePicker({
             </span>
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-[280px] p-3">
+        <PopoverContent className="w-[min(280px,calc(100vw-1.5rem))] p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <button
               type="button"
@@ -162,7 +162,7 @@ export function DatePicker({
                     setOpen(false);
                   }}
                   className={cn(
-                    "grid h-8 place-items-center rounded-md text-[12.5px] tabular-nums transition-colors duration-[120ms] disabled:opacity-30 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14",
+                    "grid h-10 place-items-center rounded-md text-[12.5px] tabular-nums transition-colors duration-[120ms] disabled:opacity-30 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14 dh:h-8",
                     inMonth ? "text-foreground" : "text-faint",
                     isSelected
                       ? "bg-signal font-semibold text-white"

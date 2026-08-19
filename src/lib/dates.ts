@@ -1,14 +1,51 @@
 import {
   format,
   isThisYear,
-  isToday,
-  isTomorrow,
-  isYesterday,
   startOfDay,
 } from "date-fns";
 
 export function getTodayDate(): Date {
   return startOfDay(new Date());
+}
+
+export function getGreeting(name: string, now = new Date()): string {
+  const hour = now.getHours();
+  const prefix =
+    hour < 5
+      ? "Still up, "
+      : hour < 12
+        ? "Good morning, "
+        : hour < 17
+          ? "Good afternoon, "
+          : "Good evening, ";
+  return `${prefix}${name}.`;
+}
+
+export function formatTodayLabel(date = getTodayDate()): string {
+  return format(date, "EEEE · MMMM d, yyyy");
+}
+
+export type CalendarMode = "utc" | "local";
+
+function calendarStamp(date: Date, mode: CalendarMode): number {
+  if (mode === "utc") {
+    return Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    );
+  }
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+export function calendarDaysBetween(
+  target: Date,
+  today: Date,
+  mode: CalendarMode = "local"
+): number {
+  return Math.round(
+    (calendarStamp(target, mode) - calendarStamp(today, mode)) / 86400000
+  );
 }
 
 /** Prisma DateTime cannot serialize years outside 0001–9999. */
@@ -47,18 +84,27 @@ export function parseDateInput(value: string | null | undefined): Date | null {
   return parsed;
 }
 
-export function formatDueDate(date: Date | null | undefined): string {
+export function formatDueDate(
+  date: Date | null | undefined,
+  today = getTodayDate(),
+  mode: CalendarMode = "local"
+): string {
   if (!date) return "No date";
-  if (isToday(date)) return "Today";
-  if (isTomorrow(date)) return "Tomorrow";
-  if (isYesterday(date)) return "Yesterday";
+  const days = calendarDaysBetween(date, today, mode);
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  if (days === -1) return "Yesterday";
   if (isThisYear(date)) return format(date, "EEE, MMM d");
   return format(date, "MMM d, yyyy");
 }
 
-export function isOverdue(dueDate: Date | null | undefined, today = getTodayDate()): boolean {
+export function isOverdue(
+  dueDate: Date | null | undefined,
+  today = getTodayDate(),
+  mode: CalendarMode = "local"
+): boolean {
   if (!dueDate) return false;
-  return startOfDay(dueDate) < today;
+  return calendarDaysBetween(dueDate, today, mode) < 0;
 }
 
 export function isScheduledOn(weekdays: number[], date = new Date()): boolean {

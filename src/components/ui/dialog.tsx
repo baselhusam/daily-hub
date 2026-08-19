@@ -52,12 +52,14 @@ function DialogContent({
   className,
   children,
   showClose = true,
+  placement = "sheet",
   onPointerDownOutside,
   onFocusOutside,
   onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showClose?: boolean;
+  placement?: "sheet" | "top";
 }) {
   return (
     <DialogPortal>
@@ -65,7 +67,11 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[min(88dvh,740px)] translate-x-[-50%] translate-y-[-50%] gap-0 overflow-y-auto overscroll-contain rounded-xl border border-border bg-card shadow-dialog data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:max-w-[520px]",
+          "fixed z-50 grid w-full gap-0 overflow-y-auto overscroll-contain border border-border bg-card shadow-dialog outline-none data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          placement === "sheet" &&
+            "inset-x-0 bottom-0 top-auto max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-top)-0.75rem))] translate-x-0 translate-y-0 rounded-t-2xl rounded-b-none pb-[env(safe-area-inset-bottom)] dh:inset-auto dh:top-[50%] dh:left-[50%] dh:bottom-auto dh:w-full dh:max-w-[520px] dh:max-h-[min(88dvh,740px)] dh:translate-x-[-50%] dh:translate-y-[-50%] dh:rounded-xl dh:pb-0",
+          placement === "top" &&
+            "top-[max(0.75rem,env(safe-area-inset-top))] left-[50%] w-[min(calc(100%-1.5rem),480px)] max-h-[min(88dvh,740px)] translate-x-[-50%] translate-y-0 rounded-xl",
           className
         )}
         onPointerDownOutside={(event) => {
@@ -84,7 +90,7 @@ function DialogContent({
       >
         {children}
         {showClose && (
-          <DialogPrimitive.Close className="absolute top-[18px] right-5 grid h-[27px] w-[27px] place-items-center rounded-full bg-track text-[15px] leading-none text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14 disabled:pointer-events-none">
+          <DialogPrimitive.Close className="absolute top-[14px] right-4 grid h-10 w-10 place-items-center rounded-full bg-track text-[15px] leading-none text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14 disabled:pointer-events-none dh:top-[18px] dh:right-5 dh:h-[27px] dh:w-[27px]">
             <X className="h-3.5 w-3.5" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
@@ -112,7 +118,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex items-center gap-2.5 border-t border-rule-soft px-5 py-[15px]",
+        "flex flex-wrap items-center justify-end gap-2.5 border-t border-rule-soft px-5 py-[15px]",
         className
       )}
       {...props}

@@ -53,7 +53,7 @@ export function SelectMenu({
             className={cn(
               "flex min-w-0 items-center gap-2 text-left outline-none transition-colors duration-[120ms] disabled:cursor-not-allowed disabled:opacity-50",
               variant === "field" &&
-                "h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[9px] text-[14.5px] focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
+                "h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[9px] text-base focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16 dh:text-[14.5px]",
               variant === "compact" &&
                 "rounded-md border border-border bg-muted px-2.5 py-2 text-[13.5px] font-medium focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
               className
@@ -75,7 +75,7 @@ export function SelectMenu({
         </PopoverTrigger>
         <PopoverContent
           className={cn(
-            "max-h-72 w-[var(--radix-popover-trigger-width)] min-w-[12rem] overflow-y-auto p-1",
+            "max-h-72 w-[var(--radix-popover-trigger-width)] min-w-[min(12rem,calc(100vw-1.5rem))] overflow-y-auto p-1",
             contentClassName
           )}
           role="listbox"

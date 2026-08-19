@@ -134,7 +134,6 @@ function cardIsLit(
 }
 
 export function AnalyticsShell({ data }: { data: AnalyticsData }) {
-  const reduced = useReducedMotion();
   const [focus, setFocus] = React.useState<Focus | null>(null);
   const [hover, setHover] = React.useState<Focus | null>(null);
   const [tip, setTip] = React.useState<Tip | null>(null);
@@ -164,6 +163,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
 
   const showTip = React.useCallback(
     (event: React.SyntheticEvent<HTMLElement>, title: string, detail: string) => {
+      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        return;
+      }
       const rect = event.currentTarget.getBoundingClientRect();
       const x = Math.min(
         window.innerWidth - 20,
@@ -191,7 +193,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
   }
 
   return (
-    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
+    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)]">
       <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
         <PageHeader
           eyebrow={data.rangeLabel}
@@ -201,9 +203,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
             <AnimatePresence>
               {focus ? (
                 <motion.div
-                  initial={reduced ? false : { opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={reduced ? undefined : { opacity: 0, y: 4 }}
+                  exit={{ opacity: 0, y: 4 }}
                   className="flex max-w-[360px] items-center gap-2 rounded-lg border border-signal/25 bg-signal-wash px-3 py-2"
                 >
                   <p className="min-w-0 flex-1 text-[12.5px] font-medium text-ink-soft">
@@ -223,7 +225,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
           }
         />
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,140px),1fr))] gap-3">
           {data.bigStats.map((stat, index) => {
             const selected = sameFocus(focus, { kind: "stat", key: stat.key });
             const lit = sameFocus(active, { kind: "stat", key: stat.key });
@@ -232,9 +234,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 key={stat.key}
                 type="button"
                 aria-pressed={selected}
-                initial={reduced ? false : { opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ ...spring, delay: reduced ? 0 : index * 0.04 }}
+                transition={{ ...spring, delay: index * 0.04 }}
                 className={cn(
                   "rounded-[12px] border bg-card px-4 py-[15px] text-left transition-[border-color,box-shadow,background-color] duration-[120ms]",
                   interact,
@@ -282,7 +284,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 <p className="mt-1 text-[12.5px] text-faint">
                   {activeDay
                     ? `${activeDay.fullLabel} · ${activeDay.total} logged`
-                    : "Hover a day, click to pin"}
+                    : "Tap a day to pin"}
                 </p>
               </div>
               <div className="flex gap-1.5 text-[11.5px] text-faint">
@@ -364,10 +366,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     <div className="flex w-full flex-1 flex-col justify-end gap-0.5">
                       <motion.div
                         className="w-full rounded-t-[3px] transition-opacity duration-200"
-                        initial={reduced ? false : { scaleY: 0 }}
+                        initial={{ scaleY: 0 }}
                         animate={{ scaleY: 1 }}
                         transition={{
-                          delay: reduced ? 0 : 0.12 + index * 0.025,
+                          delay: 0.12 + index * 0.025,
                           duration: 0.4,
                           ease: [0.2, 0.8, 0.3, 1],
                         }}
@@ -386,10 +388,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       />
                       <motion.div
                         className="w-full rounded-b-[3px] transition-[filter,opacity] duration-150 group-hover:brightness-110"
-                        initial={reduced ? false : { scaleY: 0 }}
+                        initial={{ scaleY: 0 }}
                         animate={{ scaleY: 1 }}
                         transition={{
-                          delay: reduced ? 0 : 0.18 + index * 0.025,
+                          delay: 0.18 + index * 0.025,
                           duration: 0.45,
                           ease: [0.2, 0.8, 0.3, 1],
                         }}
@@ -433,12 +435,12 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
           </SurfaceCardBody>
         </InteractiveCard>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3.5">
+        <div className="grid grid-cols-1 gap-3.5 min-[720px]:grid-cols-2">
           <InteractiveCard active={cardIsLit(active, "focus")}>
             <SurfaceCardBody>
               <h2 className="text-section">Where the time went</h2>
               <p className="mb-4 text-[12.5px] text-faint">
-                Focus hours by project — click a row
+                Focus hours by project — tap a row
               </p>
               <div className="flex flex-col gap-1">
                 {data.focusByProject.length === 0 ? (
@@ -533,7 +535,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
             <SurfaceCardBody>
               <h2 className="text-section">Project progress</h2>
               <p className="mb-4 text-[12.5px] text-faint">
-                Done vs. still open — click to compare
+                Done vs. still open — tap to compare
               </p>
               <div className="flex flex-col gap-1">
                 {data.byProject.length === 0 ? (
@@ -618,7 +620,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
           <SurfaceCardBody>
             <h2 className="text-section">Habit consistency</h2>
             <p className="mb-4 text-[12.5px] text-faint">
-              Scheduled days only · hover a square, click a habit
+              Scheduled days only · tap a square or habit
             </p>
             <div className="flex flex-col gap-1">
               {data.dailyTaskStats.length === 0 ? (
@@ -743,7 +745,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
           </SurfaceCardBody>
         </InteractiveCard>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3.5">
+        <div className="grid grid-cols-1 gap-3.5 min-[720px]:grid-cols-2">
           <InteractiveCard active={cardIsLit(active, "weekdays")}>
             <SurfaceCardBody>
               <h2 className="text-section">Best and worst days</h2>
@@ -807,10 +809,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       </span>
                       <motion.div
                         className="w-full rounded-t"
-                        initial={reduced ? false : { scaleY: 0 }}
+                        initial={{ scaleY: 0 }}
                         animate={{ scaleY: lit ? 1.04 : 1 }}
                         transition={{
-                          delay: reduced ? 0 : 0.2 + index * 0.04,
+                          delay: 0.2 + index * 0.04,
                           duration: 0.4,
                           ease: [0.2, 0.8, 0.3, 1],
                         }}
@@ -896,13 +898,13 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       }}
                       onClick={() => pin({ kind: "tod", name: band.name })}
                     >
-                      <span className="w-[88px] shrink-0 text-[13px] font-semibold">
+                      <span className="w-[4.75rem] shrink-0 truncate text-[13px] font-semibold sm:w-[88px]">
                         {band.name}
                       </span>
                       <div className="h-5 flex-1 overflow-hidden rounded bg-track">
                         <motion.div
                           className="h-full rounded"
-                          initial={reduced ? false : { scaleX: 0 }}
+                          initial={{ scaleX: 0 }}
                           animate={{ scaleX: 1 }}
                           transition={{
                             duration: 0.55,
@@ -997,10 +999,12 @@ function AnimatedMetric({ value, color }: { value: string; color: string }) {
   const reduced = useReducedMotion();
   const numeric = Number(value);
   const isNumeric = Number.isFinite(numeric);
-  const [display, setDisplay] = React.useState(reduced || !isNumeric ? value : "0");
+  const [display, setDisplay] = React.useState(value);
+  const skipIntro = React.useRef(true);
 
   React.useEffect(() => {
-    if (!isNumeric || reduced) {
+    if (!isNumeric || reduced || skipIntro.current) {
+      skipIntro.current = false;
       setDisplay(value);
       return;
     }
@@ -1038,7 +1042,7 @@ function FloatingTip({ tip }: { tip: Tip | null }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 4, scale: 0.98 }}
           transition={{ duration: 0.14 }}
-          className="pointer-events-none fixed z-[80] -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-lg border border-border bg-popover px-2.5 py-1.5 shadow-[var(--shadow-dialog)]"
+          className="pointer-events-none fixed z-[80] max-w-[min(16rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-lg border border-border bg-popover px-2.5 py-1.5 shadow-[var(--shadow-dialog)]"
           style={{ left: tip.x, top: tip.y }}
         >
           <p className="text-[12px] font-semibold text-foreground">{tip.title}</p>

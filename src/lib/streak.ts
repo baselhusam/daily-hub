@@ -1,6 +1,12 @@
-import { subDays, startOfDay } from "date-fns";
+import { subDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { getTodayDate, isScheduledOn, toDateOnlyString } from "@/lib/dates";
+import {
+  calendarDaysBetween,
+  getTodayDate,
+  isScheduledOn,
+  toDateOnlyString,
+  type CalendarMode,
+} from "@/lib/dates";
 
 export type StreakInfo = {
   streak: number;
@@ -67,10 +73,13 @@ export async function getStreakInfo(
   return { streak, dots };
 }
 
-export function daysUntil(date: Date | null | undefined, today = getTodayDate()): number | null {
+export function daysUntil(
+  date: Date | null | undefined,
+  today = getTodayDate(),
+  mode: CalendarMode = "local"
+): number | null {
   if (!date) return null;
-  const diff = startOfDay(date).getTime() - today.getTime();
-  return Math.round(diff / 86400000);
+  return calendarDaysBetween(date, today, mode);
 }
 
 export function formatEstimate(minutes: number | null | undefined): string | undefined {

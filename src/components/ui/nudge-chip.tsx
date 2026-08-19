@@ -19,7 +19,7 @@ export function NudgeChip({
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 rounded-lg border px-3.5 py-2",
+        "flex min-w-0 items-start gap-2.5 rounded-lg border px-3.5 py-2",
         variant === "warn"
           ? "border-warn-border bg-warn-wash"
           : "border-border bg-paper",
@@ -34,7 +34,9 @@ export function NudgeChip({
           )}
         />
       )}
-      <span className="text-[13.5px] font-medium text-foreground">{children}</span>
+      <span className="min-w-0 flex-1 text-[13.5px] font-medium text-pretty text-foreground">
+        {children}
+      </span>
       {action}
     </div>
   );

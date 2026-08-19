@@ -3,13 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format } from "date-fns";
 import { Inbox, X } from "lucide-react";
 import type { DashboardData } from "@/lib/dashboard";
 import { StatusChip } from "@/components/ui/option-mark";
 import { daysUntil, formatEstimate } from "@/lib/streak";
 import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
-import { getTodayDate } from "@/lib/dates";
+import { formatTodayLabel, getGreeting } from "@/lib/dates";
+import { useDisplayDay } from "@/lib/hydration";
 import { PageHeader } from "@/components/ui/page-header";
 import { QuickAdd } from "@/components/ui/quick-add";
 import { NudgeChip } from "@/components/ui/nudge-chip";
@@ -39,19 +39,6 @@ type DashboardShellProps = {
   data: DashboardData;
 };
 
-function getGreeting(name: string): string {
-  const hour = new Date().getHours();
-  const prefix =
-    hour < 5
-      ? "Still up, "
-      : hour < 12
-        ? "Good morning, "
-        : hour < 17
-          ? "Good afternoon, "
-          : "Good evening, ";
-  return `${prefix}${name}.`;
-}
-
 export function DashboardShell({ data }: DashboardShellProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -59,7 +46,13 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const [pendingTaskId, setPendingTaskId] = React.useState<string | null>(null);
   const [editingTask, setEditingTask] = React.useState<EditableTask | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
-  const today = getTodayDate();
+  const { today, mode, hydrated } = useDisplayDay(data.todayISO);
+  const todayLabel = hydrated
+    ? formatTodayLabel(today)
+    : data.todayLabel;
+  const greeting = hydrated
+    ? getGreeting(data.settings.displayName)
+    : data.greeting;
 
   React.useEffect(() => {
     const id = window.location.hash.replace("#", "");
@@ -128,7 +121,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
   }
 
   return (
-    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
+    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)]">
       {editingTask && (
         <CreateTaskDialog
           projects={data.projects}
@@ -148,8 +141,8 @@ export function DashboardShell({ data }: DashboardShellProps) {
       )}
       <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
         <PageHeader
-          eyebrow={format(today, "EEEE · MMMM d, yyyy")}
-          title={getGreeting(data.settings.displayName)}
+          eyebrow={todayLabel}
+          title={greeting}
           description={
             data.stats.overdueTasks > 0
               ? `${data.stats.overdueTasks} overdue · ${data.stats.openTasks} still open today.`
@@ -175,7 +168,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
         ) : null}
 
         {filterProject && (
-          <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pr-2 pl-2">
+          <div className="flex min-w-0 items-center gap-2 rounded-full border border-border bg-card py-1.5 pr-2 pl-2">
             <EntityAvatar
               name={filterProject.name}
               color={filterProject.color}
@@ -183,7 +176,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
               iconKey={filterProject.iconKey}
               size={22}
             />
-            <span className="text-[13px] font-semibold">
+            <span className="min-w-0 truncate text-[13px] font-semibold">
               Filtered · {filterProject.name}
             </span>
             <Link
@@ -301,7 +294,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
           ) : (
             <>
           {filteredProjects.map((project) => {
-            const dl = daysUntil(project.dueDate, today);
+            const dl = daysUntil(project.dueDate, today, mode);
             const visibleTasks = project.tasks;
 
               return (
@@ -350,7 +343,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                         .filter((m) => !m.done)
                         .slice(0, 3)
                         .map((milestone) => {
-                          const md = daysUntil(milestone.dueDate, today);
+                          const md = daysUntil(milestone.dueDate, today, mode);
                           return (
                             <Badge
                               key={milestone.id}
@@ -374,7 +367,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
 
                   <div>
                     {visibleTasks.map((task) => {
-                      const due = getDueMeta(task.dueDate, today);
+                      const due = getDueMeta(task.dueDate, today, mode);
                       return (
                         <TaskRow
                           key={task.id}
@@ -438,7 +431,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
             ) : (
               <div>
                 {data.inboxTasks.map((task) => {
-                    const due = getDueMeta(task.dueDate, today);
+                    const due = getDueMeta(task.dueDate, today, mode);
                     return (
                       <TaskRow
                         key={task.id}
@@ -464,7 +457,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
 
         {showHabits && (
           <section className="flex flex-wrap items-center gap-6 rounded-[12px] border border-foreground bg-foreground p-5 text-background shadow-float">
-            <div className="min-w-[220px] flex-1">
+            <div className="min-w-0 flex-1">
               <p className="text-[11.5px] font-semibold tracking-[0.02em] text-background/45">
                 Week in review
               </p>
@@ -487,7 +480,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
             <Button
               asChild
               variant="outline"
-              className="border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background"
+              className="w-full border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background sm:w-auto"
             >
               <Link href="/analytics">Full analytics →</Link>
             </Button>

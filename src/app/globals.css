@@ -224,6 +224,9 @@
   html {
     background: var(--paper);
     scroll-behavior: smooth;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   * {
@@ -233,7 +236,11 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
     min-width: 320px;
+    min-height: 100svh;
+    min-height: 100dvh;
+    overflow-x: clip;
     text-rendering: optimizeLegibility;
+    overscroll-behavior-x: none;
   }
 
   h1,
@@ -306,8 +313,8 @@
   }
 
   .page-gutter {
-    padding-left: clamp(14px, 2.6vw, 32px);
-    padding-right: clamp(14px, 2.6vw, 32px);
+    padding-left: max(clamp(14px, 2.6vw, 32px), env(safe-area-inset-left));
+    padding-right: max(clamp(14px, 2.6vw, 32px), env(safe-area-inset-right));
   }
 
   .section-kicker {

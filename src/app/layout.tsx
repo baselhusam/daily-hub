@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -20,6 +20,21 @@ export const metadata: Metadata = {
     icon: "/icon",
     apple: "/apple-icon",
   },
+  appleWebApp: {
+    capable: true,
+    title: "DailyHub",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#11110f" },
+  ],
 };
 
 export default function RootLayout({

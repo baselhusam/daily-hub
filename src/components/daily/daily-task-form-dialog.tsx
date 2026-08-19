@@ -157,9 +157,9 @@ export function DailyTaskFormDialog({
                 required
               />
             </label>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <FieldLabel>Schedule</FieldLabel>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="grid grid-cols-7 gap-1">
                 {WEEKDAY_LABELS.map((label, index) => (
                   <button
                     key={index}
@@ -168,7 +168,7 @@ export function DailyTaskFormDialog({
                     aria-pressed={selectedWeekdays.includes(index)}
                     aria-label={WEEKDAY_SHORT[index]}
                     className={cn(
-                      "relative grid h-[42px] w-[42px] place-items-center rounded-lg border text-xs font-semibold transition-colors",
+                      "relative grid h-11 w-full place-items-center rounded-lg border text-xs font-semibold transition-colors",
                       selectedWeekdays.includes(index)
                         ? "border-foreground text-white"
                         : "border-border bg-card text-foreground hover:border-foreground"
@@ -180,15 +180,15 @@ export function DailyTaskFormDialog({
                     <span className="relative z-10">{label}</span>
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setSelectedWeekdays([0, 1, 2, 3, 4, 5, 6])}
-                  aria-pressed={selectedWeekdays.length === 7}
-                  className="h-[42px] rounded-lg border border-dashed border-hairline px-4 text-[12.5px] font-semibold text-muted-foreground hover:border-signal hover:text-signal"
-                >
-                  Every day
-                </button>
               </div>
+              <button
+                type="button"
+                onClick={() => setSelectedWeekdays([0, 1, 2, 3, 4, 5, 6])}
+                aria-pressed={selectedWeekdays.length === 7}
+                className="h-10 rounded-lg border border-dashed border-hairline px-4 text-[12.5px] font-semibold text-muted-foreground hover:border-signal hover:text-signal"
+              >
+                Every day
+              </button>
             </div>
             <LogoField key={String(open)} existingLogoUrl={task?.logoUrl} />
             <label className="flex flex-col gap-1.5">

@@ -3,6 +3,7 @@ import {
   getTodayDate,
   isOverdue,
   toDateOnlyString,
+  type CalendarMode,
 } from "@/lib/dates";
 import { daysUntil } from "@/lib/streak";
 
@@ -14,14 +15,15 @@ export type DueMeta = {
 
 export function getDueMeta(
   dueDate: Date | null | undefined,
-  today = getTodayDate()
+  today = getTodayDate(),
+  mode: CalendarMode = "local"
 ): DueMeta | null {
   if (!dueDate) return null;
 
-  const days = daysUntil(dueDate, today);
+  const days = daysUntil(dueDate, today, mode);
   if (days === null) return null;
 
-  if (isOverdue(dueDate, today)) {
+  if (isOverdue(dueDate, today, mode)) {
     const late = Math.abs(days);
     return {
       label: late === 1 ? "1d late" : `${late}d late`,
@@ -55,7 +57,7 @@ export function getDueMeta(
   }
 
   return {
-    label: formatDueDate(dueDate),
+    label: formatDueDate(dueDate, today, mode),
     color: "var(--muted-foreground)",
     bg: "var(--paper)",
   };

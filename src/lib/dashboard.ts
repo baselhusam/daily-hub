@@ -7,6 +7,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import {
   formatWeekdays,
+  formatTodayLabel,
+  getGreeting,
   getTodayDate,
   isOverdue,
   isScheduledOn,
@@ -124,6 +126,9 @@ export type DashboardData = {
     showStreaks: boolean;
     nudgeDays: number;
   };
+  todayISO: string;
+  todayLabel: string;
+  greeting: string;
   projects: DashboardProject[];
   dailyTasks: DashboardDailyTask[];
   inboxTasks: DashboardTask[];
@@ -470,6 +475,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       showStreaks: settings.showStreaks,
       nudgeDays: settings.nudgeDays,
     },
+    todayISO: today.toISOString(),
+    todayLabel: formatTodayLabel(today),
+    greeting: getGreeting(settings.displayName),
     projects: mappedProjects,
     dailyTasks: scheduledToday.map((task) => ({
       id: task.id,
@@ -531,6 +539,7 @@ export async function getProjectsPageData() {
   ]);
 
   return {
+    todayISO: today.toISOString(),
     projects: projects.map((project) => {
       const open = project.tasks.filter((t) => t.status !== "DONE").length;
       const done = project.tasks.filter((t) => t.status === "DONE").length;

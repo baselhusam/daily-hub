@@ -67,8 +67,6 @@ export function ThemeToggle({ className }: { className?: string }) {
     setMounted(true);
   }, []);
 
-  const isDark = mounted && resolvedTheme === "dark";
-
   return (
     <Button
       type="button"
@@ -78,7 +76,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         "relative h-8 w-8 overflow-hidden border-border bg-card text-muted-foreground shadow-none hover:text-foreground",
         className
       )}
-      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      aria-label="Toggle theme"
       onClick={(event) => {
         if (!mounted) return;
         switchThemeFromEvent(

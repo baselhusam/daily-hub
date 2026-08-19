@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,7 +13,6 @@ import {
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { NotificationBell } from "@/components/notification-bell";
-import { SettingsDialog } from "@/components/settings-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
@@ -22,6 +20,7 @@ import type { SidebarStats } from "@/lib/sidebar-stats";
 type AppTopBarProps = {
   stats: SidebarStats;
   onSearchOpen: () => void;
+  onSettingsOpen: () => void;
   collapsed: boolean;
   onToggle: () => void;
   animate?: boolean;
@@ -30,12 +29,11 @@ type AppTopBarProps = {
 export function AppTopBar({
   stats,
   onSearchOpen,
+  onSettingsOpen,
   collapsed,
   onToggle,
   animate = true,
 }: AppTopBarProps) {
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
-
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 hidden h-[52px] dh:flex">
@@ -49,7 +47,7 @@ export function AppTopBar({
         >
           <button
             type="button"
-            onClick={() => setSettingsOpen(true)}
+            onClick={onSettingsOpen}
             className={cn(
               "flex min-w-0 items-center rounded-md text-left transition-colors duration-[120ms] hover:bg-hover",
               collapsed ? "h-8 w-8 justify-center" : "h-8 gap-2 px-1.5"
@@ -104,15 +102,6 @@ export function AppTopBar({
           <NotificationBell notifications={stats.notifications} />
         </div>
       </header>
-
-      <SettingsDialog
-        settings={{
-          id: "default",
-          ...stats.settings,
-        }}
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-      />
     </>
   );
 }
@@ -128,7 +117,7 @@ export function MobileTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-border bg-background/94 px-1.5 pt-1.5 pb-[calc(7px+env(safe-area-inset-bottom))] backdrop-blur-[12px] dh:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-border bg-background/94 pt-1.5 pr-[max(6px,env(safe-area-inset-right))] pb-[calc(7px+env(safe-area-inset-bottom))] pl-[max(6px,env(safe-area-inset-left))] backdrop-blur-[12px] dh:hidden">
       {navItems.map((item) => {
         const isActive =
           item.href === "/"

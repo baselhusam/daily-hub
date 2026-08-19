@@ -59,7 +59,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
   }, []);
 
   return (
-    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
+    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)]">
       <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
         <PageHeader
           eyebrow="Recurring"
@@ -76,7 +76,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                   options={habitStatusFilterOptions()}
                   variant="compact"
                   ariaLabel="Filter by status"
-                  className="min-w-[148px]"
+                  className="min-w-0 w-full sm:w-auto sm:min-w-[148px]"
                   contentClassName="min-w-[180px]"
                 />
               ) : null}
