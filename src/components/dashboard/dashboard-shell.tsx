@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { Inbox, X } from "lucide-react";
 import type { DashboardData } from "@/lib/dashboard";
+import { StatusChip } from "@/components/ui/option-mark";
 import { daysUntil, formatEstimate } from "@/lib/streak";
 import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
 import { getTodayDate } from "@/lib/dates";
@@ -315,9 +316,14 @@ export function DashboardShell({ data }: DashboardShellProps) {
                         size={30}
                       />
                       <div className="min-w-0 flex-1">
-                        <span className="text-[15px] font-semibold tracking-[-0.01em]">
-                          {project.name}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[15px] font-semibold tracking-[-0.01em]">
+                            {project.name}
+                          </span>
+                          {project.status !== "ACTIVE" ? (
+                            <StatusChip status={project.status} />
+                          ) : null}
+                        </div>
                         <p className="mt-0.5 text-[12px] text-faint">
                           {project.openCount} open · {project.doneCount} logged
                         </p>

@@ -96,7 +96,12 @@ export function DatePicker({
               className
             )}
           >
-            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-faint" />
+            <CalendarDays
+              className={cn(
+                "h-3.5 w-3.5 shrink-0",
+                selected ? "text-signal" : "text-faint"
+              )}
+            />
             <span
               className={cn(
                 "min-w-0 flex-1 truncate",

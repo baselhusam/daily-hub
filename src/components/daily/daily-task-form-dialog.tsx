@@ -21,8 +21,11 @@ import {
   DialogInput,
   FieldLabel,
 } from "@/components/ui/input";
+import {
+  habitStatusMenuOptions,
+  iconMenuOptions,
+} from "@/components/ui/option-mark";
 import { SelectMenu } from "@/components/ui/select-menu";
-import { getIcon, getIconLabel, ICON_OPTIONS } from "@/lib/icons";
 import { applyLogoToFormData } from "@/lib/logo";
 import { WEEKDAY_LABELS, WEEKDAY_SHORT } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -62,6 +65,7 @@ export function DailyTaskFormDialog({
     task?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]
   );
   const [iconKey, setIconKey] = React.useState(task?.iconKey ?? "check");
+  const [isActive, setIsActive] = React.useState(task?.isActive ?? true);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const isEdit = Boolean(task?.id);
 
@@ -69,8 +73,9 @@ export function DailyTaskFormDialog({
     if (open) {
       setSelectedWeekdays(task?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]);
       setIconKey(task?.iconKey ?? "check");
+      setIsActive(task?.isActive ?? true);
     }
-  }, [open, task?.weekdays, task?.iconKey]);
+  }, [open, task?.weekdays, task?.iconKey, task?.isActive]);
 
   function toggleWeekday(day: number) {
     setSelectedWeekdays((current) =>
@@ -192,26 +197,19 @@ export function DailyTaskFormDialog({
                 name="iconKey"
                 value={iconKey}
                 onValueChange={setIconKey}
-                options={ICON_OPTIONS.map((icon) => {
-                  const Icon = getIcon(icon);
-                  return {
-                    value: icon,
-                    label: getIconLabel(icon),
-                    leading: <Icon className="h-4 w-4 text-muted-foreground" />,
-                  };
-                })}
+                options={iconMenuOptions()}
                 ariaLabel="Habit icon"
               />
             </label>
-            <label className="flex items-center gap-2">
-              <input
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>Status</FieldLabel>
+              <SelectMenu
                 name="isActive"
-                type="checkbox"
-                value="true"
-                defaultChecked={task?.isActive ?? true}
-                className="size-4 rounded border-border"
+                value={isActive ? "true" : "false"}
+                onValueChange={(next) => setIsActive(next === "true")}
+                options={habitStatusMenuOptions()}
+                ariaLabel="Habit status"
               />
-              <span className="text-sm">Active</span>
             </label>
             {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
           </DialogBody>

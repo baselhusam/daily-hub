@@ -6,9 +6,14 @@ import { toggleMilestone } from "@/app/actions/milestones";
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
+import {
+  projectStatusFilterOptions,
+  StatusChip,
+} from "@/components/ui/option-mark";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { EmptyState } from "@/components/brand-mark";
 import { ProjectFormDialog } from "./project-form-dialog";
 import {
@@ -19,6 +24,7 @@ import { formatDueDate } from "@/lib/dates";
 import { daysUntil } from "@/lib/streak";
 import { getDeadlineColor } from "@/lib/due-meta";
 import { getTodayDate } from "@/lib/dates";
+import type { ProjectStatus } from "@/lib/status";
 
 type ProjectRecord = {
   id: string;
@@ -48,12 +54,19 @@ type ProjectsShellProps = {
 
 export function ProjectsShell({ projects }: ProjectsShellProps) {
   const today = getTodayDate();
+  const [statusFilter, setStatusFilter] = React.useState<"all" | ProjectStatus>(
+    "all"
+  );
   const [pendingDelete, setPendingDelete] =
     React.useState<DeleteProjectTarget | null>(null);
   const [pendingMilestoneId, setPendingMilestoneId] = React.useState<
     string | null
   >(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const visibleProjects =
+    statusFilter === "all"
+      ? projects
+      : projects.filter((project) => project.status === statusFilter);
 
   React.useEffect(() => {
     const id = window.location.hash.replace("#", "");
@@ -88,7 +101,24 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
           eyebrow="Workstreams"
           title="Projects"
           description="What each one still needs, and when it's due."
-          actions={<ProjectFormDialog />}
+          actions={
+            <>
+              {projects.length > 0 ? (
+                <SelectMenu
+                  value={statusFilter}
+                  onValueChange={(next) =>
+                    setStatusFilter(next as "all" | ProjectStatus)
+                  }
+                  options={projectStatusFilterOptions()}
+                  variant="compact"
+                  ariaLabel="Filter by status"
+                  className="min-w-[148px]"
+                  contentClassName="min-w-[180px]"
+                />
+              ) : null}
+              <ProjectFormDialog />
+            </>
+          }
         />
 
         {actionError ? (
@@ -114,9 +144,14 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
               }
             />
           </EmptyState>
+        ) : visibleProjects.length === 0 ? (
+          <EmptyState
+            title="Nothing in this status"
+            description="Try another status, or create a project."
+          />
         ) : (
           <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
-            {projects.map((project) => {
+            {visibleProjects.map((project) => {
               const dl = daysUntil(project.dueDate, today);
               return (
                 <SurfaceCard
@@ -134,9 +169,12 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                         size={38}
                       />
                       <div className="min-w-0 flex-1">
-                        <span className="text-[16.5px] font-semibold tracking-[-0.01em]">
-                          {project.name}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[16.5px] font-semibold tracking-[-0.01em]">
+                            {project.name}
+                          </span>
+                          <StatusChip status={project.status} />
+                        </div>
                         {project.description && (
                           <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground text-pretty">
                             {project.description}

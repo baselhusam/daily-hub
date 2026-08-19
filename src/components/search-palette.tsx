@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import type { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   CalendarCheck,
+  CheckCircle2,
   Flag,
   FolderKanban,
   ListChecks,
@@ -23,7 +25,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
+import { OptionMark } from "@/components/ui/option-mark";
 import type { SearchIndex } from "@/lib/search";
+import {
+  getHabitStatus,
+  getProjectStatus,
+  type OptionTone,
+} from "@/lib/status";
 import { cn, formatCount } from "@/lib/utils";
 
 type SearchPaletteProps = {
@@ -49,6 +57,11 @@ type PaletteItem = {
   iconKey: string | null;
   color: string | null;
   inbox?: boolean;
+  statusMark?: {
+    Icon: LucideIcon;
+    tone: OptionTone;
+    label: string;
+  };
 };
 
 const TYPE_META: Record<
@@ -198,11 +211,6 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             type: "project",
             title: project.name,
             subtitle: joinMeta([
-              project.status === "DONE"
-                ? "Done"
-                : project.status === "PAUSED"
-                  ? "Paused"
-                  : null,
               formatCount(project.openCount, "open task"),
               project.dueLabel ? `due ${project.dueLabel}` : null,
             ]),
@@ -212,6 +220,10 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             logoUrl: project.logoUrl,
             iconKey: project.iconKey,
             color: project.color,
+            statusMark:
+              project.status === "ACTIVE"
+                ? undefined
+                : getProjectStatus(project.status),
           }),
           limit
         )
@@ -230,11 +242,6 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             title: task.title,
             subtitle: joinMeta([
               task.project?.name ?? "Inbox",
-              task.status === "DONE"
-                ? "Done"
-                : task.status === "DOING"
-                  ? "Doing"
-                  : null,
               task.dueLabel,
             ]),
             href: task.visibleOnToday
@@ -250,6 +257,10 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             iconKey: task.project?.iconKey ?? null,
             color: task.project?.color ?? null,
             inbox: !task.project,
+            statusMark:
+              task.status === "DONE"
+                ? { Icon: CheckCircle2, tone: "done", label: "Done" }
+                : undefined,
           }),
           limit
         )
@@ -268,7 +279,6 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             title: milestone.name,
             subtitle: joinMeta([
               milestone.project.name,
-              milestone.done ? "Done" : null,
               milestone.dueLabel,
             ]),
             href: `/projects#milestone-${milestone.id}`,
@@ -277,6 +287,9 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             logoUrl: milestone.project.logoUrl,
             iconKey: milestone.project.iconKey,
             color: milestone.project.color,
+            statusMark: milestone.done
+              ? { Icon: CheckCircle2, tone: "done", label: "Done" }
+              : undefined,
           }),
           limit
         )
@@ -293,16 +306,16 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             key: `habit-${habit.id}`,
             type: "habit",
             title: habit.title,
-            subtitle: joinMeta([
-              habit.scheduleLabel,
-              habit.isActive ? null : "Paused",
-            ]),
+            subtitle: habit.scheduleLabel,
             href: `/daily#habit-${habit.id}`,
             badge: TYPE_META.habit.label,
             name: habit.title,
             logoUrl: habit.logoUrl,
             iconKey: habit.iconKey,
             color: null,
+            statusMark: habit.isActive
+              ? undefined
+              : getHabitStatus(false),
           }),
           limit
         )
@@ -508,17 +521,28 @@ export function SearchPalette({
                           {item.subtitle}
                         </span>
                       </span>
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded border border-border bg-paper px-1.5 py-0.5 text-[10.5px] font-semibold tracking-[0.02em] text-muted-foreground">
-                        {item.action ? (
-                          item.action === "create" ? (
-                            <Plus className="h-3 w-3" />
+                      <span className="inline-flex shrink-0 items-center gap-1.5">
+                        {item.statusMark ? (
+                          <span title={item.statusMark.label}>
+                            <OptionMark
+                              icon={item.statusMark.Icon}
+                              tone={item.statusMark.tone}
+                              size={16}
+                            />
+                          </span>
+                        ) : null}
+                        <span className="inline-flex items-center gap-1 rounded border border-border bg-paper px-1.5 py-0.5 text-[10.5px] font-semibold tracking-[0.02em] text-muted-foreground">
+                          {item.action ? (
+                            item.action === "create" ? (
+                              <Plus className="h-3 w-3" />
+                            ) : (
+                              <ArrowUpRight className="h-3 w-3" />
+                            )
                           ) : (
-                            <ArrowUpRight className="h-3 w-3" />
-                          )
-                        ) : (
-                          <TypeIcon className="h-3 w-3" />
-                        )}
-                        {item.badge}
+                            <TypeIcon className="h-3 w-3" />
+                          )}
+                          {item.badge}
+                        </span>
                       </span>
                     </button>
                   </React.Fragment>

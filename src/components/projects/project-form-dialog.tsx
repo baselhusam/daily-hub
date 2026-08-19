@@ -20,8 +20,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DialogInput, DialogTextarea, FieldLabel } from "@/components/ui/input";
+import {
+  iconMenuOptions,
+  projectStatusMenuOptions,
+} from "@/components/ui/option-mark";
 import { SelectMenu } from "@/components/ui/select-menu";
-import { getIcon, getIconLabel, ICON_OPTIONS } from "@/lib/icons";
 import { applyLogoToFormData } from "@/lib/logo";
 import { parseDateInput, toDateOnlyString } from "@/lib/dates";
 
@@ -251,14 +254,7 @@ export function ProjectFormDialog({
                 name="iconKey"
                 value={iconKey}
                 onValueChange={setIconKey}
-                options={ICON_OPTIONS.map((icon) => {
-                  const Icon = getIcon(icon);
-                  return {
-                    value: icon,
-                    label: getIconLabel(icon),
-                    leading: <Icon className="h-4 w-4 text-muted-foreground" />,
-                  };
-                })}
+                options={iconMenuOptions()}
                 ariaLabel="Project icon"
               />
             </label>
@@ -270,11 +266,7 @@ export function ProjectFormDialog({
                 onValueChange={(next) =>
                   setStatus(next as "ACTIVE" | "PAUSED" | "DONE")
                 }
-                options={[
-                  { value: "ACTIVE", label: "Active" },
-                  { value: "PAUSED", label: "Paused" },
-                  { value: "DONE", label: "Done" },
-                ]}
+                options={projectStatusMenuOptions()}
                 ariaLabel="Project status"
               />
             </label>

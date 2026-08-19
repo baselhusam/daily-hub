@@ -5,6 +5,11 @@ import { Trash2, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
+import {
+  habitStatusFilterOptions,
+  StatusChip,
+} from "@/components/ui/option-mark";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { DayPills } from "@/components/ui/day-pills";
 import { ChainDots } from "@/components/ui/chain-dots";
 import { Button } from "@/components/ui/button";
@@ -32,8 +37,18 @@ type DailyShellProps = {
 };
 
 export function DailyShell({ dailyTasks }: DailyShellProps) {
+  const [statusFilter, setStatusFilter] = React.useState<
+    "all" | "true" | "false"
+  >("all");
   const [pendingDelete, setPendingDelete] =
     React.useState<DeleteDailyTaskTarget | null>(null);
+  const visibleTasks =
+    statusFilter === "all"
+      ? dailyTasks
+      : dailyTasks.filter((task) =>
+          statusFilter === "true" ? task.isActive : !task.isActive
+        );
+
   React.useEffect(() => {
     const id = window.location.hash.replace("#", "");
     if (!id) return;
@@ -50,7 +65,24 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
           eyebrow="Recurring"
           title="Habits"
           description="Set the schedule here. Check them off on Today."
-          actions={<DailyTaskFormDialog />}
+          actions={
+            <>
+              {dailyTasks.length > 0 ? (
+                <SelectMenu
+                  value={statusFilter}
+                  onValueChange={(next) =>
+                    setStatusFilter(next as "all" | "true" | "false")
+                  }
+                  options={habitStatusFilterOptions()}
+                  variant="compact"
+                  ariaLabel="Filter by status"
+                  className="min-w-[148px]"
+                  contentClassName="min-w-[180px]"
+                />
+              ) : null}
+              <DailyTaskFormDialog />
+            </>
+          }
         />
 
         {dailyTasks.length === 0 ? (
@@ -66,9 +98,14 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
               }
             />
           </EmptyState>
+        ) : visibleTasks.length === 0 ? (
+          <EmptyState
+            title="Nothing in this status"
+            description="Try another status, or create a habit."
+          />
         ) : (
           <SurfaceCard>
-            {dailyTasks.map((task) => (
+            {visibleTasks.map((task) => (
               <div
                 id={`habit-${task.id}`}
                 key={task.id}
@@ -82,10 +119,12 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                   rounded="lg"
                 />
                 <div className="min-w-0 flex-1 basis-[180px]">
-                  <div className="text-[15px] font-semibold">{task.title}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-[15px] font-semibold">{task.title}</div>
+                    {!task.isActive ? <StatusChip active={false} /> : null}
+                  </div>
                   <div className="mt-0.5 text-[12px] text-faint">
                     {task.scheduleLabel}
-                    {task.isActive ? "" : " · Paused"}
                   </div>
                 </div>
                 <DayPills
