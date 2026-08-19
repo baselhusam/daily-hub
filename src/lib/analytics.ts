@@ -1,4 +1,4 @@
-import { subDays, eachDayOfInterval } from "date-fns";
+import { subDays, eachDayOfInterval, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate, isScheduledOn, toDateOnlyString } from "@/lib/dates";
 
@@ -18,6 +18,9 @@ export type AnalyticsOverview = {
 export type CompletionDayPoint = {
   date: string;
   label: string;
+  fullLabel: string;
+  weekday: number;
+  weekdayName: string;
   tasks: number;
   daily: number;
   total: number;
@@ -25,8 +28,10 @@ export type CompletionDayPoint = {
 };
 
 export type FocusHoursAnalytics = {
+  id: string;
   name: string;
   hours: number;
+  minutes: number;
   share: string;
   color: string;
   barWidth: number;
@@ -45,10 +50,16 @@ export type ProjectProgressAnalytics = {
   iconKey: string;
 };
 
+export type HabitDot = {
+  color: string;
+  date: string;
+  status: "hit" | "miss" | "off";
+};
+
 export type HabitConsistencyAnalytics = {
   id: string;
   title: string;
-  dots: Array<{ color: string }>;
+  dots: HabitDot[];
   rate: number;
   rateColor: string;
   logoUrl: string | null;
@@ -58,27 +69,40 @@ export type HabitConsistencyAnalytics = {
 export type WeekdayAnalytics = {
   id: number;
   label: string;
+  name: string;
   count: number;
   labelColor: string;
   barHeight: number;
+  isBest: boolean;
+  isWeakest: boolean;
 };
 
 export type TimeOfDayAnalytics = {
   name: string;
+  range: string;
   count: number;
   barWidth: number;
   isPeak: boolean;
 };
+
+export type AnalyticsStatKey =
+  | "completed"
+  | "tasks"
+  | "habits"
+  | "focus"
+  | "perDay";
 
 export type AnalyticsData = {
   rangeDays: number;
   rangeLabel: string;
   lede: string;
   bigStats: Array<{
+    key: AnalyticsStatKey;
     label: string;
     value: string;
     unit: string;
     color: string;
+    hint: string;
   }>;
   overview: AnalyticsOverview;
   completionsByDay: CompletionDayPoint[];
@@ -211,6 +235,9 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     return {
       date: dateKey,
       label: `${day.getDate()}/${day.getMonth() + 1}`,
+      fullLabel: format(day, "EEE d MMM"),
+      weekday: day.getDay(),
+      weekdayName: format(day, "EEEE"),
       tasks: tasksCount,
       daily,
       total: tasksCount + daily,
@@ -224,6 +251,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const hoursBuckets = new Map<
     string,
     {
+      id: string;
       name: string;
       color: string;
       minutes: number;
@@ -255,6 +283,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     }
 
     const existing = hoursBuckets.get(bucketKey) ?? {
+      id: bucketKey,
       name,
       color,
       minutes: 0,
@@ -275,8 +304,10 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const hoursMax = Math.max(1, ...hoursArr.map((b) => b.minutes));
 
   const focusByProject: FocusHoursAnalytics[] = hoursArr.map((b) => ({
+    id: b.id,
     name: b.name,
     hours: Math.round(b.minutes / 60),
+    minutes: b.minutes,
     share: totalMinutes
       ? `${Math.round((b.minutes / totalMinutes) * 100)}%`
       : "0%",
@@ -325,10 +356,10 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
 
   const dailyTaskStats: HabitConsistencyAnalytics[] = dailyTasks.map((task) => {
     const dots = dayRange.map((day) => {
-      if (!isScheduledOn(task.weekdays, day)) {
-        return { color: "#F7F7F5" };
-      }
       const key = toDateOnlyString(day);
+      if (!isScheduledOn(task.weekdays, day)) {
+        return { date: key, status: "off" as const, color: "#F7F7F5" };
+      }
       const ok = windowCompletions.some(
         (c) =>
           c.entityType === "DAILY_TASK" &&
@@ -336,6 +367,8 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
           toDateOnlyString(c.completedOn) === key
       );
       return {
+        date: key,
+        status: (ok ? "hit" : "miss") as "hit" | "miss",
         color: ok ? (key === todayKey ? "#2383E2" : "#9CC7EE") : "#EDEDEC",
       };
     });
@@ -343,8 +376,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     const scheduled = dayRange.filter((day) =>
       isScheduledOn(task.weekdays, day)
     ).length;
-    const hit = dots.filter((d) => d.color !== "#EDEDEC" && d.color !== "#F7F7F5")
-      .length;
+    const hit = dots.filter((d) => d.status === "hit").length;
     const rate = scheduled === 0 ? 0 : Math.round((hit / scheduled) * 100);
 
     return {
@@ -387,17 +419,20 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const weekdays: WeekdayAnalytics[] = order.map((i) => ({
     id: i,
     label: dayLabels[i],
+    name: dayNames[i],
     count: Math.round(wdAvg[i] * 10) / 10,
     labelColor:
       i === bestI ? "#2383E2" : i === dow ? "#37352F" : "#9B9A97",
     barHeight: Math.max(3, Math.round((wdAvg[i] / wdMax) * 100)),
+    isBest: i === bestI,
+    isWeakest: i === worstI,
   }));
 
   const buckets = [
-    { name: "Morning", lo: 5, hi: 11 },
-    { name: "Midday", lo: 12, hi: 16 },
-    { name: "Evening", lo: 17, hi: 21 },
-    { name: "Late night", lo: 22, hi: 28 },
+    { name: "Morning", lo: 5, hi: 11, range: "5–11am" },
+    { name: "Midday", lo: 12, hi: 16, range: "12–4pm" },
+    { name: "Evening", lo: 17, hi: 21, range: "5–9pm" },
+    { name: "Late night", lo: 22, hi: 28, range: "10pm–4am" },
   ];
 
   const bCounts = buckets.map((b) =>
@@ -415,6 +450,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
 
   const timeOfDay: TimeOfDayAnalytics[] = buckets.map((b, i) => ({
     name: b.name,
+    range: b.range,
     count: bCounts[i],
     barWidth: Math.max(2, Math.round((bCounts[i] / bMax) * 100)),
     isPeak: i === peak,
@@ -431,38 +467,48 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       : "Nothing logged in this window yet.",
     bigStats: [
       {
+        key: "completed",
         label: "Completed",
         value: String(rangeLogs.length),
         unit: "items",
         color: "#37352F",
+        hint: "Everything you checked off in this window",
       },
       {
+        key: "tasks",
         label: "Tasks",
         value: String(
           rangeLogs.filter((l) => l.entityType === "TASK").length
         ),
         unit: "done",
         color: "#37352F",
+        hint: "One-off work finished — click to isolate the chart",
       },
       {
+        key: "habits",
         label: "Habit check-ins",
         value: String(
           rangeLogs.filter((l) => l.entityType === "DAILY_TASK").length
         ),
         unit: "",
         color: "#787774",
+        hint: "Scheduled days you showed up",
       },
       {
+        key: "focus",
         label: "Focus time",
         value: String(Math.round(totalMinutes / 60)),
         unit: "hours",
         color: "#2383E2",
+        hint: "Minutes logged across projects",
       },
       {
+        key: "perDay",
         label: "Per day",
         value: (rangeLogs.length / ANALYTICS_WINDOW_DAYS).toFixed(1),
         unit: "avg",
         color: "#37352F",
+        hint: "Average completions per day",
       },
     ],
     overview: {

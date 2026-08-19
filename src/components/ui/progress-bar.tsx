@@ -6,6 +6,7 @@ type ProgressBarProps = {
   color?: string;
   className?: string;
   height?: "sm" | "md";
+  animated?: boolean;
 };
 
 export function ProgressBar({
@@ -14,6 +15,7 @@ export function ProgressBar({
   color = "var(--signal)",
   className,
   height = "sm",
+  animated = false,
 }: ProgressBarProps) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
 
@@ -26,7 +28,10 @@ export function ProgressBar({
       )}
     >
       <div
-        className="h-full rounded-[3px] transition-[width] duration-[120ms]"
+        className={cn(
+          "h-full rounded-[3px] transition-[width] duration-[120ms]",
+          animated && "animate-dh-fill"
+        )}
         style={{ width: `${Math.max(pct > 0 ? 2 : 0, pct)}%`, backgroundColor: color }}
       />
     </div>

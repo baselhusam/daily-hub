@@ -144,6 +144,15 @@
   }
 }
 
+@keyframes dh-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -226,5 +235,16 @@
 
   .animate-dh-pop {
     animation: dh-pop 0.2s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  .animate-dh-fill {
+    transform-origin: left center;
+    animation: dh-fill 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-dh-fill {
+      animation: none;
+    }
   }
 }
