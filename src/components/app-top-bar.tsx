@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,41 +8,112 @@ import {
   CalendarCheck,
   FolderKanban,
   LayoutDashboard,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
 } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import { NotificationBell } from "@/components/notification-bell";
+import { SettingsDialog } from "@/components/settings-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
 type AppTopBarProps = {
   stats: SidebarStats;
   onSearchOpen: () => void;
+  collapsed: boolean;
+  onToggle: () => void;
+  animate?: boolean;
 };
 
 export function AppTopBar({
   stats,
   onSearchOpen,
+  collapsed,
+  onToggle,
+  animate = true,
 }: AppTopBarProps) {
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+
   return (
-    <div className="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-border bg-background/86 px-[clamp(14px,2.2vw,26px)] py-[11px] backdrop-blur-[10px]">
-      <button
-        type="button"
-        onClick={onSearchOpen}
-        className="flex max-w-[320px] flex-[0_1_320px] items-center gap-2 rounded-md border border-border bg-paper px-2.5 py-1.5 text-left transition-colors duration-[120ms] hover:border-border-strong"
-        aria-label="Search"
-        title="Search (⌘K or /)"
-      >
-        <Search className="h-3.5 w-3.5 shrink-0 text-faint" />
-        <span className="min-w-0 flex-1 truncate text-[13px] text-faint">
-          Search…
-        </span>
-        <span className="shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-[11.5px] font-semibold text-faint tabular-nums">
-          ⌘K
-        </span>
-      </button>
-      <ThemeToggle />
-      <NotificationBell notifications={stats.notifications} />
-    </div>
+    <>
+      <header className="fixed inset-x-0 top-0 z-50 hidden h-[52px] dh:flex">
+        <div
+          className={cn(
+            "flex h-full items-center justify-center border-r border-border bg-paper",
+            animate &&
+              "transition-[width,padding] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
+            collapsed ? "w-[68px] px-1" : "w-64 px-3"
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className={cn(
+              "flex min-w-0 items-center rounded-md text-left transition-colors duration-[120ms] hover:bg-hover",
+              collapsed ? "h-8 w-8 justify-center" : "h-8 gap-2 px-1.5"
+            )}
+            aria-label="Workspace settings"
+            title={stats.settings.workspaceName}
+          >
+            <BrandMark
+              size={collapsed ? 22 : 24}
+              className="text-foreground"
+            />
+            {!collapsed && (
+              <span className="max-w-[9.5rem] truncate text-[13.5px] font-semibold tracking-[-0.02em] leading-none">
+                {stats.settings.workspaceName}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div className="flex min-w-0 flex-1 items-center gap-3 border-b border-border bg-background pl-2 pr-[clamp(14px,2.2vw,26px)]">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors duration-[120ms] hover:bg-hover hover:text-foreground"
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </button>
+          <div className="min-w-2 flex-1" />
+          <button
+            type="button"
+            onClick={onSearchOpen}
+            className="flex max-w-[320px] flex-[0_1_320px] items-center gap-2 rounded-md border border-border bg-paper px-2.5 py-1.5 text-left transition-colors duration-[120ms] hover:border-border-strong"
+            aria-label="Search"
+            title="Search (⌘K or /)"
+          >
+            <Search className="h-3.5 w-3.5 shrink-0 text-faint" />
+            <span className="min-w-0 flex-1 truncate text-[13px] text-faint">
+              Search…
+            </span>
+            <span className="shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-[11.5px] font-semibold text-faint tabular-nums">
+              ⌘K
+            </span>
+          </button>
+          <ThemeToggle />
+          <NotificationBell notifications={stats.notifications} />
+        </div>
+      </header>
+
+      <SettingsDialog
+        settings={{
+          id: "default",
+          ...stats.settings,
+        }}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+      />
+    </>
   );
 }
 

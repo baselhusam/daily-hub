@@ -25,19 +25,16 @@ type AppShellProps = {
 function SidebarWithSearchParams({
   stats,
   collapsed,
-  onToggle,
   animate,
 }: {
   stats: SidebarStats;
   collapsed: boolean;
-  onToggle: () => void;
   animate: boolean;
 }) {
   return (
     <AppSidebar
       stats={stats}
       collapsed={collapsed}
-      onToggle={onToggle}
       animate={animate}
     />
   );
@@ -107,11 +104,18 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
       />
+      <AppTopBar
+        stats={stats}
+        onSearchOpen={() => setPaletteOpen(true)}
+        collapsed={collapsed}
+        onToggle={toggleSidebar}
+        animate={sidebarReady}
+      />
+
       <Suspense fallback={null}>
         <SidebarWithSearchParams
           stats={stats}
           collapsed={collapsed}
-          onToggle={toggleSidebar}
           animate={sidebarReady}
         />
       </Suspense>
@@ -121,16 +125,10 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
           "flex min-h-svh flex-col",
           sidebarReady &&
             "transition-[padding] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
+          "dh:pt-[52px]",
           collapsed ? "dh:pl-[68px]" : "dh:pl-64"
         )}
       >
-        <div className="hidden dh:block">
-          <AppTopBar
-            stats={stats}
-            onSearchOpen={() => setPaletteOpen(true)}
-          />
-        </div>
-
         <div className="dh:hidden">
           <header className="flex items-center justify-between border-b border-border bg-paper px-4 py-3.5">
             <Link href="/" aria-label="DailyHub">

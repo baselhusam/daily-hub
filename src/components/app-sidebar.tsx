@@ -1,22 +1,16 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3,
   CalendarCheck,
-  ChevronDown,
   FolderKanban,
   LayoutDashboard,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from "lucide-react";
-import { BrandMark } from "@/components/brand-mark";
 import { ChainDots } from "@/components/ui/chain-dots";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SettingsDialog } from "@/components/settings-dialog";
 import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
@@ -30,103 +24,40 @@ const navItems = [
 type AppSidebarProps = {
   stats: SidebarStats;
   collapsed?: boolean;
-  onToggle?: () => void;
   animate?: boolean;
 };
 
 export function AppSidebar({
   stats,
   collapsed = false,
-  onToggle,
   animate = true,
 }: AppSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeProjectId = searchParams.get("project");
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   return (
-    <>
-      <aside
+    <aside
+      className={cn(
+        "fixed top-[52px] bottom-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-border bg-paper dh:flex",
+        animate &&
+          "transition-[width] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
+        collapsed ? "w-[68px]" : "w-64"
+      )}
+    >
+      <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-border bg-paper dh:flex",
-          animate &&
-            "transition-[width] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
-          collapsed ? "w-[68px]" : "w-64"
+          "flex flex-col pb-3",
+          collapsed ? "gap-3 p-2" : "gap-5 p-3.5"
         )}
       >
-        <div
-          className={cn(
-            "flex flex-col pb-3",
-            collapsed ? "gap-3 p-2" : "gap-5 p-3.5"
+        <nav className="flex flex-col gap-0.5">
+          {!collapsed && (
+            <p className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[0.02em] text-faint">
+              Main Menu
+            </p>
           )}
-        >
-          <div
-            className={cn(
-              "flex items-center",
-              collapsed ? "flex-col gap-1.5" : "gap-1.5"
-            )}
-          >
-            {collapsed && onToggle && (
-              <button
-                type="button"
-                onClick={onToggle}
-                aria-expanded={false}
-                aria-label="Expand sidebar"
-                title="Expand sidebar"
-                className="grid h-9 w-full place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-raised transition-colors hover:border-border-strong hover:text-foreground"
-              >
-                <PanelLeftOpen className="h-4 w-4" />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setSettingsOpen(true)}
-              className={cn(
-                "flex items-center rounded-lg border border-border bg-card text-left shadow-raised transition-colors hover:border-border-strong",
-                collapsed
-                  ? "h-9 w-full justify-center"
-                  : "min-w-0 flex-1 gap-2.5 px-2 py-2"
-              )}
-              aria-label="Workspace settings"
-              title={collapsed ? stats.settings.workspaceName : undefined}
-            >
-              <BrandMark size={collapsed ? 22 : 28} className="text-foreground" />
-              {!collapsed && (
-                <>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[11px] font-semibold tracking-[0.02em] text-faint">
-                      {stats.settings.workspaceName}
-                    </span>
-                    <span className="block text-[13.5px] font-semibold tracking-[-0.01em]">
-                      DailyHub
-                    </span>
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-faint" />
-                </>
-              )}
-            </button>
-            {!collapsed && onToggle && (
-              <button
-                type="button"
-                onClick={onToggle}
-                aria-expanded={true}
-                aria-label="Collapse sidebar"
-                title="Collapse sidebar"
-                className="grid h-[44px] w-8 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-raised transition-colors hover:border-border-strong hover:text-foreground"
-              >
-                <PanelLeftClose className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          <nav className="flex flex-col gap-0.5">
-            {!collapsed && (
-              <p className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[0.02em] text-faint">
-                Main Menu
-              </p>
-            )}
-            {navItems.map((item) => {
+          {navItems.map((item) => {
               const isActive =
                 item.href === "/"
                   ? pathname === "/"
@@ -257,16 +188,6 @@ export function AppSidebar({
             </div>
           </div>
         )}
-      </aside>
-
-      <SettingsDialog
-        settings={{
-          id: "default",
-          ...stats.settings,
-        }}
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-      />
-    </>
+    </aside>
   );
 }
