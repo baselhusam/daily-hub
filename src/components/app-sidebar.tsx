@@ -237,13 +237,8 @@ export function AppSidebar({
           )}
         </div>
 
-        <div
-          className={cn(
-            "mt-auto flex flex-col gap-2",
-            collapsed ? "p-2" : "p-3"
-          )}
-        >
-          {!collapsed && stats.showStreaks && (
+        {!collapsed && stats.showStreaks && (
+          <div className="mt-auto p-3">
             <div className="rounded-[10px] border border-border bg-card p-3.5">
               <p className="mb-1.5 text-[11.5px] font-semibold tracking-[0.02em] text-faint">
                 Chain
@@ -258,44 +253,8 @@ export function AppSidebar({
               </div>
               <ChainDots dots={stats.streakDots} className="mt-2.5" />
             </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            title={
-              collapsed
-                ? `${stats.settings.displayName} · ${stats.settings.role}`
-                : undefined
-            }
-            className={cn(
-              "flex items-center rounded-lg border border-border bg-card text-left shadow-[0_1px_2px_rgba(15,15,15,.04)] transition-colors hover:border-[#D3D2CF]",
-              collapsed
-                ? "h-9 w-full justify-center"
-                : "gap-2.5 px-2 py-2"
-            )}
-          >
-            <span
-              className={cn(
-                "relative grid place-items-center rounded-full bg-border font-semibold text-muted-foreground",
-                collapsed ? "h-[22px] w-[22px] text-[10px]" : "h-[30px] w-[30px] text-xs"
-              )}
-            >
-              {stats.settings.displayName.slice(0, 1).toUpperCase()}
-              <span className="absolute -right-px -bottom-px h-2 w-2 rounded-full border-2 border-card bg-signal" />
-            </span>
-            {!collapsed && (
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-semibold leading-snug">
-                  {stats.settings.displayName}
-                </span>
-                <span className="block text-[11px] text-faint">
-                  {stats.settings.role}
-                </span>
-              </span>
-            )}
-          </button>
-        </div>
+          </div>
+        )}
       </aside>
 
       <SettingsDialog

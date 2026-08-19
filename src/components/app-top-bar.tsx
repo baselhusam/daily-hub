@@ -91,9 +91,6 @@ export function AppTopBar({
           <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-background bg-signal" />
         )}
       </Link>
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-foreground text-xs font-semibold text-background">
-        {stats.settings.displayName.slice(0, 1).toUpperCase()}
-      </span>
     </div>
   );
 }
