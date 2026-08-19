@@ -42,7 +42,7 @@ export function TaskRow({
         checked={task.done}
         disabled={pending}
         onCheckedChange={onToggle}
-        className="mt-0.5 size-[22px]"
+        className="relative z-10 mt-0.5 size-[22px]"
         aria-label={`Toggle ${task.title}`}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3">

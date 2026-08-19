@@ -110,7 +110,7 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function completeTask(taskId: string): Promise<ActionResult> {
+export async function toggleTask(taskId: string): Promise<ActionResult> {
   const today = getTodayDate();
 
   try {
@@ -120,31 +120,56 @@ export async function completeTask(taskId: string): Promise<ActionResult> {
     }
 
     if (task.status === "DONE") {
-      return { success: true };
+      await prisma.$transaction([
+        prisma.task.update({
+          where: { id: taskId },
+          data: {
+            status: "TODO",
+            completedAt: null,
+          },
+        }),
+        prisma.completionLog.deleteMany({
+          where: {
+            entityType: "TASK",
+            entityId: taskId,
+            completedOn: today,
+          },
+        }),
+      ]);
+    } else {
+      await prisma.$transaction([
+        prisma.task.update({
+          where: { id: taskId },
+          data: {
+            status: "DONE",
+            completedAt: new Date(),
+          },
+        }),
+        prisma.completionLog.upsert({
+          where: {
+            entityType_entityId_completedOn: {
+              entityType: "TASK",
+              entityId: taskId,
+              completedOn: today,
+            },
+          },
+          create: {
+            entityType: "TASK",
+            entityId: taskId,
+            completedOn: today,
+            minutes: task.estimatedMinutes,
+          },
+          update: {
+            minutes: task.estimatedMinutes,
+          },
+        }),
+      ]);
     }
-
-    await prisma.$transaction([
-      prisma.task.update({
-        where: { id: taskId },
-        data: {
-          status: "DONE",
-          completedAt: new Date(),
-        },
-      }),
-      prisma.completionLog.create({
-        data: {
-          entityType: "TASK",
-          entityId: taskId,
-          completedOn: today,
-          minutes: task.estimatedMinutes,
-        },
-      }),
-    ]);
   } catch (error) {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Failed to complete task.",
+        error instanceof Error ? error.message : "Failed to update task.",
     };
   }
 

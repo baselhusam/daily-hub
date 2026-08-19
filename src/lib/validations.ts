@@ -75,7 +75,7 @@ export const toggleDailyTaskSchema = z.object({
   dailyTaskId: z.string().min(1),
 });
 
-export const completeTaskSchema = z.object({
+export const toggleTaskSchema = z.object({
   taskId: z.string().min(1),
 });
 

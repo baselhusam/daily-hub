@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/brand-mark";
 import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
-import { completeTask } from "@/app/actions/tasks";
+import { toggleTask } from "@/app/actions/tasks";
 import { cn, isTypingTarget } from "@/lib/utils";
 
 type EditableTask = {
@@ -104,18 +104,18 @@ export function DashboardShell({ data }: DashboardShellProps) {
           (data.stats.dailyCompleted / data.stats.dailyScheduled) * 100
         );
 
-  async function handleComplete(taskId: string) {
+  async function handleToggle(taskId: string) {
     setPendingTaskId(taskId);
     setActionError(null);
     try {
-      const result = await completeTask(taskId);
+      const result = await toggleTask(taskId);
       if (!result.success) {
         setActionError(
-          result.error ?? "Could not complete this task. Try again."
+          result.error ?? "Could not update this task. Try again."
         );
       }
     } catch {
-      setActionError("Could not complete this task. Try again.");
+      setActionError("Could not update this task. Try again.");
     } finally {
       setPendingTaskId(null);
     }
@@ -371,7 +371,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                               ),
                             }}
                             pending={pendingTaskId === task.id}
-                            onToggle={() => void handleComplete(task.id)}
+                            onToggle={() => void handleToggle(task.id)}
                             onEdit={() => setEditingTask(task)}
                           />
                         );
@@ -462,7 +462,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                                 ),
                               }}
                               pending={pendingTaskId === task.id}
-                              onToggle={() => void handleComplete(task.id)}
+                              onToggle={() => void handleToggle(task.id)}
                               onEdit={() => setEditingTask(task)}
                             />
                           );
