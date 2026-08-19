@@ -31,6 +31,49 @@ export async function deleteMilestone(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
+export async function createMilestone(formData: FormData): Promise<ActionResult> {
+  const parsed = milestoneSchema.safeParse({
+    name: formData.get("name"),
+    dueDate: formData.get("dueDate") || undefined,
+  });
+  const projectId = String(formData.get("projectId") ?? "").trim();
+
+  if (!projectId) {
+    return { success: false, error: "Choose a project." };
+  }
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Enter a milestone name.",
+    };
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true },
+  });
+  if (!project) {
+    return { success: false, error: "Project not found." };
+  }
+
+  const last = await prisma.milestone.aggregate({
+    where: { projectId },
+    _max: { sortOrder: true },
+  });
+
+  await prisma.milestone.create({
+    data: {
+      projectId,
+      name: parsed.data.name.trim(),
+      dueDate: parseDateInput(parsed.data.dueDate),
+      sortOrder: (last._max.sortOrder ?? -1) + 1,
+    },
+  });
+
+  revalidateAll();
+  return { success: true };
+}
+
 export async function saveProjectMilestones(
   projectId: string,
   milestones: Array<{ id?: string; name: string; dueDate?: string; done?: boolean }>

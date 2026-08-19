@@ -18,7 +18,6 @@ import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { DialogInput, FieldLabel } from "@/components/ui/input";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { toDateOnlyString } from "@/lib/dates";
-import type { DashboardProject } from "@/lib/dashboard";
 
 type TaskFormValues = {
   id: string;
@@ -29,8 +28,16 @@ type TaskFormValues = {
   estimatedMinutes: number | null;
 };
 
+type TaskProjectOption = {
+  id: string;
+  name: string;
+  iconKey: string;
+  logoUrl: string | null;
+  color: string | null;
+};
+
 type CreateTaskDialogProps = {
-  projects: DashboardProject[];
+  projects: TaskProjectOption[];
   defaultProjectId?: string;
   task?: TaskFormValues;
   triggerLabel?: string;

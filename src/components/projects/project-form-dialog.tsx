@@ -49,13 +49,19 @@ export type ProjectFormValues = {
 type ProjectFormDialogProps = {
   project?: ProjectFormValues;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export function ProjectFormDialog({
   project,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: ProjectFormDialogProps) {
-  const [open, setOpen] = React.useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
   const [milestones, setMilestones] = React.useState<MilestoneForm[]>([]);
@@ -142,14 +148,16 @@ export function ProjectFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-        {trigger ?? (
-          <Button size="sm" className="h-9 gap-1 px-4 text-[13.5px] font-semibold">
-            <Plus className="h-3.5 w-3.5" />
-            Project
-          </Button>
+        {(trigger || controlledOpen === undefined) && (
+          <DialogTrigger asChild>
+            {trigger ?? (
+              <Button size="sm" className="h-9 gap-1 px-4 text-[13.5px] font-semibold">
+                <Plus className="h-3.5 w-3.5" />
+                Project
+              </Button>
+            )}
+          </DialogTrigger>
         )}
-      </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
