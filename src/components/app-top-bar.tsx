@@ -59,13 +59,6 @@ export function AppTopBar({
         </span>
       </button>
       <ThemeToggle />
-      <Link
-        href="/analytics"
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
-        aria-label="Analytics"
-      >
-        <BarChart3 className="h-4 w-4" />
-      </Link>
       <NotificationBell notifications={stats.notifications} />
     </div>
   );
