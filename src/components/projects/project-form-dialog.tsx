@@ -162,7 +162,7 @@ export function ProjectFormDialog({
           </DialogTrigger>
         )}
       <DialogContent>
-        <form onSubmit={handleSubmit}>
+        <form className="flex min-h-0 w-full flex-col" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{isEdit ? "Edit project" : "New project"}</DialogTitle>
           </DialogHeader>
