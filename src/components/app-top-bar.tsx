@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   CalendarCheck,
-  ChevronRight,
   FolderKanban,
   LayoutDashboard,
   Search,
@@ -19,30 +18,12 @@ type AppTopBarProps = {
   onSearchOpen: () => void;
 };
 
-const crumbs: Record<string, string> = {
-  "/": "Overview",
-  "/projects": "Projects",
-  "/daily": "Habits",
-  "/analytics": "Analytics",
-};
-
 export function AppTopBar({
   stats,
   onSearchOpen,
 }: AppTopBarProps) {
-  const pathname = usePathname();
-  const crumb =
-    crumbs[pathname] ??
-    (pathname === "/" ? "Overview" : pathname.slice(1));
-
   return (
-    <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/86 px-[clamp(14px,2.2vw,26px)] py-[11px] backdrop-blur-[10px]">
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="text-[13px] text-faint">DailyHub</span>
-        <ChevronRight className="h-3.5 w-3.5 text-hairline" />
-        <span className="truncate text-[13px] font-semibold">{crumb}</span>
-      </div>
-      <div className="min-w-2 flex-1" />
+    <div className="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-border bg-background/86 px-[clamp(14px,2.2vw,26px)] py-[11px] backdrop-blur-[10px]">
       <button
         type="button"
         onClick={onSearchOpen}
