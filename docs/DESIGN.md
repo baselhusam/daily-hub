@@ -54,7 +54,7 @@ Paper, ink, and one accent — accent only for what is live (today, streaks, lin
 - **Desktop (≥900px):** fixed left sidebar (256px, paper) — workspace lockup, main menu with counts, filter today, chain card, user chip
 - **Top bar:** sticky glass bar — breadcrumb, search (⌘K), quick nav icons, user initial
 - **Mobile:** lockup + streak pill in content; fixed bottom tab bar (Today / Projects / Habits / Analytics)
-- Main column `max-w-[1080px]` with page gutters `clamp(14px, 2.6vw, 32px)`
+- Main column `max-w-[1080px]` with page gutters `clamp(14px, 2.6vw, 32px)`. Today (`/`) uses `max-w-[1180px]` for the desktop split.
 - Selected nav is a white card with a 1px rule + raised shadow — hover is `#EFEFED`, never both
 - Cards never nest
 
@@ -66,10 +66,9 @@ Paper, ink, and one accent — accent only for what is live (today, streaks, lin
 | Quick add | Inline task capture with project, due, Add |
 | Nudges | Overdue and stalled project chips |
 | Snapshot | Four metric cards with sparklines |
-| Habits | Today's habits card with progress bar |
-| Open work | Project groups with milestones, task rows |
-| Inbox | Paper-surface card for ungrouped tasks |
-| Week review | Ink panel linking to Analytics |
+| Desktop split | Left: project groups with milestones and task rows (page scroll). Right: today's habits + inbox, sticky while projects scroll. |
+| Mobile stack | Habits and inbox first, then open work |
+| Week review | Full-width ink panel linking to Analytics |
 
 Project filters live in the **sidebar** only.
 

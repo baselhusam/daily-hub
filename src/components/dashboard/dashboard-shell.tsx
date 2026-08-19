@@ -24,7 +24,7 @@ import { EmptyState } from "@/components/brand-mark";
 import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { completeTask } from "@/app/actions/tasks";
-import { isTypingTarget } from "@/lib/utils";
+import { cn, isTypingTarget } from "@/lib/utils";
 
 type EditableTask = {
   id: string;
@@ -95,6 +95,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
     !filterProject &&
     data.projects.length === 0 &&
     data.inboxTasks.length === 0;
+  const showTodayRail = showHabits || (showInbox && !isFreshWorkspace);
 
   const habitProgress =
     data.stats.dailyScheduled === 0
@@ -139,7 +140,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
           }}
         />
       )}
-      <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
         <PageHeader
           eyebrow={todayLabel}
           title={greeting}
@@ -250,210 +251,230 @@ export function DashboardShell({ data }: DashboardShellProps) {
           </section>
         )}
 
-        {showHabits && (
-          <SurfaceCard>
-            <SurfaceCardHeader className="!py-3.5">
-              <div className="flex w-full items-center justify-between gap-3">
-                <div className="flex items-baseline gap-2.5">
-                  <h2 className="text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
-                    Today&apos;s habits
-                  </h2>
-                  <span className="text-[12px] font-medium text-faint tabular-nums">
-                    {data.stats.dailyCompleted}/{data.stats.dailyScheduled}
-                  </span>
-                </div>
-                <ProgressBar
-                  value={habitProgress}
-                  className="max-w-[180px] flex-1"
-                />
-              </div>
-            </SurfaceCardHeader>
-            <DailyChecklist tasks={data.dailyTasks} />
-          </SurfaceCard>
-        )}
+        <div
+          className={cn(
+            "grid gap-5",
+            showTodayRail
+              ? "dh:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.9fr)]"
+              : "dh:grid-cols-1"
+          )}
+        >
+          <div className="order-2 flex min-w-0 flex-col gap-3.5 dh:order-1">
+            <div className="flex items-baseline justify-between gap-3 px-0.5">
+              <h2 className="section-kicker flex-1">Open work</h2>
+              <span className="text-[11.5px] tracking-[0.1em] text-faint tabular-nums">
+                {data.stats.openTasks} open
+              </span>
+            </div>
 
-        <div className="flex flex-col gap-3.5">
-          <div className="flex items-baseline justify-between gap-3 px-0.5">
-            <h2 className="section-kicker flex-1">
-              Open work
-            </h2>
-            <span className="text-[11.5px] tracking-[0.1em] text-faint tabular-nums">
-              {data.stats.openTasks} open
-            </span>
+            {isFreshWorkspace ? (
+              <SurfaceCard>
+                <EmptyState
+                  title="No open work"
+                  description="Add a task, or create a project to group related work."
+                >
+                  <CreateTaskDialog projects={data.projects} />
+                </EmptyState>
+              </SurfaceCard>
+            ) : (
+              filteredProjects.map((project) => {
+                const dl = daysUntil(project.dueDate, today, mode);
+                const visibleTasks = project.tasks;
+
+                return (
+                  <SurfaceCard key={project.id}>
+                    <SurfaceCardHeader sunk>
+                      <div className="flex w-full flex-wrap items-center gap-3">
+                        <EntityAvatar
+                          name={project.name}
+                          color={project.color}
+                          logoUrl={project.logoUrl}
+                          iconKey={project.iconKey}
+                          size={30}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[15px] font-semibold tracking-[-0.01em]">
+                              {project.name}
+                            </span>
+                            {project.status !== "ACTIVE" ? (
+                              <StatusChip status={project.status} />
+                            ) : null}
+                          </div>
+                          <p className="mt-0.5 text-[12px] text-faint">
+                            {project.openCount} open · {project.doneCount} logged
+                          </p>
+                        </div>
+                        {dl !== null && (
+                          <div className="text-right">
+                            <div
+                              className="text-[14px] font-semibold tabular-nums leading-none"
+                              style={{ color: getDeadlineColor(dl) }}
+                            >
+                              {dl < 0 ? `${Math.abs(dl)}d late` : `${dl}d`}
+                            </div>
+                            <div className="mt-0.5 text-[11.5px] text-faint">
+                              to deadline
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </SurfaceCardHeader>
+
+                    {project.milestones.filter((m) => !m.done).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 border-b border-rule-soft bg-canvas-sunk px-[18px] py-2.5">
+                        {project.milestones
+                          .filter((m) => !m.done)
+                          .slice(0, 3)
+                          .map((milestone) => {
+                            const md = daysUntil(milestone.dueDate, today, mode);
+                            return (
+                              <Badge
+                                key={milestone.id}
+                                variant="filter"
+                                dotColor={
+                                  md !== null && md <= 7
+                                    ? "var(--signal)"
+                                    : "var(--hairline)"
+                                }
+                                className="gap-1.5"
+                              >
+                                {milestone.name}
+                                {md !== null && (
+                                  <span className="text-faint tabular-nums">
+                                    {md < 0
+                                      ? `${Math.abs(md)}d late`
+                                      : `${md}d`}
+                                  </span>
+                                )}
+                              </Badge>
+                            );
+                          })}
+                      </div>
+                    )}
+
+                    <div>
+                      {visibleTasks.map((task) => {
+                        const due = getDueMeta(task.dueDate, today, mode);
+                        return (
+                          <TaskRow
+                            key={task.id}
+                            task={{
+                              id: task.id,
+                              title: task.title,
+                              done: task.doneToday,
+                              dueLabel: due?.label,
+                              dueColor: due?.color,
+                              dueBg: due?.bg,
+                              estimateLabel: formatEstimate(
+                                task.estimatedMinutes
+                              ),
+                            }}
+                            pending={pendingTaskId === task.id}
+                            onToggle={() => void handleComplete(task.id)}
+                            onEdit={() => setEditingTask(task)}
+                          />
+                        );
+                      })}
+                      <CreateTaskDialog
+                        projects={data.projects}
+                        defaultProjectId={project.id}
+                        trigger={
+                          <button
+                            type="button"
+                            className="w-full px-[18px] py-3 text-left text-[13px] font-semibold text-faint transition-colors hover:bg-paper hover:text-signal"
+                          >
+                            + Add task to {project.name}
+                          </button>
+                        }
+                      />
+                    </div>
+                  </SurfaceCard>
+                );
+              })
+            )}
           </div>
 
-          {isFreshWorkspace ? (
-            <SurfaceCard>
-              <EmptyState
-                title="No open work"
-                description="Add a task, or create a project to group related work."
-              >
-                <CreateTaskDialog projects={data.projects} />
-              </EmptyState>
-            </SurfaceCard>
-          ) : (
-            <>
-          {filteredProjects.map((project) => {
-            const dl = daysUntil(project.dueDate, today, mode);
-            const visibleTasks = project.tasks;
-
-              return (
-                <SurfaceCard key={project.id}>
-                  <SurfaceCardHeader sunk>
-                    <div className="flex w-full flex-wrap items-center gap-3">
-                      <EntityAvatar
-                        name={project.name}
-                        color={project.color}
-                        logoUrl={project.logoUrl}
-                        iconKey={project.iconKey}
-                        size={30}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[15px] font-semibold tracking-[-0.01em]">
-                            {project.name}
+          {showTodayRail ? (
+            <div className="order-1 min-w-0 dh:order-2">
+              <div className="flex flex-col gap-3.5 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:pr-0.5">
+                {showHabits && (
+                  <SurfaceCard>
+                    <SurfaceCardHeader className="!py-3.5">
+                      <div className="flex w-full items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-baseline gap-2.5">
+                          <h2 className="text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
+                            Today&apos;s habits
+                          </h2>
+                          <span className="text-[12px] font-medium text-faint tabular-nums">
+                            {data.stats.dailyCompleted}/
+                            {data.stats.dailyScheduled}
                           </span>
-                          {project.status !== "ACTIVE" ? (
-                            <StatusChip status={project.status} />
-                          ) : null}
                         </div>
-                        <p className="mt-0.5 text-[12px] text-faint">
-                          {project.openCount} open · {project.doneCount} logged
-                        </p>
+                        <ProgressBar
+                          value={habitProgress}
+                          className="max-w-[140px] flex-1"
+                        />
                       </div>
-                      {dl !== null && (
-                        <div className="text-right">
-                          <div
-                            className="text-[14px] font-semibold tabular-nums leading-none"
-                            style={{ color: getDeadlineColor(dl) }}
-                          >
-                            {dl < 0 ? `${Math.abs(dl)}d late` : `${dl}d`}
-                          </div>
-                          <div className="mt-0.5 text-[11.5px] text-faint">
-                            to deadline
+                    </SurfaceCardHeader>
+                    <DailyChecklist tasks={data.dailyTasks} />
+                  </SurfaceCard>
+                )}
+
+                {showInbox && !isFreshWorkspace && (
+                  <SurfaceCard variant="paper">
+                    <SurfaceCardHeader>
+                      <div className="flex w-full items-center gap-3">
+                        <span className="grid h-[30px] w-[30px] place-items-center rounded-md bg-border text-muted-foreground">
+                          <Inbox className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[15px] font-semibold">Inbox</div>
+                          <div className="mt-0.5 text-[12px] text-faint">
+                            No project yet · file these or finish them
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </SurfaceCardHeader>
-
-                  {project.milestones.filter((m) => !m.done).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 border-b border-rule-soft bg-canvas-sunk px-[18px] py-2.5">
-                      {project.milestones
-                        .filter((m) => !m.done)
-                        .slice(0, 3)
-                        .map((milestone) => {
-                          const md = daysUntil(milestone.dueDate, today, mode);
+                        <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
+                          {data.inboxTasks.filter((t) => !t.doneToday).length}
+                        </span>
+                      </div>
+                    </SurfaceCardHeader>
+                    {data.inboxTasks.length === 0 ? (
+                      <p className="px-[18px] py-5 text-[13.5px] text-faint">
+                        Inbox clear.
+                      </p>
+                    ) : (
+                      <div>
+                        {data.inboxTasks.map((task) => {
+                          const due = getDueMeta(task.dueDate, today, mode);
                           return (
-                            <Badge
-                              key={milestone.id}
-                              variant="filter"
-                              dotColor={
-                                md !== null && md <= 7 ? "var(--signal)" : "var(--hairline)"
-                              }
-                              className="gap-1.5"
-                            >
-                              {milestone.name}
-                              {md !== null && (
-                                <span className="text-faint tabular-nums">
-                                  {md < 0 ? `${Math.abs(md)}d late` : `${md}d`}
-                                </span>
-                              )}
-                            </Badge>
+                            <TaskRow
+                              key={task.id}
+                              task={{
+                                id: task.id,
+                                title: task.title,
+                                done: task.doneToday,
+                                dueLabel: due?.label,
+                                dueColor: due?.color,
+                                dueBg: due?.bg,
+                                estimateLabel: formatEstimate(
+                                  task.estimatedMinutes
+                                ),
+                              }}
+                              pending={pendingTaskId === task.id}
+                              onToggle={() => void handleComplete(task.id)}
+                              onEdit={() => setEditingTask(task)}
+                            />
                           );
                         })}
-                    </div>
-                  )}
-
-                  <div>
-                    {visibleTasks.map((task) => {
-                      const due = getDueMeta(task.dueDate, today, mode);
-                      return (
-                        <TaskRow
-                          key={task.id}
-                          task={{
-                            id: task.id,
-                            title: task.title,
-                            done: task.doneToday,
-                            dueLabel: due?.label,
-                            dueColor: due?.color,
-                            dueBg: due?.bg,
-                            estimateLabel: formatEstimate(task.estimatedMinutes),
-                          }}
-                          pending={pendingTaskId === task.id}
-                          onToggle={() => void handleComplete(task.id)}
-                          onEdit={() => setEditingTask(task)}
-                        />
-                      );
-                    })}
-                    <CreateTaskDialog
-                      projects={data.projects}
-                      defaultProjectId={project.id}
-                      trigger={
-                        <button
-                          type="button"
-                          className="w-full px-[18px] py-3 text-left text-[13px] font-semibold text-faint transition-colors hover:bg-paper hover:text-signal"
-                        >
-                          + Add task to {project.name}
-                        </button>
-                      }
-                    />
-                  </div>
-                </SurfaceCard>
-              );
-            })}
-            </>
-          )}
+                      </div>
+                    )}
+                  </SurfaceCard>
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
-
-        {showInbox && !isFreshWorkspace && (
-          <SurfaceCard variant="paper">
-            <SurfaceCardHeader>
-              <div className="flex w-full items-center gap-3">
-                <span className="grid h-[30px] w-[30px] place-items-center rounded-md bg-border text-muted-foreground">
-                  <Inbox className="h-4 w-4" />
-                </span>
-                <div className="flex-1">
-                  <div className="text-[15px] font-semibold">Inbox</div>
-                  <div className="mt-0.5 text-[12px] text-faint">
-                    No project yet · file these or finish them
-                  </div>
-                </div>
-                <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
-                  {data.inboxTasks.filter((t) => !t.doneToday).length}
-                </span>
-              </div>
-            </SurfaceCardHeader>
-            {data.inboxTasks.length === 0 ? (
-              <p className="px-[18px] py-5 text-[13.5px] text-faint">
-                Inbox clear.
-              </p>
-            ) : (
-              <div>
-                {data.inboxTasks.map((task) => {
-                    const due = getDueMeta(task.dueDate, today, mode);
-                    return (
-                      <TaskRow
-                        key={task.id}
-                        task={{
-                          id: task.id,
-                          title: task.title,
-                          done: task.doneToday,
-                          dueLabel: due?.label,
-                          dueColor: due?.color,
-                          dueBg: due?.bg,
-                          estimateLabel: formatEstimate(task.estimatedMinutes),
-                        }}
-                        pending={pendingTaskId === task.id}
-                        onToggle={() => void handleComplete(task.id)}
-                        onEdit={() => setEditingTask(task)}
-                      />
-                    );
-                  })}
-              </div>
-            )}
-          </SurfaceCard>
-        )}
 
         {showHabits && (
           <section className="flex flex-wrap items-center gap-6 rounded-[12px] border border-foreground bg-foreground p-5 text-background shadow-float">
