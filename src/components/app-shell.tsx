@@ -8,20 +8,64 @@ import { AppTopBar, MobileTabBar } from "@/components/app-top-bar";
 import { BrandLockup } from "@/components/brand-mark";
 import { SearchProvider } from "@/components/search-context";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
+
+const SIDEBAR_COLLAPSED_KEY = "dh-sidebar-collapsed";
 
 type AppShellProps = {
   stats: SidebarStats;
   children: React.ReactNode;
 };
 
-function SidebarWithSearchParams({ stats }: { stats: SidebarStats }) {
-  return <AppSidebar stats={stats} />;
+function SidebarWithSearchParams({
+  stats,
+  collapsed,
+  onToggle,
+  animate,
+}: {
+  stats: SidebarStats;
+  collapsed: boolean;
+  onToggle: () => void;
+  animate: boolean;
+}) {
+  return (
+    <AppSidebar
+      stats={stats}
+      collapsed={collapsed}
+      onToggle={onToggle}
+      animate={animate}
+    />
+  );
 }
 
 export function AppShell({ stats, children }: AppShellProps) {
   const [search, setSearch] = React.useState("");
+  const [collapsed, setCollapsed] = React.useState(false);
+  const [sidebarReady, setSidebarReady] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+    } catch {
+      // Ignore private-mode / blocked storage.
+    }
+    const frame = requestAnimationFrame(() => setSidebarReady(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const toggleSidebar = React.useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        // Ignore private-mode / blocked storage.
+      }
+      return next;
+    });
+  }, []);
 
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -38,10 +82,22 @@ export function AppShell({ stats, children }: AppShellProps) {
   return (
     <div className="min-h-svh bg-background">
       <Suspense fallback={null}>
-        <SidebarWithSearchParams stats={stats} />
+        <SidebarWithSearchParams
+          stats={stats}
+          collapsed={collapsed}
+          onToggle={toggleSidebar}
+          animate={sidebarReady}
+        />
       </Suspense>
 
-      <div className="flex min-h-svh flex-col dh:pl-64">
+      <div
+        className={cn(
+          "flex min-h-svh flex-col",
+          sidebarReady &&
+            "transition-[padding] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
+          collapsed ? "dh:pl-[68px]" : "dh:pl-64"
+        )}
+      >
         <div className="hidden dh:block">
           <AppTopBar
             stats={stats}
