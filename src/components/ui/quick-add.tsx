@@ -87,11 +87,11 @@ export function QuickAdd({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-stretch gap-2 rounded-[10px] border border-border bg-card p-2",
+        "grid grid-cols-2 items-stretch gap-2 rounded-[12px] border border-border bg-card p-2 shadow-raised sm:flex sm:flex-wrap",
         className
       )}
     >
-      <div className="flex min-w-[180px] flex-1 items-center gap-2.5 px-2.5">
+      <div className="col-span-2 flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2.5 sm:min-w-[180px]">
         <span className="h-[15px] w-[15px] shrink-0 rounded border-[1.6px] border-dashed border-hairline" />
         <input
           value={title}
@@ -107,7 +107,7 @@ export function QuickAdd({
         options={projectOptions}
         variant="compact"
         ariaLabel="Project"
-        className="min-w-[148px]"
+        className="min-w-0 sm:min-w-[148px]"
         contentClassName="min-w-[200px]"
       />
       <DatePicker
@@ -117,13 +117,13 @@ export function QuickAdd({
         max={DATE_INPUT_MAX}
         variant="compact"
         placeholder="Due"
-        className="min-w-[148px]"
+        className="min-w-0 sm:min-w-[148px]"
       />
       <Button
         type="button"
         onClick={() => void submit()}
         disabled={pending || !title.trim()}
-        className="px-5 py-2.5 text-[13.5px] font-semibold"
+        className="col-span-2 h-auto min-h-10 px-4 py-2.5 text-[13.5px] font-semibold sm:col-auto sm:px-5"
       >
         Add
       </Button>

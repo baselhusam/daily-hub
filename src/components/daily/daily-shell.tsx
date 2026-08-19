@@ -59,7 +59,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
               <div
                 id={`habit-${task.id}`}
                 key={task.id}
-                className="flex flex-wrap items-center gap-3.5 scroll-mt-24 border-b border-rule-soft px-[18px] py-4 last:border-0 target:bg-signal-wash"
+                className="group grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-3.5 scroll-mt-24 border-b border-rule-soft px-[18px] py-4 transition-colors duration-[120ms] last:border-0 hover:bg-canvas-sunk target:bg-signal-wash sm:grid-cols-[36px_minmax(180px,1fr)_auto_minmax(132px,auto)_auto]"
               >
                 <EntityAvatar
                   name={task.title}
@@ -75,9 +75,16 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                     {task.isActive ? "" : " · Paused"}
                   </div>
                 </div>
-                <DayPills activeDays={task.weekdays} />
-                <div className="flex min-w-[150px] items-center gap-3.5">
-                  <ChainDots dots={task.dots} size="md" className="gap-[2.5px]" />
+                <DayPills
+                  activeDays={task.weekdays}
+                  className="col-span-3 sm:col-span-1"
+                />
+                <div className="col-span-2 flex items-center gap-3.5 border-t border-rule-soft pt-3 sm:col-span-1 sm:border-0 sm:pt-0">
+                  <ChainDots
+                    dots={task.dots}
+                    size="md"
+                    className="w-[112px] flex-none gap-[2.5px]"
+                  />
                   <span
                     className="text-[13px] font-semibold tabular-nums"
                     style={{
@@ -92,7 +99,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                     {task.rate}%
                   </span>
                 </div>
-                <div className="flex gap-0.5">
+                <div className="flex justify-self-end gap-0.5">
                   <DailyTaskFormDialog
                     task={{
                       id: task.id,
@@ -103,7 +110,11 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                       isActive: task.isActive,
                     }}
                     trigger={
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-hairline">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-hairline sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                      >
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Edit habit</span>
                       </Button>
@@ -112,7 +123,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-hairline hover:text-destructive"
+                    className="h-8 w-8 text-hairline hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                     onClick={() => deleteDailyTask(task.id)}
                     aria-label="Delete habit"
                   >

@@ -38,7 +38,7 @@ export function AppTopBar({
   return (
     <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/86 px-[clamp(14px,2.2vw,26px)] py-[11px] backdrop-blur-[10px]">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="text-[13px] text-faint">Dashboard</span>
+        <span className="text-[13px] text-faint">DailyHub</span>
         <ChevronRight className="h-3.5 w-3.5 text-hairline" />
         <span className="truncate text-[13px] font-semibold">{crumb}</span>
       </div>
@@ -93,13 +93,16 @@ export function MobileTabBar() {
           <Link
             key={item.href}
             href={item.href}
-            className="relative flex flex-col items-center gap-1.5 py-2 text-foreground"
+            className={
+              "relative flex min-h-14 flex-col items-center justify-center gap-1 py-2 transition-colors duration-[120ms] " +
+              (isActive ? "text-foreground" : "text-faint hover:text-foreground")
+            }
           >
             {isActive && (
               <span className="absolute top-0 left-1/2 h-[2.5px] w-[26px] -translate-x-1/2 rounded-sm bg-signal" />
             )}
-            <Icon className="h-[19px] w-[19px]" />
-            <span className="text-[11.5px] font-semibold">{item.label}</span>
+            <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.4 : 2} />
+            <span className="text-[10.5px] font-semibold tracking-[0.01em]">{item.label}</span>
           </Link>
         );
       })}

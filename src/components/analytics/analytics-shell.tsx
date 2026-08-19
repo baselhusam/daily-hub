@@ -235,10 +235,8 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 initial={reduced ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: reduced ? 0 : index * 0.04 }}
-                whileHover={reduced ? undefined : { y: -3 }}
-                whileTap={reduced ? undefined : { scale: 0.985 }}
                 className={cn(
-                  "rounded-[10px] border bg-card px-4 py-[15px] text-left transition-[border-color,box-shadow,background-color] duration-200",
+                  "rounded-[12px] border bg-card px-4 py-[15px] text-left transition-[border-color,box-shadow,background-color] duration-[120ms]",
                   interact,
                   lit
                     ? "border-signal shadow-[0_0_0_3px_var(--signal-wash)]"
@@ -935,13 +933,10 @@ function InteractiveCard({
   children: React.ReactNode;
   active?: boolean;
 }) {
-  const reduced = useReducedMotion();
   return (
     <motion.div
-      whileHover={reduced ? undefined : { y: -2 }}
-      transition={spring}
       className={cn(
-        "overflow-visible rounded-[10px] border bg-card transition-[border-color,box-shadow] duration-200",
+        "overflow-visible rounded-[12px] border bg-card transition-[border-color,box-shadow,background-color] duration-[120ms]",
         active
           ? "border-signal shadow-[0_0_0_3px_var(--signal-wash)]"
           : "border-border hover:border-border-strong hover:shadow-float"

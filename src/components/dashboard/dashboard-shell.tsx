@@ -199,11 +199,14 @@ export function DashboardShell({ data }: DashboardShellProps) {
         )}
 
         {showHabits && (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(168px,1fr))] gap-3">
-            {data.snapshots.map((snapshot) => (
-              <SnapshotCard key={snapshot.label} {...snapshot} />
-            ))}
-          </div>
+          <section className="flex flex-col gap-2.5">
+            <div className="section-kicker">Daily pulse</div>
+            <div className="grid grid-cols-2 gap-3 dh:grid-cols-4">
+              {data.snapshots.map((snapshot) => (
+                <SnapshotCard key={snapshot.label} {...snapshot} />
+              ))}
+            </div>
+          </section>
         )}
 
         {showHabits && (
@@ -230,7 +233,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
 
         <div className="flex flex-col gap-3.5">
           <div className="flex items-baseline justify-between gap-3 px-0.5">
-            <h2 className="text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
+            <h2 className="section-kicker flex-1">
               Open work
             </h2>
             <span className="text-[11.5px] tracking-[0.1em] text-faint tabular-nums">
@@ -394,7 +397,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
         )}
 
         {showHabits && (
-          <section className="flex flex-wrap items-center gap-6 rounded-[10px] bg-foreground p-5 text-background">
+          <section className="flex flex-wrap items-center gap-6 rounded-[12px] border border-foreground bg-foreground p-5 text-background shadow-float">
             <div className="min-w-[220px] flex-1">
               <p className="text-[11.5px] font-semibold tracking-[0.02em] text-background/45">
                 Week in review

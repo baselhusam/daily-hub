@@ -76,14 +76,14 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
             description="Create one to start organizing tasks."
           />
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-3.5">
+          <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
             {projects.map((project) => {
               const dl = daysUntil(project.dueDate, today);
               return (
                 <SurfaceCard
                   key={project.id}
                   id={`project-${project.id}`}
-                  className="scroll-mt-24 p-[18px] target:bg-signal-wash"
+                  className="group scroll-mt-24 p-[18px] transition-[border-color,background-color] duration-[120ms] hover:border-border-strong hover:bg-canvas-sunk target:bg-signal-wash"
                 >
                   <div className="flex flex-col gap-3.5">
                     <div className="flex items-start gap-3">
@@ -117,7 +117,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                             milestones: project.milestones,
                           }}
                           trigger={
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-hairline">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-hairline sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100">
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Edit project</span>
                             </Button>
@@ -126,7 +126,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-hairline hover:bg-destructive-wash hover:text-destructive"
+                          className="h-8 w-8 text-hairline hover:bg-destructive-wash hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                           onClick={() =>
                             setPendingDelete({
                               id: project.id,

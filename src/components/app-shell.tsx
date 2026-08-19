@@ -114,7 +114,7 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
         </div>
 
         <div className="dh:hidden">
-          <header className="flex items-center justify-between border-b border-border bg-paper px-4 py-3">
+          <header className="flex items-center justify-between border-b border-border bg-paper px-4 py-3.5">
             <Link href="/" aria-label="DailyHub">
               <BrandLockup size={24} wordmarkClassName="text-[15px] leading-none" />
             </Link>
@@ -129,7 +129,7 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
-                className="grid h-8 w-8 place-items-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+                className="grid h-9 w-9 place-items-center rounded-md border border-border bg-card text-muted-foreground shadow-raised transition-colors hover:border-border-strong hover:text-foreground"
                 aria-label="Search"
               >
                 <Search className="h-4 w-4" />

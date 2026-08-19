@@ -18,7 +18,7 @@ export function SurfaceCard({
     <div
       id={id}
       className={cn(
-        "overflow-hidden rounded-[10px] border border-border shadow-raised",
+        "overflow-hidden rounded-[12px] border border-border shadow-raised",
         variant === "canvas" ? "bg-card" : "bg-paper",
         className
       )}

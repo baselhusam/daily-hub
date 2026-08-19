@@ -40,7 +40,7 @@ export function SnapshotCard({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-[10px] border border-border bg-card shadow-raised",
+        "group flex min-h-[124px] flex-col rounded-[12px] border border-border bg-card shadow-raised transition-[border-color,background-color] duration-[120ms] hover:border-border-strong hover:bg-canvas-sunk",
         className
       )}
     >
@@ -65,7 +65,7 @@ export function SnapshotCard({
               {bars.map((bar, i) => (
                 <span
                   key={i}
-                  className="w-1 rounded-[1px] bg-foreground"
+                  className="w-1 rounded-[1px] bg-foreground transition-colors duration-[120ms] group-hover:bg-signal"
                   style={{
                     height: `${bar.height}px`,
                     opacity: bar.opacity ?? 1,

@@ -35,7 +35,7 @@ export function TaskRow({
     <div
       id={`task-${task.id}`}
       className={cn(
-        "group relative flex items-start gap-3 scroll-mt-24 border-b border-rule-soft px-[18px] py-3 last:border-0 hover:bg-canvas-sunk target:bg-signal-wash",
+        "group relative flex items-start gap-3 scroll-mt-24 border-b border-rule-soft px-[18px] py-3.5 last:border-0 transition-colors duration-[120ms] hover:bg-canvas-sunk target:bg-signal-wash",
         className
       )}
     >
@@ -49,7 +49,7 @@ export function TaskRow({
       <div className="relative min-w-0 flex-1">
         <div
           className={cn(
-            "text-[14.5px] leading-snug font-medium text-pretty",
+            "text-[14.5px] leading-snug font-medium text-pretty transition-colors duration-[120ms] group-hover:text-foreground",
             task.done && "text-muted-foreground"
           )}
         >
@@ -67,7 +67,7 @@ export function TaskRow({
         )}
         {task.dueLabel && (
           <span
-            className="rounded px-[7px] py-[3px] text-[11.5px] font-semibold whitespace-nowrap tabular-nums"
+            className="rounded-[5px] px-[7px] py-[3px] text-[11.5px] font-semibold whitespace-nowrap tabular-nums"
             style={{
               color: task.dueColor,
               backgroundColor: task.dueBg,

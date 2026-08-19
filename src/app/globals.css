@@ -204,12 +204,19 @@
 }
 
 @layer base {
+  html {
+    background: var(--paper);
+    scroll-behavior: smooth;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
 
   body {
     @apply bg-background font-sans text-foreground antialiased;
+    min-width: 320px;
+    text-rendering: optimizeLegibility;
   }
 
   h1,
@@ -222,6 +229,12 @@
   ::selection {
     background: var(--signal-wash);
     color: var(--foreground);
+  }
+
+  button,
+  a,
+  input {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -274,6 +287,23 @@
   .page-gutter {
     padding-left: clamp(14px, 2.6vw, 32px);
     padding-right: clamp(14px, 2.6vw, 32px);
+  }
+
+  .section-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.71875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--faint);
+  }
+
+  .section-kicker::after {
+    height: 1px;
+    flex: 1;
+    background: var(--rule-soft);
+    content: "";
   }
 
   .animate-dh-fade {
