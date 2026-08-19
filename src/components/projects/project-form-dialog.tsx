@@ -212,7 +212,7 @@ export function ProjectFormDialog({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-[#C7C6C2] hover:text-destructive"
+                    className="h-8 w-8 text-hairline hover:text-destructive"
                     onClick={() =>
                       setMilestones(milestones.filter((_, i) => i !== index))
                     }

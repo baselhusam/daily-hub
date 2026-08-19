@@ -129,7 +129,7 @@ function SourceTab({
       className={cn(
         "inline-flex h-[22px] items-center gap-1 rounded-[5px] px-2 text-[11px] font-semibold tracking-[0.01em] transition-colors duration-[120ms]",
         active
-          ? "bg-background text-foreground shadow-[0_1px_2px_rgba(15,15,15,.06)]"
+          ? "bg-background text-foreground shadow-raised"
           : "text-faint hover:text-ink-soft"
       )}
     >

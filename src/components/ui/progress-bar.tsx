@@ -22,7 +22,7 @@ export function ProgressBar({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[3px] bg-[#EDEDEC] dark:bg-white/10",
+        "overflow-hidden rounded-[3px] bg-track",
         height === "sm" ? "h-1.5" : "h-2",
         className
       )}

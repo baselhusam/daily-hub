@@ -242,7 +242,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                   interact,
                   lit
                     ? "border-signal shadow-[0_0_0_3px_var(--signal-wash)]"
-                    : "border-border hover:border-[#D3D2CF] hover:shadow-[0_12px_28px_-18px_rgba(15,15,15,.28)]"
+                    : "border-border hover:border-border-strong hover:shadow-float"
                 )}
                 onMouseEnter={(event) => {
                   setHover({ kind: "stat", key: stat.key });
@@ -290,7 +290,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               <div className="flex gap-1.5 text-[11.5px] text-faint">
                 <LegendButton
                   label="Tasks"
-                  swatch="#37352F"
+                  swatch="var(--chart-ink)"
                   pressed={series !== "habits"}
                   dimmed={series === "habits"}
                   onHover={(on) =>
@@ -300,7 +300,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 />
                 <LegendButton
                   label="Habits"
-                  swatch="#C7C6C2"
+                  swatch="var(--chart-muted)"
                   pressed={series !== "tasks"}
                   dimmed={series === "tasks"}
                   onHover={(on) =>
@@ -378,7 +378,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                           opacity: habitsDim ? 0.18 : 1,
                           height: `${(day.daily / maxDay) * 100}%`,
                           minHeight: day.daily ? 3 : 0,
-                          backgroundColor: day.isToday ? "#9CC7EE" : "#C7C6C2",
+                          backgroundColor: day.isToday
+                            ? "var(--chart-hit-soft)"
+                            : "var(--chart-muted)",
                           boxShadow: lit
                             ? "0 0 0 2px color-mix(in srgb, var(--signal) 35%, transparent)"
                             : undefined,
@@ -398,11 +400,13 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                           opacity: tasksDim ? 0.18 : 1,
                           height: `${(day.tasks / maxDay) * 100}%`,
                           minHeight: day.tasks ? 4 : lit ? 3 : 0,
-                          backgroundColor: day.isToday ? "#2383E2" : "#37352F",
+                          backgroundColor: day.isToday
+                            ? "var(--chart-hit)"
+                            : "var(--chart-ink)",
                         }}
                       />
                       {!day.total && !lit ? (
-                        <span className="mx-auto h-0.5 w-3/5 rounded-full bg-[#EDEDEC] dark:bg-white/10" />
+                        <span className="mx-auto h-0.5 w-3/5 rounded-full bg-track" />
                       ) : null}
                     </div>
                   </button>
@@ -419,7 +423,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     key={`${day.date}-label`}
                     className="min-w-0 flex-1 text-center text-[11px] tracking-[-0.02em] tabular-nums transition-colors"
                     style={{
-                      color: lit || day.isToday ? "#2383E2" : "#9B9A97",
+                      color: lit || day.isToday ? "var(--signal)" : "var(--faint)",
                       fontWeight: lit ? 600 : 400,
                     }}
                   >
@@ -806,18 +810,18 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                           originY: 1,
                           height: `${weekday.barHeight}%`,
                           backgroundColor: weekday.isBest
-                            ? "#2383E2"
+                            ? "var(--signal)"
                             : weekday.barHeight <= 3
-                              ? "#EDEDEC"
+                              ? "var(--track)"
                               : lit
-                                ? "#37352F"
-                                : "#C7C6C2",
+                                ? "var(--chart-ink)"
+                                : "var(--chart-muted)",
                         }}
                       />
                       <span
                         className="text-[11.5px] font-semibold tabular-nums"
                         style={{
-                          color: lit ? "#2383E2" : weekday.labelColor,
+                          color: lit ? "var(--signal)" : weekday.labelColor,
                         }}
                       >
                         {weekday.label}
@@ -887,7 +891,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       <span className="w-[88px] shrink-0 text-[13px] font-semibold">
                         {band.name}
                       </span>
-                      <div className="h-5 flex-1 overflow-hidden rounded bg-[#EDEDEC] dark:bg-white/10">
+                      <div className="h-5 flex-1 overflow-hidden rounded bg-track">
                         <motion.div
                           className="h-full rounded"
                           initial={reduced ? false : { scaleX: 0 }}
@@ -900,10 +904,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                             originX: 0,
                             width: `${lit ? Math.max(band.barWidth, 12) : band.barWidth}%`,
                             backgroundColor: band.isPeak
-                              ? "#2383E2"
+                              ? "var(--signal)"
                               : lit
-                                ? "#37352F"
-                                : "#C7C6C2",
+                                ? "var(--chart-ink)"
+                                : "var(--chart-muted)",
                           }}
                         />
                       </div>
@@ -940,7 +944,7 @@ function InteractiveCard({
         "overflow-visible rounded-[10px] border bg-card transition-[border-color,box-shadow] duration-200",
         active
           ? "border-signal shadow-[0_0_0_3px_var(--signal-wash)]"
-          : "border-border hover:border-[#D3D2CF] hover:shadow-[0_14px_36px_-22px_rgba(15,15,15,.32)]"
+          : "border-border hover:border-border-strong hover:shadow-float"
       )}
     >
       {children}

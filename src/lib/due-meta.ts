@@ -25,48 +25,48 @@ export function getDueMeta(
     const late = Math.abs(days);
     return {
       label: late === 1 ? "1d late" : `${late}d late`,
-      color: "#C4554D",
-      bg: "#FBECEB",
+      color: "var(--destructive)",
+      bg: "var(--destructive-wash)",
     };
   }
 
   if (days === 0) {
     return {
       label: "Today",
-      color: "#2383E2",
-      bg: "#EAF3FB",
+      color: "var(--signal)",
+      bg: "var(--signal-soft)",
     };
   }
 
   if (days === 1) {
     return {
       label: "Tomorrow",
-      color: "#787774",
-      bg: "#F7F7F5",
+      color: "var(--muted-foreground)",
+      bg: "var(--paper)",
     };
   }
 
   if (days <= 7) {
     return {
       label: `${days}d`,
-      color: "#2383E2",
-      bg: "#EAF3FB",
+      color: "var(--signal)",
+      bg: "var(--signal-soft)",
     };
   }
 
   return {
     label: formatDueDate(dueDate),
-    color: "#787774",
-    bg: "#F7F7F5",
+    color: "var(--muted-foreground)",
+    bg: "var(--paper)",
   };
 }
 
 export function getDeadlineColor(days: number | null): string {
-  if (days === null) return "#9B9A97";
-  if (days < 0) return "#C4554D";
-  if (days <= 7) return "#2383E2";
-  if (days <= 21) return "#D9730D";
-  return "#787774";
+  if (days === null) return "var(--faint)";
+  if (days < 0) return "var(--destructive)";
+  if (days <= 7) return "var(--signal)";
+  if (days <= 21) return "var(--warn)";
+  return "var(--muted-foreground)";
 }
 
 export function isCompletedToday(

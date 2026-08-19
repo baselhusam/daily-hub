@@ -55,7 +55,7 @@ export function SelectMenu({
               variant === "field" &&
                 "h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[9px] text-[14.5px] focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
               variant === "compact" &&
-                "rounded-md border border-border bg-[#F1F1EF] px-2.5 py-2 text-[13.5px] font-medium focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16 dark:bg-muted",
+                "rounded-md border border-border bg-muted px-2.5 py-2 text-[13.5px] font-medium focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
               className
             )}
           >

@@ -33,8 +33,9 @@ export function TaskRow({
 }: TaskRowProps) {
   return (
     <div
+      id={`task-${task.id}`}
       className={cn(
-        "group relative flex items-start gap-3 border-b border-rule-soft px-[18px] py-3 last:border-0 hover:bg-canvas-sunk",
+        "group relative flex items-start gap-3 scroll-mt-24 border-b border-rule-soft px-[18px] py-3 last:border-0 hover:bg-canvas-sunk target:bg-signal-wash",
         className
       )}
     >
@@ -55,7 +56,7 @@ export function TaskRow({
           {task.title}
         </div>
         {task.done && (
-          <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[min(100%,560px)] bg-[#A3A29E]" />
+          <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[min(100%,560px)] bg-hairline" />
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2.5">
@@ -80,7 +81,7 @@ export function TaskRow({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-[#C7C6C2] opacity-100 hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+            className="h-7 w-7 text-hairline opacity-100 hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
             onClick={onEdit}
             aria-label={`Edit ${task.title}`}
           >

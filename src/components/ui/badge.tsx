@@ -12,11 +12,11 @@ const badgeVariants = cva(
         today:
           "border-border bg-background text-foreground",
         overdue:
-          "border-[#F2DFDE] bg-[#FBECEB] text-[#B0403C]",
+          "border-destructive/25 bg-destructive-wash text-destructive",
         done:
-          "border-[#D8EDE2] bg-[#EEF8F3] text-[#0C7C4E]",
+          "border-done/25 bg-done-wash text-done",
         muted:
-          "border-[#EDEDEC] bg-paper text-muted-foreground rounded",
+          "border-border bg-paper text-muted-foreground rounded",
         filter:
           "border-border bg-background text-foreground",
       },

@@ -137,7 +137,7 @@ export function DeleteProjectDialog({
           <Button
             type="button"
             disabled={pending || !project}
-            className="bg-destructive text-white hover:bg-[#C13B36] hover:text-white"
+            className="bg-destructive text-white hover:bg-destructive/90 hover:text-white"
             onClick={handleConfirm}
           >
             {pending ? "Deleting..." : "Delete project"}

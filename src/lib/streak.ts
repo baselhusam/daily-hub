@@ -56,7 +56,11 @@ export async function getStreakInfo(
     const dt = subDays(today, k);
     const ok = dayOk(dt);
     dots.push({
-      color: ok ? (k === 0 ? "#2383E2" : "#B6D8F5") : "#EDEDEC",
+      color: ok
+        ? k === 0
+          ? "var(--chart-hit)"
+          : "var(--chart-hit-soft)"
+        : "var(--track)",
     });
   }
 

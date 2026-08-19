@@ -40,7 +40,7 @@ export function SnapshotCard({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-[10px] border border-border bg-card shadow-[0_1px_2px_rgba(15,15,15,.03)]",
+        "flex flex-col rounded-[10px] border border-border bg-card shadow-raised",
         className
       )}
     >
@@ -95,7 +95,7 @@ export function SnapshotCard({
           {hint}
         </span>
         {foot && (
-          <span className="shrink-0 text-[11px] tracking-[0.02em] text-[#B4B3AF] tabular-nums">
+          <span className="shrink-0 text-[11px] tracking-[0.02em] text-faint tabular-nums">
             {foot}
           </span>
         )}

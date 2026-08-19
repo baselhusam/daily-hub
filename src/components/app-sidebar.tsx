@@ -74,7 +74,7 @@ export function AppSidebar({
                 aria-expanded={false}
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
-                className="grid h-9 w-full place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-[0_1px_2px_rgba(15,15,15,.04)] transition-colors hover:border-[#D3D2CF] hover:text-foreground"
+                className="grid h-9 w-full place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-raised transition-colors hover:border-border-strong hover:text-foreground"
               >
                 <PanelLeftOpen className="h-4 w-4" />
               </button>
@@ -83,7 +83,7 @@ export function AppSidebar({
               type="button"
               onClick={() => setSettingsOpen(true)}
               className={cn(
-                "flex items-center rounded-lg border border-border bg-card text-left shadow-[0_1px_2px_rgba(15,15,15,.04)] transition-colors hover:border-[#D3D2CF]",
+                "flex items-center rounded-lg border border-border bg-card text-left shadow-raised transition-colors hover:border-border-strong",
                 collapsed
                   ? "h-9 w-full justify-center"
                   : "min-w-0 flex-1 gap-2.5 px-2 py-2"
@@ -112,7 +112,7 @@ export function AppSidebar({
                 aria-expanded={true}
                 aria-label="Collapse sidebar"
                 title="Collapse sidebar"
-                className="grid h-[44px] w-8 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-[0_1px_2px_rgba(15,15,15,.04)] transition-colors hover:border-[#D3D2CF] hover:text-foreground"
+                className="grid h-[44px] w-8 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-raised transition-colors hover:border-border-strong hover:text-foreground"
               >
                 <PanelLeftClose className="h-4 w-4" />
               </button>
@@ -150,7 +150,7 @@ export function AppSidebar({
                   )}
                 >
                   {isActive && (
-                    <span className="absolute inset-0 rounded-md border border-border bg-card shadow-[0_1px_2px_rgba(15,15,15,.05)]" />
+                    <span className="absolute inset-0 rounded-md border border-border bg-card shadow-raised" />
                   )}
                   <span
                     className={cn(
@@ -184,7 +184,7 @@ export function AppSidebar({
                 {activeProjectId && (
                   <Link
                     href="/"
-                    className="text-[11px] font-semibold text-signal hover:text-[#1A7BD4]"
+                    className="text-[11px] font-semibold text-signal hover:text-signal-hover"
                   >
                     clear
                   </Link>

@@ -35,7 +35,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-[rgba(15,15,15,0.3)] backdrop-blur-[3px] data-[state=open]:animate-dh-fade data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-scrim backdrop-blur-[3px] data-[state=open]:animate-dh-fade data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className
       )}
       {...props}
@@ -65,7 +65,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-0 overflow-hidden rounded-xl border border-border bg-background shadow-[0_24px_60px_-20px_rgba(15,15,15,.24)] data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:max-w-[520px]",
+          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-0 overflow-hidden rounded-xl border border-border bg-card shadow-dialog data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:max-w-[520px]",
           className
         )}
         onPointerDownOutside={(event) => {
@@ -84,7 +84,7 @@ function DialogContent({
       >
         {children}
         {showClose && (
-          <DialogPrimitive.Close className="absolute top-[18px] right-5 grid h-[27px] w-[27px] place-items-center rounded-full bg-[#EDEDEC] text-[15px] leading-none text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus:outline-none focus:ring-[3px] focus:ring-signal/14 disabled:pointer-events-none">
+          <DialogPrimitive.Close className="absolute top-[18px] right-5 grid h-[27px] w-[27px] place-items-center rounded-full bg-track text-[15px] leading-none text-muted-foreground transition-colors hover:bg-hover hover:text-foreground focus:outline-none focus:ring-[3px] focus:ring-signal/14 disabled:pointer-events-none">
             <X className="h-3.5 w-3.5" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
@@ -99,7 +99,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-header"
       className={cn(
-        "flex flex-col gap-1 border-b border-[#EDEDEC] px-5 pt-[18px] pb-[15px] text-left",
+        "flex flex-col gap-1 border-b border-rule-soft px-5 pt-[18px] pb-[15px] text-left",
         className
       )}
       {...props}
@@ -112,7 +112,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex items-center gap-2.5 border-t border-[#EDEDEC] px-5 py-[15px]",
+        "flex items-center gap-2.5 border-t border-rule-soft px-5 py-[15px]",
         className
       )}
       {...props}

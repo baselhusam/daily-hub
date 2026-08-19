@@ -9,7 +9,6 @@ import type { DashboardData } from "@/lib/dashboard";
 import { daysUntil, formatEstimate } from "@/lib/streak";
 import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
 import { getTodayDate } from "@/lib/dates";
-import { useSearchQuery } from "@/components/search-context";
 import { PageHeader } from "@/components/ui/page-header";
 import { QuickAdd } from "@/components/ui/quick-add";
 import { NudgeChip } from "@/components/ui/nudge-chip";
@@ -53,11 +52,19 @@ function getGreeting(name: string): string {
 export function DashboardShell({ data }: DashboardShellProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const search = useSearchQuery().trim().toLowerCase();
   const projectFilter = searchParams.get("project");
   const [pendingTaskId, setPendingTaskId] = React.useState<string | null>(null);
   const [editingTask, setEditingTask] = React.useState<EditableTask | null>(null);
   const today = getTodayDate();
+
+  React.useEffect(() => {
+    const id = window.location.hash.replace("#", "");
+    if (!id) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [projectFilter]);
 
   const filteredProjects =
     projectFilter && projectFilter !== "all" && projectFilter !== "inbox"
@@ -75,10 +82,6 @@ export function DashboardShell({ data }: DashboardShellProps) {
       : Math.round(
           (data.stats.dailyCompleted / data.stats.dailyScheduled) * 100
         );
-
-  function matchesSearch(title: string) {
-    return !search || title.toLowerCase().includes(search);
-  }
 
   async function handleComplete(taskId: string) {
     setPendingTaskId(taskId);
@@ -137,7 +140,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
             </span>
             <Link
               href="/"
-              className="grid h-[22px] w-[22px] place-items-center rounded-full bg-[#EFEEE9] text-[13px] text-muted-foreground hover:bg-hover"
+              className="grid h-[22px] w-[22px] place-items-center rounded-full bg-track text-[13px] text-muted-foreground hover:bg-hover"
               aria-label="Clear filter"
             >
               <X className="h-3 w-3" />
@@ -182,7 +185,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                       onClick={() =>
                         router.push(`/?project=${nudge.projectId}`)
                       }
-                      className="text-[12.5px] font-semibold text-signal whitespace-nowrap hover:text-[#1A7BD4]"
+                      className="text-[12.5px] font-semibold text-signal whitespace-nowrap hover:text-signal-hover"
                     >
                       {nudge.actionLabel} →
                     </button>
@@ -235,18 +238,9 @@ export function DashboardShell({ data }: DashboardShellProps) {
             </span>
           </div>
 
-          {filteredProjects
-            .filter((project) => {
-              const visibleTasks = project.tasks.filter((t) =>
-                matchesSearch(t.title)
-              );
-              return visibleTasks.length > 0 || !search;
-            })
-            .map((project) => {
-              const dl = daysUntil(project.dueDate, today);
-              const visibleTasks = project.tasks.filter((t) =>
-                matchesSearch(t.title)
-              );
+          {filteredProjects.map((project) => {
+            const dl = daysUntil(project.dueDate, today);
+            const visibleTasks = project.tasks;
 
               return (
                 <SurfaceCard key={project.id}>
@@ -295,7 +289,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                               key={milestone.id}
                               variant="filter"
                               dotColor={
-                                md !== null && md <= 7 ? "#2383E2" : "#C7C6C2"
+                                md !== null && md <= 7 ? "var(--signal)" : "var(--hairline)"
                               }
                               className="gap-1.5"
                             >
@@ -368,16 +362,13 @@ export function DashboardShell({ data }: DashboardShellProps) {
                 </span>
               </div>
             </SurfaceCardHeader>
-            {data.inboxTasks.filter((t) => matchesSearch(t.title)).length ===
-            0 ? (
+            {data.inboxTasks.length === 0 ? (
               <p className="px-[18px] py-5 text-[13.5px] text-faint">
                 Inbox clear.
               </p>
             ) : (
               <div>
-                {data.inboxTasks
-                  .filter((t) => matchesSearch(t.title))
-                  .map((task) => {
+                {data.inboxTasks.map((task) => {
                     const due = getDueMeta(task.dueDate, today);
                     return (
                       <TaskRow
@@ -405,7 +396,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
         {showHabits && (
           <section className="flex flex-wrap items-center gap-6 rounded-[10px] bg-foreground p-5 text-background">
             <div className="min-w-[220px] flex-1">
-              <p className="text-[11.5px] font-semibold tracking-[0.02em] text-[#A3A29E]">
+              <p className="text-[11.5px] font-semibold tracking-[0.02em] text-background/45">
                 Week in review
               </p>
               <p className="mt-2 text-[26px] leading-snug text-pretty">
@@ -418,7 +409,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                   <div className="text-2xl font-semibold tabular-nums leading-none">
                     {stat.value}
                   </div>
-                  <div className="mt-1.5 text-[11.5px] text-[#A3A29E]">
+                  <div className="mt-1.5 text-[11.5px] text-background/45">
                     {stat.label}
                   </div>
                 </div>
@@ -427,7 +418,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
             <Button
               asChild
               variant="outline"
-              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              className="border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background"
             >
               <Link href="/analytics">Full analytics →</Link>
             </Button>

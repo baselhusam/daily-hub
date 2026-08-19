@@ -51,6 +51,15 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
   const [pendingDelete, setPendingDelete] =
     React.useState<DeleteProjectTarget | null>(null);
 
+  React.useEffect(() => {
+    const id = window.location.hash.replace("#", "");
+    if (!id) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
       <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
@@ -71,7 +80,11 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
             {projects.map((project) => {
               const dl = daysUntil(project.dueDate, today);
               return (
-                <SurfaceCard key={project.id} className="p-[18px]">
+                <SurfaceCard
+                  key={project.id}
+                  id={`project-${project.id}`}
+                  className="scroll-mt-24 p-[18px] target:bg-signal-wash"
+                >
                   <div className="flex flex-col gap-3.5">
                     <div className="flex items-start gap-3">
                       <EntityAvatar
@@ -104,7 +117,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                             milestones: project.milestones,
                           }}
                           trigger={
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#C7C6C2]">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-hairline">
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Edit project</span>
                             </Button>
@@ -113,7 +126,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-[#C7C6C2] hover:bg-[#FBECEB] hover:text-destructive"
+                          className="h-8 w-8 text-hairline hover:bg-destructive-wash hover:text-destructive"
                           onClick={() =>
                             setPendingDelete({
                               id: project.id,
@@ -142,14 +155,14 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                         </span>
                         <span
                           className="text-[12px] font-semibold tabular-nums"
-                          style={{ color: project.color ?? "#37352F" }}
+                          style={{ color: project.color ?? "var(--foreground)" }}
                         >
                           {project.completionPct}%
                         </span>
                       </div>
                       <ProgressBar
                         value={project.completionPct}
-                        color={project.color ?? "#37352F"}
+                        color={project.color ?? "var(--foreground)"}
                         height="md"
                       />
                     </div>
@@ -176,8 +189,9 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                           const md = daysUntil(milestone.dueDate, today);
                           return (
                             <div
+                              id={`milestone-${milestone.id}`}
                               key={milestone.id}
-                              className="flex items-center gap-2.5"
+                              className="flex scroll-mt-24 items-center gap-2.5 rounded-md px-1 py-0.5 -mx-1 target:bg-signal-wash"
                             >
                               <Checkbox
                                 checked={milestone.done}
@@ -191,8 +205,8 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                                 className="min-w-0 flex-1 truncate text-[13.5px] font-medium"
                                 style={{
                                   color: milestone.done
-                                    ? "#9B9A97"
-                                    : "#37352F",
+                                    ? "var(--muted-foreground)"
+                                    : "var(--foreground)",
                                 }}
                               >
                                 {milestone.name}
@@ -201,7 +215,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                                 <span
                                   className="text-[11px] whitespace-nowrap tabular-nums"
                                   style={{
-                                    color: md < 0 ? "#C4554D" : "#9B9A97",
+                                    color: md < 0 ? "var(--destructive)" : "var(--faint)",
                                   }}
                                 >
                                   {md < 0
@@ -220,7 +234,7 @@ export function ProjectsShell({ projects }: ProjectsShellProps) {
                     {project.stalled && (
                       <div className="flex items-center gap-2 rounded-[10px] border border-warn-border bg-warn-wash px-3 py-2">
                         <span className="h-1.5 w-1.5 rounded-full bg-warn" />
-                        <span className="text-[12.5px] font-medium text-[#9E5B12]">
+                        <span className="text-[12.5px] font-medium text-warn">
                           {project.idleDays >= 99
                             ? "Never logged activity"
                             : `No activity for ${project.idleDays} days`}{" "}

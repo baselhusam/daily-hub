@@ -32,7 +32,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
               Add one thing, or{" "}
               <Link
                 href="/daily"
-                className="font-semibold text-signal hover:text-[#1A7BD4]"
+                className="font-semibold text-signal hover:text-signal-hover"
               >
                 manage habits
               </Link>
@@ -78,7 +78,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
               {task.scheduleLabel}
             </div>
             {task.completedToday && (
-              <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[420px] bg-[#A3A29E]" />
+              <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[420px] bg-hairline" />
             )}
           </div>
           {task.completedToday && (

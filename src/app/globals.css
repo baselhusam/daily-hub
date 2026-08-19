@@ -34,6 +34,19 @@
   --color-warn: var(--warn);
   --color-warn-wash: var(--warn-wash);
   --color-warn-border: var(--warn-border);
+  --color-border-strong: var(--border-strong);
+  --color-track: var(--track);
+  --color-hairline: var(--hairline);
+  --color-chart-ink: var(--chart-ink);
+  --color-chart-muted: var(--chart-muted);
+  --color-chart-hit: var(--chart-hit);
+  --color-chart-hit-soft: var(--chart-hit-soft);
+  --color-chart-off: var(--chart-off);
+  --color-signal-hover: var(--signal-hover);
+  --color-signal-soft: var(--signal-soft);
+  --color-destructive-wash: var(--destructive-wash);
+  --color-done-wash: var(--done-wash);
+  --color-scrim: var(--scrim);
   --font-sans: var(--font-instrument-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: 4px;
@@ -41,12 +54,14 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-card: 10px;
-  --shadow-raised: 0 1px 2px rgba(15, 15, 15, 0.05);
-  --shadow-dialog: 0 24px 60px -20px rgba(15, 15, 15, 0.24);
+  --shadow-raised: var(--elevation-raised);
+  --shadow-dialog: var(--elevation-dialog);
+  --shadow-float: var(--elevation-float);
   --breakpoint-dh: 900px;
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.375rem;
   --background: #ffffff;
   --foreground: #37352f;
@@ -78,39 +93,74 @@
   --warn: #d9730d;
   --warn-wash: #faebdd;
   --warn-border: #f0dcc4;
+  --border-strong: #d3d2cf;
+  --track: #ededec;
+  --hairline: #c7c6c2;
+  --chart-ink: #37352f;
+  --chart-muted: #c7c6c2;
+  --chart-hit: #2383e2;
+  --chart-hit-soft: #9cc7ee;
+  --chart-off: #f7f7f5;
+  --signal-hover: #1a7bd4;
+  --signal-soft: #eaf3fb;
+  --destructive-wash: #fbeceb;
+  --done-wash: #eef8f3;
+  --scrim: rgb(15 15 15 / 32%);
+  --elevation-raised: 0 1px 2px rgb(15 15 15 / 5%);
+  --elevation-dialog: 0 24px 60px -20px rgb(15 15 15 / 24%);
+  --elevation-float: 0 14px 36px -22px rgb(15 15 15 / 32%);
 }
 
 .dark {
-  --background: #2b2a25;
-  --foreground: #f7f7f5;
-  --card: #2b2a25;
-  --card-foreground: #f7f7f5;
-  --popover: #32312c;
-  --popover-foreground: #f7f7f5;
+  color-scheme: dark;
+  --background: #11110f;
+  --foreground: #f3f2ee;
+  --card: #211f1c;
+  --card-foreground: #f3f2ee;
+  --popover: #2a2824;
+  --popover-foreground: #f3f2ee;
   --primary: #6baee9;
-  --primary-foreground: #2b2a25;
-  --secondary: #37352f;
-  --secondary-foreground: #f7f7f5;
-  --muted: #37352f;
-  --muted-foreground: #9b9a97;
-  --accent: #3f3d38;
-  --accent-foreground: #f7f7f5;
-  --destructive: #d44c47;
+  --primary-foreground: #11110f;
+  --secondary: #262522;
+  --secondary-foreground: #f3f2ee;
+  --muted: #262522;
+  --muted-foreground: #a8a69e;
+  --accent: #2e2c28;
+  --accent-foreground: #f3f2ee;
+  --destructive: #e0706c;
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 14%);
   --ring: #6baee9;
   --signal: #6baee9;
-  --signal-wash: rgb(107 174 233 / 28%);
-  --done: #0f9960;
-  --paper: #37352f;
-  --hover: #3f3d38;
-  --faint: #8e8d8a;
-  --ink-soft: #c7c6c2;
-  --canvas-sunk: #32312c;
-  --rule-soft: rgb(255 255 255 / 8%);
-  --warn: #d9730d;
-  --warn-wash: rgb(217 115 13 / 15%);
-  --warn-border: rgb(217 115 13 / 30%);
+  --signal-wash: rgb(107 174 233 / 22%);
+  --done: #3cc98a;
+  --paper: #181714;
+  --hover: #2e2c28;
+  --faint: #9a9890;
+  --ink-soft: #d2d0c9;
+  --canvas-sunk: #171614;
+  --rule-soft: rgb(255 255 255 / 6%);
+  --warn: #e08a3c;
+  --warn-wash: rgb(224 138 60 / 16%);
+  --warn-border: rgb(224 138 60 / 32%);
+  --border-strong: rgb(255 255 255 / 16%);
+  --track: rgb(255 255 255 / 10%);
+  --hairline: rgb(255 255 255 / 28%);
+  --chart-ink: #eceae4;
+  --chart-muted: rgb(255 255 255 / 28%);
+  --chart-hit: #6baee9;
+  --chart-hit-soft: #4d92c9;
+  --chart-off: rgb(255 255 255 / 6%);
+  --signal-hover: #4f98d4;
+  --signal-soft: rgb(107 174 233 / 16%);
+  --destructive-wash: rgb(224 112 108 / 16%);
+  --done-wash: rgb(60 201 138 / 16%);
+  --scrim: rgb(0 0 0 / 62%);
+  --elevation-raised: 0 1px 0 rgb(255 255 255 / 6%),
+    0 8px 18px -10px rgb(0 0 0 / 72%);
+  --elevation-dialog: 0 28px 80px -24px rgb(0 0 0 / 72%);
+  --elevation-float: 0 18px 44px -20px rgb(0 0 0 / 68%);
+  scrollbar-color: rgb(255 255 255 / 18%) transparent;
 }
 
 @keyframes dh-fade {
@@ -171,6 +221,7 @@
 
   ::selection {
     background: var(--signal-wash);
+    color: var(--foreground);
   }
 }
 

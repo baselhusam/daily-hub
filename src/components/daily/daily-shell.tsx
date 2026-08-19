@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Trash2, Pencil } from "lucide-react";
 import { deleteDailyTask } from "@/app/actions/daily-tasks";
 import { PageHeader } from "@/components/ui/page-header";
@@ -28,6 +29,15 @@ type DailyShellProps = {
 };
 
 export function DailyShell({ dailyTasks }: DailyShellProps) {
+  React.useEffect(() => {
+    const id = window.location.hash.replace("#", "");
+    if (!id) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)] pb-28">
       <div className="mx-auto flex max-w-[1080px] flex-col gap-5">
@@ -47,8 +57,9 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
           <SurfaceCard>
             {dailyTasks.map((task) => (
               <div
+                id={`habit-${task.id}`}
                 key={task.id}
-                className="flex flex-wrap items-center gap-3.5 border-b border-rule-soft px-[18px] py-4 last:border-0"
+                className="flex flex-wrap items-center gap-3.5 scroll-mt-24 border-b border-rule-soft px-[18px] py-4 last:border-0 target:bg-signal-wash"
               >
                 <EntityAvatar
                   name={task.title}
@@ -72,10 +83,10 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                     style={{
                       color:
                         task.rate >= 80
-                          ? "#448361"
+                          ? "var(--done)"
                           : task.rate >= 50
-                            ? "#787774"
-                            : "#C4554D",
+                            ? "var(--muted-foreground)"
+                            : "var(--destructive)",
                     }}
                   >
                     {task.rate}%
@@ -92,7 +103,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                       isActive: task.isActive,
                     }}
                     trigger={
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[#C7C6C2]">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-hairline">
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Edit habit</span>
                       </Button>
@@ -101,7 +112,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-[#C7C6C2] hover:text-destructive"
+                    className="h-8 w-8 text-hairline hover:text-destructive"
                     onClick={() => deleteDailyTask(task.id)}
                     aria-label="Delete habit"
                   >

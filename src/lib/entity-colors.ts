@@ -1,4 +1,4 @@
-const DEFAULT_COLOR = "#37352F";
+const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
 export function getEntityInitials(name: string, max = 2): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -8,7 +8,7 @@ export function getEntityInitials(name: string, max = 2): string {
 }
 
 export function resolveEntityColor(color?: string | null): string {
-  if (!color || !/^#[0-9A-Fa-f]{6}$/.test(color)) return DEFAULT_COLOR;
+  if (!color || !HEX_COLOR.test(color)) return "var(--foreground)";
   return color;
 }
 
@@ -17,10 +17,16 @@ export function entityTintStyles(color?: string | null): {
   borderColor: string;
   color: string;
 } {
-  const resolved = resolveEntityColor(color);
+  if (!color || !HEX_COLOR.test(color)) {
+    return {
+      backgroundColor: "var(--accent)",
+      borderColor: "var(--border)",
+      color: "var(--foreground)",
+    };
+  }
   return {
-    backgroundColor: `${resolved}18`,
-    borderColor: `${resolved}33`,
-    color: resolved,
+    backgroundColor: `${color}18`,
+    borderColor: `${color}33`,
+    color,
   };
 }

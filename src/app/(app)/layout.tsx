@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { getSearchIndex } from "@/lib/search";
 import { getSidebarStats } from "@/lib/sidebar-stats";
 
 export default async function AppLayout({
@@ -6,7 +7,14 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const stats = await getSidebarStats();
+  const [stats, searchIndex] = await Promise.all([
+    getSidebarStats(),
+    getSearchIndex(),
+  ]);
 
-  return <AppShell stats={stats}>{children}</AppShell>;
+  return (
+    <AppShell stats={stats} searchIndex={searchIndex}>
+      {children}
+    </AppShell>
+  );
 }

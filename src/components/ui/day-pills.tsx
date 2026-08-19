@@ -23,7 +23,7 @@ export function DayPills({ activeDays, className, size = "sm" }: DayPillsProps) 
               dim,
               on
                 ? "bg-foreground text-background"
-                : "border border-[#EFEFED] bg-paper text-[#B4B3AF] dark:border-white/10"
+                : "border border-border bg-paper text-faint"
             )}
           >
             {label}

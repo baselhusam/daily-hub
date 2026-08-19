@@ -264,7 +264,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   for (const log of windowCompletions) {
     let bucketKey = "inbox";
     let name = "Inbox & habits";
-    let color = "#9B9A97";
+    let color = "var(--faint)";
     let logoUrl: string | null = null;
     let iconKey: string | null = null;
 
@@ -275,7 +275,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         if (project) {
           bucketKey = project.id;
           name = project.name;
-          color = project.color ?? "#37352F";
+          color = project.color ?? "var(--foreground)";
           logoUrl = project.logoUrl;
           iconKey = project.iconKey;
         }
@@ -346,9 +346,9 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         idle >= 7
           ? `idle ${idle === 99 ? "always" : `${idle}d`}`
           : `${pct}% · ${open} open`,
-      noteColor: idle >= 7 ? "#2383E2" : "#787774",
+      noteColor: idle >= 7 ? "var(--signal)" : "var(--muted-foreground)",
       barWidth: Math.max(2, pct),
-      color: project.color ?? "#37352F",
+      color: project.color ?? "var(--foreground)",
       logoUrl: project.logoUrl,
       iconKey: project.iconKey,
     };
@@ -358,7 +358,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     const dots = dayRange.map((day) => {
       const key = toDateOnlyString(day);
       if (!isScheduledOn(task.weekdays, day)) {
-        return { date: key, status: "off" as const, color: "#F7F7F5" };
+        return { date: key, status: "off" as const, color: "var(--chart-off)" };
       }
       const ok = windowCompletions.some(
         (c) =>
@@ -369,7 +369,11 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       return {
         date: key,
         status: (ok ? "hit" : "miss") as "hit" | "miss",
-        color: ok ? (key === todayKey ? "#2383E2" : "#9CC7EE") : "#EDEDEC",
+        color: ok
+          ? key === todayKey
+            ? "var(--chart-hit)"
+            : "var(--chart-hit-soft)"
+          : "var(--track)",
       };
     });
 
@@ -384,7 +388,8 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       title: task.title,
       dots,
       rate,
-      rateColor: rate >= 80 ? "#448361" : rate >= 50 ? "#787774" : "#C4554D",
+      rateColor:
+        rate >= 80 ? "var(--done)" : rate >= 50 ? "var(--muted-foreground)" : "var(--destructive)",
       logoUrl: task.logoUrl,
       iconKey: task.iconKey,
     };
@@ -422,7 +427,11 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     name: dayNames[i],
     count: Math.round(wdAvg[i] * 10) / 10,
     labelColor:
-      i === bestI ? "#2383E2" : i === dow ? "#37352F" : "#9B9A97",
+      i === bestI
+        ? "var(--signal)"
+        : i === dow
+          ? "var(--foreground)"
+          : "var(--faint)",
     barHeight: Math.max(3, Math.round((wdAvg[i] / wdMax) * 100)),
     isBest: i === bestI,
     isWeakest: i === worstI,
@@ -471,7 +480,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         label: "Completed",
         value: String(rangeLogs.length),
         unit: "items",
-        color: "#37352F",
+        color: "var(--foreground)",
         hint: "Everything you checked off in this window",
       },
       {
@@ -481,7 +490,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
           rangeLogs.filter((l) => l.entityType === "TASK").length
         ),
         unit: "done",
-        color: "#37352F",
+        color: "var(--foreground)",
         hint: "One-off work finished — click to isolate the chart",
       },
       {
@@ -491,7 +500,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
           rangeLogs.filter((l) => l.entityType === "DAILY_TASK").length
         ),
         unit: "",
-        color: "#787774",
+        color: "var(--muted-foreground)",
         hint: "Scheduled days you showed up",
       },
       {
@@ -499,7 +508,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         label: "Focus time",
         value: String(Math.round(totalMinutes / 60)),
         unit: "hours",
-        color: "#2383E2",
+        color: "var(--signal)",
         hint: "Minutes logged across projects",
       },
       {
@@ -507,7 +516,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         label: "Per day",
         value: (rangeLogs.length / ANALYTICS_WINDOW_DAYS).toFixed(1),
         unit: "avg",
-        color: "#37352F",
+        color: "var(--foreground)",
         hint: "Average completions per day",
       },
     ],

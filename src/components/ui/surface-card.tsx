@@ -5,17 +5,20 @@ type SurfaceCardProps = {
   children: ReactNode;
   className?: string;
   variant?: "canvas" | "paper";
+  id?: string;
 };
 
 export function SurfaceCard({
   children,
   className,
   variant = "canvas",
+  id,
 }: SurfaceCardProps) {
   return (
     <div
+      id={id}
       className={cn(
-        "overflow-hidden rounded-[10px] border border-border",
+        "overflow-hidden rounded-[10px] border border-border shadow-raised",
         variant === "canvas" ? "bg-card" : "bg-paper",
         className
       )}

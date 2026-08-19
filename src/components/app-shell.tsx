@@ -3,19 +3,22 @@
 import * as React from "react";
 import { Suspense } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopBar, MobileTabBar } from "@/components/app-top-bar";
 import { BrandLockup } from "@/components/brand-mark";
 import { NotificationBell } from "@/components/notification-bell";
-import { SearchProvider } from "@/components/search-context";
+import { SearchPalette } from "@/components/search-palette";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
+import type { SearchIndex } from "@/lib/search";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
 const SIDEBAR_COLLAPSED_KEY = "dh-sidebar-collapsed";
 
 type AppShellProps = {
   stats: SidebarStats;
+  searchIndex: SearchIndex;
   children: React.ReactNode;
 };
 
@@ -40,11 +43,10 @@ function SidebarWithSearchParams({
   );
 }
 
-export function AppShell({ stats, children }: AppShellProps) {
-  const [search, setSearch] = React.useState("");
+export function AppShell({ stats, searchIndex, children }: AppShellProps) {
+  const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
   const [sidebarReady, setSidebarReady] = React.useState(false);
-  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     try {
@@ -72,7 +74,7 @@ export function AppShell({ stats, children }: AppShellProps) {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        searchInputRef.current?.focus();
+        setPaletteOpen((open) => !open);
       }
     }
 
@@ -82,6 +84,11 @@ export function AppShell({ stats, children }: AppShellProps) {
 
   return (
     <div className="min-h-svh bg-background">
+      <SearchPalette
+        index={searchIndex}
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+      />
       <Suspense fallback={null}>
         <SidebarWithSearchParams
           stats={stats}
@@ -102,9 +109,7 @@ export function AppShell({ stats, children }: AppShellProps) {
         <div className="hidden dh:block">
           <AppTopBar
             stats={stats}
-            search={search}
-            onSearchChange={setSearch}
-            searchInputRef={searchInputRef}
+            onSearchOpen={() => setPaletteOpen(true)}
           />
         </div>
 
@@ -121,15 +126,21 @@ export function AppShell({ stats, children }: AppShellProps) {
                   </span>
                 </div>
               )}
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                className="grid h-8 w-8 place-items-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+                aria-label="Search"
+              >
+                <Search className="h-4 w-4" />
+              </button>
               <NotificationBell notifications={stats.notifications} />
               <ThemeToggle />
             </div>
           </header>
         </div>
 
-        <main className="flex-1 overflow-y-auto pb-24 dh:pb-0">
-          <SearchProvider value={search}>{children}</SearchProvider>
-        </main>
+        <main className="flex-1 overflow-y-auto pb-24 dh:pb-0">{children}</main>
 
         <MobileTabBar />
       </div>

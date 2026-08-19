@@ -92,7 +92,7 @@ export function QuickAdd({
       )}
     >
       <div className="flex min-w-[180px] flex-1 items-center gap-2.5 px-2.5">
-        <span className="h-[15px] w-[15px] shrink-0 rounded border-[1.6px] border-dashed border-[#C7C6C2]" />
+        <span className="h-[15px] w-[15px] shrink-0 rounded border-[1.6px] border-dashed border-hairline" />
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}

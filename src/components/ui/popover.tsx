@@ -29,7 +29,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "z-[70] origin-[var(--radix-popover-content-transform-origin)] rounded-[10px] border border-border bg-popover p-1 text-popover-foreground shadow-[0_12px_32px_-12px_rgba(15,15,15,.28)] outline-none data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+          "z-[70] origin-[var(--radix-popover-content-transform-origin)] rounded-[10px] border border-border bg-popover p-1 text-popover-foreground shadow-float outline-none data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
           className
         )}
         {...props}

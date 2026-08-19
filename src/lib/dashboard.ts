@@ -378,7 +378,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       hint: overdueTasks.length
         ? `${overdueTasks.length} overdue`
         : "nothing overdue",
-      hintColor: overdueTasks.length ? "#C4554D" : "var(--faint)",
+      hintColor: overdueTasks.length ? "var(--destructive)" : "var(--faint)",
       foot: "7d closed",
       bars: mkSparkBars(doneSeries),
     },
@@ -395,8 +395,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       hintColor:
         scheduledToday.length > 0 &&
         scheduledToday.every((t) => completedDailyIds.has(t.id))
-          ? "#448361"
-          : "#D9730D",
+          ? "var(--done)"
+          : "var(--warn)",
       foot: "7d hits",
       bars: mkSparkBars(habitSeries),
     },
@@ -589,7 +589,7 @@ export async function getDailyPageData() {
 
       const dots = days.map((day) => {
         if (!isScheduledOn(task.weekdays, day)) {
-          return { color: "#F7F7F5" };
+          return { color: "var(--chart-off)" };
         }
         const ok = completions.some(
           (c) =>
@@ -598,7 +598,11 @@ export async function getDailyPageData() {
         );
         const isToday = toDateOnlyString(day) === toDateOnlyString(today);
         return {
-          color: ok ? (isToday ? "#2383E2" : "#9CC7EE") : "#EDEDEC",
+          color: ok
+            ? isToday
+              ? "var(--chart-hit)"
+              : "var(--chart-hit-soft)"
+            : "var(--track)",
         };
       });
 

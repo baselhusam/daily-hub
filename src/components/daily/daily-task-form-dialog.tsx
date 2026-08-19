@@ -163,7 +163,7 @@ export function DailyTaskFormDialog({
                 <button
                   type="button"
                   onClick={() => setSelectedWeekdays([0, 1, 2, 3, 4, 5, 6])}
-                  className="h-[42px] rounded-lg border border-dashed border-[#DEDDDA] px-4 text-[12.5px] font-semibold text-muted-foreground hover:border-signal hover:text-signal"
+                  className="h-[42px] rounded-lg border border-dashed border-hairline px-4 text-[12.5px] font-semibold text-muted-foreground hover:border-signal hover:text-signal"
                 >
                   Every day
                 </button>
