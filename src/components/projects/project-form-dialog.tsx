@@ -161,20 +161,24 @@ export function ProjectFormDialog({
             )}
           </DialogTrigger>
         )}
-      <DialogContent>
-        <form className="flex min-h-0 w-full flex-col" onSubmit={handleSubmit}>
+      <DialogContent className="overflow-hidden dh:max-h-[min(88dvh,640px)]">
+        <form
+          className="flex min-h-0 w-full flex-1 flex-col overflow-hidden"
+          onSubmit={handleSubmit}
+        >
           <DialogHeader>
             <DialogTitle>{isEdit ? "Edit project" : "New project"}</DialogTitle>
           </DialogHeader>
-          <DialogBody>
+          <DialogBody className="min-h-0 flex-1 gap-4 overflow-y-auto">
             {project?.id && <input type="hidden" name="id" value={project.id} />}
             <label className="flex flex-col gap-1.5">
-              <FieldLabel>Project name</FieldLabel>
+              <FieldLabel>Name</FieldLabel>
               <DialogInput
                 name="name"
                 placeholder="e.g. ClickML…"
                 defaultValue={project?.name}
                 required
+                autoFocus
               />
             </label>
             <label className="flex flex-col gap-1.5">
@@ -184,21 +188,56 @@ export function ProjectFormDialog({
                 placeholder="What is this, in one line…"
                 defaultValue={project?.description ?? ""}
                 rows={2}
+                className="min-h-[68px] resize-none"
               />
             </label>
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Deadline</FieldLabel>
-              <DatePicker
-                name="dueDate"
-                value={dueDate}
-                onValueChange={setDueDate}
-                placeholder="No deadline"
-              />
-            </label>
-            <div className="flex flex-col gap-2 border-t border-rule-soft pt-4">
-              <FieldLabel>Milestones</FieldLabel>
+            <div className="grid grid-cols-2 gap-3 dh:grid-cols-3">
+              <label className="col-span-2 flex flex-col gap-1.5 dh:col-span-1">
+                <FieldLabel>Deadline</FieldLabel>
+                <DatePicker
+                  name="dueDate"
+                  value={dueDate}
+                  onValueChange={setDueDate}
+                  placeholder="No deadline"
+                />
+              </label>
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <FieldLabel>Icon</FieldLabel>
+                <SelectMenu
+                  name="iconKey"
+                  value={iconKey}
+                  onValueChange={setIconKey}
+                  options={iconMenuOptions()}
+                  ariaLabel="Project icon"
+                />
+              </label>
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <FieldLabel>Status</FieldLabel>
+                <SelectMenu
+                  name="status"
+                  value={status}
+                  onValueChange={(next) =>
+                    setStatus(next as "ACTIVE" | "PAUSED" | "DONE")
+                  }
+                  options={projectStatusMenuOptions()}
+                  ariaLabel="Project status"
+                />
+              </label>
+            </div>
+            <LogoField
+              key={String(open)}
+              existingLogoUrl={project?.logoUrl}
+            />
+            <div className="flex flex-col gap-2">
+              <div className="flex items-baseline gap-2">
+                <FieldLabel>Milestones</FieldLabel>
+                <span className="text-[11.5px] text-faint">Optional</span>
+              </div>
               {milestones.map((milestone, index) => (
-                <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div
+                  key={index}
+                  className="flex items-center gap-2"
+                >
                   <DialogInput
                     value={milestone.name}
                     onChange={(e) => {
@@ -207,72 +246,48 @@ export function ProjectFormDialog({
                       setMilestones(next);
                     }}
                     placeholder="Milestone name…"
-                    className="min-w-0 flex-1 rounded-md text-[13.5px]"
+                    className="min-w-0 flex-1 rounded-[10px] py-[9px] text-[13.5px]"
+                    autoFocus={index === milestones.length - 1 && !milestone.name}
                   />
-                  <div className="flex items-center gap-2">
-                    <DatePicker
-                      value={milestone.dueDate}
-                      onValueChange={(nextDate) => {
-                        const next = [...milestones];
-                        next[index] = { ...next[index], dueDate: nextDate };
-                        setMilestones(next);
-                      }}
-                      placeholder="Due"
-                      className="min-w-0 flex-1 rounded-md py-2 text-[13px] sm:w-[158px] sm:flex-none"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 shrink-0 text-hairline hover:text-destructive sm:h-8 sm:w-8"
-                      onClick={() =>
-                        setMilestones(milestones.filter((_, i) => i !== index))
-                      }
-                      aria-label="Remove milestone"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <DatePicker
+                    value={milestone.dueDate}
+                    onValueChange={(nextDate) => {
+                      const next = [...milestones];
+                      next[index] = { ...next[index], dueDate: nextDate };
+                      setMilestones(next);
+                    }}
+                    placeholder="Due"
+                    className="w-[138px] shrink-0 rounded-[10px] py-[9px] text-[13px]"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-hairline hover:text-destructive"
+                    onClick={() =>
+                      setMilestones(milestones.filter((_, i) => i !== index))
+                    }
+                    aria-label="Remove milestone"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                className="self-start border-dashed text-[12.5px] font-semibold text-muted-foreground"
+                className="self-start py-0.5 text-left text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
                 onClick={() =>
                   setMilestones([...milestones, { name: "", dueDate: "" }])
                 }
               >
                 + Add milestone
-              </Button>
+              </button>
             </div>
-            <LogoField
-              key={String(open)}
-              existingLogoUrl={project?.logoUrl}
-            />
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Icon</FieldLabel>
-              <SelectMenu
-                name="iconKey"
-                value={iconKey}
-                onValueChange={setIconKey}
-                options={iconMenuOptions()}
-                ariaLabel="Project icon"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Status</FieldLabel>
-              <SelectMenu
-                name="status"
-                value={status}
-                onValueChange={(next) =>
-                  setStatus(next as "ACTIVE" | "PAUSED" | "DONE")
-                }
-                options={projectStatusMenuOptions()}
-                ariaLabel="Project status"
-              />
-            </label>
-            {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p role="alert" aria-live="polite" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
           </DialogBody>
           <DialogFooter>
             {isEdit && project?.id && (

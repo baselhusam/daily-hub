@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Link2, Upload } from "lucide-react";
+import { ImageIcon, Link2, Upload } from "lucide-react";
 import { DialogInput, FieldLabel } from "@/components/ui/input";
 import { isRemoteLogoUrl } from "@/lib/logo";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ type LogoFieldProps = {
 };
 
 export function LogoField({ existingLogoUrl }: LogoFieldProps) {
+  const fileRef = React.useRef<HTMLInputElement>(null);
   const [source, setSource] = React.useState<LogoSource>(
     isRemoteLogoUrl(existingLogoUrl) ? "url" : "upload"
   );
@@ -20,17 +21,39 @@ export function LogoField({ existingLogoUrl }: LogoFieldProps) {
     isRemoteLogoUrl(existingLogoUrl) ? existingLogoUrl ?? "" : ""
   );
   const [previewFailed, setPreviewFailed] = React.useState(false);
+  const [fileName, setFileName] = React.useState<string | null>(null);
+  const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+  const [dragOver, setDragOver] = React.useState(false);
 
   const previewSrc = remoteUrl.trim();
   const showLivePreview = source === "url" && /^https?:\/\//i.test(previewSrc);
+  const uploadPreview = objectUrl ?? (!isRemoteLogoUrl(existingLogoUrl) ? existingLogoUrl : null);
 
   React.useEffect(() => {
     setPreviewFailed(false);
   }, [previewSrc]);
 
+  React.useEffect(() => {
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [objectUrl]);
+
+  function assignFile(file: File | undefined) {
+    if (!file || !file.type.startsWith("image/")) return;
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    if (fileRef.current) fileRef.current.files = transfer.files;
+    setFileName(file.name);
+    setObjectUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2.5">
         <FieldLabel>Logo</FieldLabel>
         <div
           role="tablist"
@@ -55,20 +78,70 @@ export function LogoField({ existingLogoUrl }: LogoFieldProps) {
       </div>
 
       {source === "upload" ? (
-        <div className="flex flex-col gap-2">
-          {existingLogoUrl ? (
-            <CurrentLogoPreview src={existingLogoUrl} />
-          ) : null}
-          <DialogInput name="logo" type="file" accept="image/*" />
-          {existingLogoUrl ? (
-            <p className="text-[12px] text-faint">
-              Leave empty to keep the current logo.
-            </p>
-          ) : null}
-        </div>
+        <label
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setDragOver(true);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault();
+            if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+              setDragOver(false);
+            }
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragOver(false);
+            assignFile(event.dataTransfer.files[0]);
+          }}
+          className={cn(
+            "flex cursor-pointer items-center gap-3 rounded-[10px] border border-dashed px-3 py-2.5 transition-colors duration-[120ms]",
+            dragOver
+              ? "border-signal bg-signal-soft"
+              : "border-input bg-background hover:border-border-strong hover:bg-canvas-sunk"
+          )}
+        >
+            <span className="relative inline-grid size-9 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-paper">
+              {uploadPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={uploadPreview}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <ImageIcon className="size-3.5 text-faint" />
+              )}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13.5px] leading-snug">
+                {fileName
+                  ? fileName
+                  : existingLogoUrl
+                    ? "Replace current logo"
+                    : "Drop an image, or click to choose"}
+              </span>
+              <span className="mt-0.5 block text-[11.5px] text-faint">
+                PNG, JPG, or SVG
+              </span>
+            </span>
+            <input
+              ref={fileRef}
+              name="logo"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(event) => assignFile(event.target.files?.[0])}
+            />
+          </label>
       ) : (
-        <div className="flex items-start gap-2.5">
-          <span className="relative mt-0.5 inline-grid size-[42px] shrink-0 place-items-center overflow-hidden rounded-[10px] border border-border bg-paper">
+        <div className="flex items-center gap-2.5">
+          <span className="relative inline-grid size-9 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-paper">
             {showLivePreview && !previewFailed ? (
               // Native img so any remote URL can preview without Next image config.
               // eslint-disable-next-line @next/next/no-img-element
@@ -94,14 +167,13 @@ export function LogoField({ existingLogoUrl }: LogoFieldProps) {
               onChange={(event) => setRemoteUrl(event.target.value)}
               autoComplete="off"
               spellCheck={false}
+              className="rounded-[10px] py-[9px]"
             />
-            <p className="mt-1.5 text-[12px] leading-snug text-faint">
-              {previewFailed
-                ? "Couldn’t load that image. Check the URL."
-                : showLivePreview
-                  ? "Loaded live from this URL — not uploaded."
-                  : "Paste an image URL. It stays remote and updates live."}
-            </p>
+            {previewFailed ? (
+              <p className="mt-1 text-[11.5px] text-destructive">
+                Couldn’t load that image. Check the URL.
+              </p>
+            ) : null}
           </div>
         </div>
       )}
@@ -135,24 +207,5 @@ function SourceTab({
     >
       {children}
     </button>
-  );
-}
-
-function CurrentLogoPreview({ src }: { src: string }) {
-  const [failed, setFailed] = React.useState(false);
-
-  if (failed) return null;
-
-  return (
-    <span className="inline-grid size-8 overflow-hidden rounded-md border border-border">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt=""
-        className="h-full w-full object-cover"
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-      />
-    </span>
   );
 }

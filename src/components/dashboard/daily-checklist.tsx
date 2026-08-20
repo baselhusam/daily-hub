@@ -38,7 +38,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
 
   if (tasks.length === 0) {
     return (
-      <div className="px-[18px] py-5">
+      <div className="px-4 py-4">
         <EmptyState
           title="Nothing scheduled for today"
           description={
@@ -64,7 +64,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
         <p
           role="alert"
           aria-live="polite"
-          className="border-b border-destructive/20 bg-destructive-wash px-[18px] py-2.5 text-[13px] text-destructive"
+          className="px-4 py-2 text-[13px] text-destructive"
         >
           {error}
         </p>
@@ -76,47 +76,34 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
         return (
           <div
             key={task.id}
-            className="group relative flex items-center gap-3 border-b border-rule-soft px-[18px] py-3 last:border-0 hover:bg-canvas-sunk"
+            className="group flex items-center gap-2.5 px-4 py-2 transition-colors duration-[120ms] hover:bg-canvas-sunk"
           >
             <Checkbox
               checked={done}
               onCheckedChange={() => void handleToggle(task.id, done)}
-              className="relative z-10 size-[22px]"
               aria-label={`Toggle ${task.title}`}
             />
             <EntityAvatar
               name={task.title}
               logoUrl={task.logoUrl}
               iconKey={task.iconKey}
-              size={28}
-              rounded="lg"
+              size={20}
             />
-            <div className="relative min-w-0 flex-1">
+            <div className="min-w-0 flex-1">
               <div
                 className={cn(
-                  "text-[14.5px] font-semibold leading-snug",
-                  done && "text-muted-foreground"
+                  "text-[14px] leading-snug",
+                  done && "text-muted-foreground line-through decoration-hairline"
                 )}
               >
                 {task.title}
               </div>
-              <div className="mt-0.5 text-[12px] text-faint">
+              <div className="mt-0.5 text-[11.5px] text-faint">
                 {task.carriedOver
                   ? `${task.scheduleLabel} · carried over`
                   : task.scheduleLabel}
               </div>
-              {done && (
-                <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[420px] bg-hairline" />
-              )}
             </div>
-            {done && (
-              <>
-                <span className="text-[11px] font-semibold tracking-[0.08em] text-signal tabular-nums">
-                  DONE
-                </span>
-                <span className="pointer-events-none absolute inset-0 bg-white/62 dark:bg-background/50" />
-              </>
-            )}
           </div>
         );
       })}

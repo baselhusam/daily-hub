@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type SurfaceCardProps = {
   children: ReactNode;
   className?: string;
-  variant?: "canvas" | "paper";
+  variant?: "canvas" | "paper" | "quiet";
   id?: string;
 };
 
@@ -18,8 +18,12 @@ export function SurfaceCard({
     <div
       id={id}
       className={cn(
-        "overflow-hidden rounded-[12px] border border-border shadow-raised",
-        variant === "canvas" ? "bg-card" : "bg-paper",
+        "overflow-hidden rounded-[12px] border border-border",
+        variant === "quiet"
+          ? "bg-card"
+          : variant === "paper"
+            ? "bg-paper shadow-raised"
+            : "bg-card shadow-raised",
         className
       )}
     >
@@ -32,16 +36,18 @@ export function SurfaceCardHeader({
   children,
   className,
   sunk = false,
+  divided = true,
 }: {
   children: ReactNode;
   className?: string;
   sunk?: boolean;
+  divided?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 border-b px-[18px] py-3.5",
-        sunk ? "border-border bg-canvas-sunk" : "border-rule-soft",
+        "flex items-center justify-between gap-3 px-[18px] py-3.5",
+        divided && (sunk ? "border-b border-border bg-canvas-sunk" : "border-b border-rule-soft"),
         className
       )}
     >

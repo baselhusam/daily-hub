@@ -33,32 +33,31 @@ export function TaskRow({
     <div
       id={`task-${task.id}`}
       className={cn(
-        "group relative flex items-start gap-3 scroll-mt-24 border-b border-rule-soft px-[18px] py-3.5 last:border-0 transition-colors duration-[120ms] hover:bg-canvas-sunk target:bg-signal-wash",
+        "group relative flex items-start gap-2.5 scroll-mt-24 px-4 py-2 transition-colors duration-[120ms] hover:bg-canvas-sunk target:bg-signal-wash",
         className
       )}
     >
       <Checkbox
         checked={task.done}
         onCheckedChange={onToggle}
-        className="relative z-10 mt-0.5 size-[22px]"
+        className="relative z-10 mt-[3px]"
         aria-label={`Toggle ${task.title}`}
       />
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3">
-        <div className="relative min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-start sm:gap-3">
+        <div className="min-w-0 flex-1">
           <div
             className={cn(
-              "text-[14.5px] leading-snug font-medium text-pretty transition-colors duration-[120ms] group-hover:text-foreground",
-              task.done && "text-muted-foreground"
+              "text-[14px] leading-snug text-pretty transition-colors duration-[120ms]",
+              task.done
+                ? "text-muted-foreground line-through decoration-hairline"
+                : "group-hover:text-foreground"
             )}
           >
             {task.title}
           </div>
           {task.metaLabel ? (
-            <div className="mt-0.5 text-[12px] text-faint">{task.metaLabel}</div>
+            <div className="mt-0.5 text-[11.5px] text-faint">{task.metaLabel}</div>
           ) : null}
-          {task.done && (
-            <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[min(100%,560px)] bg-hairline" />
-          )}
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
         {task.estimateLabel && (
@@ -68,11 +67,8 @@ export function TaskRow({
         )}
         {task.dueLabel && (
           <span
-            className="rounded-[5px] px-[7px] py-[3px] text-[11.5px] font-semibold whitespace-nowrap tabular-nums"
-            style={{
-              color: task.dueColor,
-              backgroundColor: task.dueBg,
-            }}
+            className="text-[11.5px] font-medium whitespace-nowrap tabular-nums"
+            style={{ color: task.dueColor }}
           >
             {task.dueLabel}
           </span>
@@ -82,7 +78,7 @@ export function TaskRow({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-hairline opacity-100 hover:text-foreground md:h-7 md:w-7 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+            className="h-7 w-7 text-hairline opacity-100 hover:text-foreground md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
             onClick={onEdit}
             aria-label={`Edit ${task.title}`}
           >
@@ -91,9 +87,6 @@ export function TaskRow({
         )}
         </div>
       </div>
-      {task.done && (
-        <span className="pointer-events-none absolute inset-0 bg-white/62 dark:bg-background/50" />
-      )}
     </div>
   );
 }

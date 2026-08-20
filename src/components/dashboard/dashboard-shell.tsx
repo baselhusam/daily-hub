@@ -14,11 +14,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { QuickAdd } from "@/components/ui/quick-add";
 import { NudgeChip } from "@/components/ui/nudge-chip";
 import { SnapshotCard } from "@/components/ui/snapshot-card";
-import { SurfaceCard, SurfaceCardHeader } from "@/components/ui/surface-card";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { TaskRow } from "@/components/ui/task-row";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/brand-mark";
 import { DailyChecklist } from "./daily-checklist";
@@ -319,7 +318,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
             </div>
 
             {isFreshWorkspace ? (
-              <SurfaceCard>
+              <SurfaceCard variant="quiet">
                 <EmptyState
                   title="No open work"
                   description="Add a task, or create a project to group related work."
@@ -334,89 +333,82 @@ export function DashboardShell({ data }: DashboardShellProps) {
                   project.tasks,
                   (task) => optimisticTasks.get(task.id, task.doneToday)
                 );
+                const openCount = project.tasks.filter(
+                  (task) => !optimisticTasks.get(task.id, task.doneToday)
+                ).length;
+                const openMilestones = project.milestones
+                  .filter((m) => !m.done)
+                  .slice(0, 3);
 
                 return (
-                  <SurfaceCard key={project.id}>
-                    <SurfaceCardHeader sunk>
-                      <div className="flex w-full flex-wrap items-center gap-3">
-                        <EntityAvatar
-                          name={project.name}
-                          color={project.color}
-                          logoUrl={project.logoUrl}
-                          iconKey={project.iconKey}
-                          size={30}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[15px] font-semibold tracking-[-0.01em]">
-                              {project.name}
-                            </span>
-                            {project.status !== "ACTIVE" ? (
-                              <StatusChip status={project.status} />
-                            ) : null}
-                          </div>
-                          <p className="mt-0.5 text-[12px] text-faint">
-                            {
-                              project.tasks.filter(
-                                (task) =>
-                                  !optimisticTasks.get(
-                                    task.id,
-                                    task.doneToday
-                                  )
-                              ).length
-                            }{" "}
-                            open · {project.doneCount} logged
-                          </p>
+                  <SurfaceCard key={project.id} variant="quiet">
+                    <div className="flex items-start gap-2.5 px-4 pt-3.5 pb-2">
+                      <EntityAvatar
+                        name={project.name}
+                        color={project.color}
+                        logoUrl={project.logoUrl}
+                        iconKey={project.iconKey}
+                        size={22}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-0 truncate text-[14.5px] font-semibold tracking-[-0.015em]">
+                            {project.name}
+                          </span>
+                          {project.status !== "ACTIVE" ? (
+                            <StatusChip status={project.status} />
+                          ) : null}
                         </div>
-                        {dl !== null && (
-                          <div className="text-right">
-                            <div
-                              className="text-[14px] font-semibold tabular-nums leading-none"
-                              style={{ color: getDeadlineColor(dl) }}
-                            >
-                              {dl < 0 ? `${Math.abs(dl)}d late` : `${dl}d`}
-                            </div>
-                            <div className="mt-0.5 text-[11.5px] text-faint">
-                              to deadline
-                            </div>
-                          </div>
-                        )}
+                        <p className="mt-0.5 text-[12px] text-faint">
+                          {openCount} open
+                          {project.doneCount > 0
+                            ? ` · ${project.doneCount} logged`
+                            : null}
+                        </p>
                       </div>
-                    </SurfaceCardHeader>
+                      {dl !== null && (
+                        <span
+                          className="shrink-0 pt-0.5 text-[12.5px] font-medium tabular-nums"
+                          style={{ color: getDeadlineColor(dl) }}
+                        >
+                          {dl < 0 ? `${Math.abs(dl)}d late` : `${dl}d`}
+                        </span>
+                      )}
+                    </div>
 
-                    {project.milestones.filter((m) => !m.done).length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 border-b border-rule-soft bg-canvas-sunk px-[18px] py-2.5">
-                        {project.milestones
-                          .filter((m) => !m.done)
-                          .slice(0, 3)
-                          .map((milestone) => {
-                            const md = daysUntil(milestone.dueDate, today, mode);
-                            return (
-                              <Badge
-                                key={milestone.id}
-                                variant="filter"
-                                dotColor={
-                                  md !== null && md <= 7
-                                    ? "var(--signal)"
-                                    : "var(--hairline)"
-                                }
-                                className="gap-1.5"
-                              >
-                                {milestone.name}
-                                {md !== null && (
-                                  <span className="text-faint tabular-nums">
-                                    {md < 0
-                                      ? `${Math.abs(md)}d late`
-                                      : `${md}d`}
-                                  </span>
-                                )}
-                              </Badge>
-                            );
-                          })}
+                    {openMilestones.length > 0 && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-1.5">
+                        {openMilestones.map((milestone) => {
+                          const md = daysUntil(milestone.dueDate, today, mode);
+                          return (
+                            <span
+                              key={milestone.id}
+                              className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground"
+                            >
+                              <span
+                                className="h-1 w-1 rounded-full"
+                                style={{
+                                  backgroundColor:
+                                    md !== null && md <= 7
+                                      ? "var(--signal)"
+                                      : "var(--hairline)",
+                                }}
+                              />
+                              {milestone.name}
+                              {md !== null && (
+                                <span className="text-faint tabular-nums">
+                                  {md < 0
+                                    ? `${Math.abs(md)}d late`
+                                    : `${md}d`}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
 
-                    <div>
+                    <div className="pt-0.5 pb-1.5">
                       {visibleTasks.map((task) => {
                         const due = getDueMeta(task.dueDate, today, mode);
                         const done = optimisticTasks.get(
@@ -432,7 +424,6 @@ export function DashboardShell({ data }: DashboardShellProps) {
                               done,
                               dueLabel: due?.label,
                               dueColor: due?.color,
-                              dueBg: due?.bg,
                               estimateLabel: formatEstimate(
                                 task.estimatedMinutes
                               ),
@@ -455,9 +446,9 @@ export function DashboardShell({ data }: DashboardShellProps) {
                         trigger={
                           <button
                             type="button"
-                            className="w-full px-[18px] py-3 text-left text-[13px] font-semibold text-faint transition-colors hover:bg-paper hover:text-signal"
+                            className="w-full py-2 pr-4 pl-11 text-left text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
                           >
-                            + Add task to {project.name}
+                            + Add task
                           </button>
                         }
                       />
@@ -472,25 +463,23 @@ export function DashboardShell({ data }: DashboardShellProps) {
             <div className="order-1 min-w-0 dh:order-2">
               <div className="flex flex-col gap-3.5 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:pr-0.5">
                 {showHabits && (
-                  <SurfaceCard>
-                    <SurfaceCardHeader className="!py-3.5">
-                      <div className="flex w-full items-center justify-between gap-3">
-                        <div className="flex min-w-0 items-baseline gap-2.5">
-                          <h2 className="text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
-                            Today&apos;s habits
-                          </h2>
-                          <span className="text-[12px] font-medium text-faint tabular-nums">
-                            {data.stats.dailyCompleted}/
-                            {data.stats.dailyScheduled}
-                          </span>
-                        </div>
-                        <ProgressBar
-                          value={habitProgress}
-                          className="max-w-[140px] flex-1"
-                        />
-                      </div>
-                    </SurfaceCardHeader>
-                    <DailyChecklist tasks={data.dailyTasks} />
+                  <SurfaceCard variant="quiet">
+                    <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-2.5">
+                      <h2 className="text-[13px] font-semibold tracking-[-0.015em]">
+                        Today&apos;s habits
+                      </h2>
+                      <span className="text-[12px] text-faint tabular-nums">
+                        {data.stats.dailyCompleted}/
+                        {data.stats.dailyScheduled}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={habitProgress}
+                      className="h-px max-w-none rounded-none bg-rule-soft"
+                    />
+                    <div className="py-1">
+                      <DailyChecklist tasks={data.dailyTasks} />
+                    </div>
                   </SurfaceCard>
                 )}
 
@@ -567,25 +556,24 @@ function InboxPanel({
   mode: CalendarMode;
 }) {
   return (
-    <SurfaceCard variant="paper">
-      <SurfaceCardHeader>
-        <div className="flex w-full items-center gap-3">
-          <InboxAvatar size={30} />
-          <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-semibold">Inbox</div>
-            <div className="mt-0.5 text-[12px] text-faint">
-              No project yet · file these or finish them
-            </div>
-          </div>
-          <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
+    <SurfaceCard variant="quiet">
+      <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-2">
+        <div className="min-w-0">
+          <h2 className="text-[13px] font-semibold tracking-[-0.015em]">
+            Inbox
+          </h2>
+          <p className="mt-0.5 text-[12px] text-faint">Unfiled</p>
+        </div>
+        {openCount > 0 ? (
+          <span className="text-[12px] text-faint tabular-nums">
             {openCount}
           </span>
-        </div>
-      </SurfaceCardHeader>
+        ) : null}
+      </div>
       {tasks.length === 0 ? (
-        <p className="px-[18px] py-5 text-[13.5px] text-faint">Inbox clear.</p>
+        <p className="px-4 pt-1 pb-4 text-[13px] text-faint">Inbox clear.</p>
       ) : (
-        <div>
+        <div className="pb-1.5">
           {sortCompletedLast(tasks, (task) =>
             getDone(task.id, task.doneToday)
           ).map((task) => {
@@ -600,7 +588,6 @@ function InboxPanel({
                   done,
                   dueLabel: due?.label,
                   dueColor: due?.color,
-                  dueBg: due?.bg,
                   estimateLabel: formatEstimate(task.estimatedMinutes),
                   metaLabel: formatAddedAgo(task.createdAt, today, mode),
                 }}
