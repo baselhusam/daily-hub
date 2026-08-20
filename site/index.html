@@ -3,234 +3,362 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>DailyHub — the day, in one place</title>
+    <title>DailyHub — a quiet workspace that keeps the day in one place</title>
     <meta
       name="description"
       content="A personal command center for projects, tasks, and daily habits. Run it locally with npx — no Docker required."
     />
-    <meta name="theme-color" content="#070706" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F7F5" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#11110F" />
+    <meta name="color-scheme" content="light dark" />
     <meta property="og:title" content="DailyHub — the day, in one place" />
     <meta
       property="og:description"
-      content="A personal command center for projects, tasks, and daily habits. npx @baselhusam/daily-hub"
+      content="A quiet workspace for projects, tasks, and daily habits. npx @baselhusam/daily-hub"
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://baselhusam.github.io/daily-hub/" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="https://baselhusam.github.io/daily-hub/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://baselhusam.github.io/daily-hub/og.png" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://baselhusam.github.io/daily-hub/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Doto:wght@400;700&family=Geist+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <a class="skip" href="#main">Skip to content</a>
+
     <div class="atmosphere" aria-hidden="true">
-      <div class="key"></div>
-      <div class="fill"></div>
-      <div class="flare"></div>
       <div class="grid"></div>
-      <div class="spot"></div>
-      <div class="grid-lit"></div>
-      <div class="vignette"></div>
+      <div class="wash"></div>
       <div class="grain"></div>
     </div>
 
     <header class="top">
+      <div class="top-inner">
       <a class="lockup" href="#main">
-        <svg class="mark" viewBox="0 0 40 40" width="28" height="28" aria-hidden="true">
+        <svg class="mark mark-light" viewBox="0 0 40 40" width="28" height="28" aria-hidden="true">
+          <rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#37352F" />
+          <path d="M10.5 21.2l5 5 10.5-11" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="32" cy="8" r="6" fill="#fff" />
+          <circle cx="32" cy="8" r="4" fill="#2383E2" />
+        </svg>
+        <svg class="mark mark-dark" viewBox="0 0 40 40" width="28" height="28" aria-hidden="true">
           <rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="#fff" />
-          <path
-            d="M10.5 21.2l5 5 10.5-11"
-            stroke="#37352F"
-            stroke-width="3.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <circle cx="32" cy="8" r="6" fill="#37352F" />
+          <path d="M10.5 21.2l5 5 10.5-11" stroke="#37352F" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="32" cy="8" r="6" fill="#11110F" />
           <circle cx="32" cy="8" r="4" fill="#6BAEE9" />
         </svg>
         <span class="wordmark">Daily<span>Hub</span></span>
       </a>
-      <a
-        class="ghost-link"
-        href="https://github.com/baselhusam/daily-hub"
-        rel="noopener noreferrer"
-      >
-        GitHub
-      </a>
+      <nav class="top-links">
+        <a href="https://www.npmjs.com/package/@baselhusam/daily-hub" rel="noopener noreferrer">npm</a>
+        <a href="https://github.com/baselhusam/daily-hub" rel="noopener noreferrer">GitHub</a>
+      </nav>
+      </div>
     </header>
 
     <main id="main">
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">A quiet command center</p>
-          <h1>The day,<br />in one place.</h1>
-          <div class="lede">
-            <p>
-              For people who juggle more than one project at a time — founders,
-              consultants, indie builders. Client work, side projects, and a few
-              non-negotiable daily habits.
-            </p>
-            <p>
-              Not Linear. Not Notion. The morning surface: what is open, what
-              belongs where, what must happen today.
-            </p>
-          </div>
-          <div class="actions">
-            <a
-              class="btn"
-              href="https://github.com/baselhusam/daily-hub"
-              rel="noopener noreferrer"
-            >
-              View on GitHub
-            </a>
-            <nav class="action-links">
-              <a href="https://www.npmjs.com/package/@baselhusam/daily-hub" rel="noopener noreferrer">npm</a>
-              <a href="https://github.com/baselhusam/daily-hub/blob/main/docs/DEPLOYMENT.md" rel="noopener noreferrer">Deploy</a>
-              <a href="https://github.com/baselhusam/daily-hub/blob/main/docs/DESIGN.md" rel="noopener noreferrer">Design</a>
-            </nav>
-          </div>
-        </div>
+          <p class="eyebrow">Personal command center</p>
+          <h1>The day, in one place.</h1>
+          <p class="lede">
+            A quiet workspace for people who juggle more than one project at a
+            time — founders, consultants, indie builders. Client work, side
+            projects, and a few non-negotiable daily habits.
+          </p>
+          <p class="lede muted">
+            Not Linear. Not Notion. The morning surface: what is open, what
+            belongs where, what must happen today.
+          </p>
 
-        <div class="terminal-stage">
-          <aside class="terminal" aria-label="Install commands">
-            <div class="terminal-chrome">
-              <div class="tabs" role="tablist" aria-label="Install options">
-                <button
-                  type="button"
-                  class="tab is-active"
-                  role="tab"
-                  id="tab-npx"
-                  aria-selected="true"
-                  aria-controls="panel-npx"
-                  data-tab="npx"
-                >
-                  npx
-                </button>
-                <button
-                  type="button"
-                  class="tab"
-                  role="tab"
-                  id="tab-seed"
-                  aria-selected="false"
-                  aria-controls="panel-seed"
-                  data-tab="seed"
-                >
-                  Seed
-                </button>
-                <button
-                  type="button"
-                  class="tab"
-                  role="tab"
-                  id="tab-docker"
-                  aria-selected="false"
-                  aria-controls="panel-docker"
-                  data-tab="docker"
-                >
-                  Docker
-                </button>
+          <aside class="command" aria-label="Install commands">
+            <div class="command-bar">
+              <div class="segmented" role="tablist" aria-label="Install options">
+                <button type="button" class="tab is-active" role="tab" id="tab-npx" aria-selected="true" aria-controls="panel-npx" data-tab="npx">npx</button>
+                <button type="button" class="tab" role="tab" id="tab-seed" aria-selected="false" aria-controls="panel-seed" data-tab="seed">Seed</button>
+                <button type="button" class="tab" role="tab" id="tab-docker" aria-selected="false" aria-controls="panel-docker" data-tab="docker">Docker</button>
               </div>
               <button type="button" class="copy" data-copy aria-live="polite">
                 <span data-copy-label>Copy</span>
               </button>
             </div>
-
-            <div class="terminal-body">
-              <div
-                class="panel is-active"
-                role="tabpanel"
-                id="panel-npx"
-                aria-labelledby="tab-npx"
-                data-command="npx @baselhusam/daily-hub"
-              >
-                <p class="cmd">
-                  <span class="prompt">$</span>
-                  <span class="bin">npx</span>
-                  <span class="pkg">@baselhusam/daily-hub</span>
-                  <span class="cursor" aria-hidden="true"></span>
-                </p>
-                <p class="out">
-                  http://127.0.0.1:9999<br />
-                  <span class="dim">~/.daily-hub</span>
-                </p>
+            <div class="command-body">
+              <div class="panel is-active" role="tabpanel" id="panel-npx" aria-labelledby="tab-npx" data-command="npx @baselhusam/daily-hub">
+                <p class="cmd"><span class="prompt">$</span> <span class="bin">npx</span> <span class="pkg">@baselhusam/daily-hub</span><span class="cursor" aria-hidden="true"></span></p>
+                <p class="out">http://127.0.0.1:9999 <span class="dim">· ~/.daily-hub</span></p>
               </div>
-              <div
-                class="panel"
-                role="tabpanel"
-                id="panel-seed"
-                aria-labelledby="tab-seed"
-                hidden
-                data-command="npx @baselhusam/daily-hub --seed"
-              >
-                <p class="cmd">
-                  <span class="prompt">$</span>
-                  <span class="bin">npx</span>
-                  <span class="pkg">@baselhusam/daily-hub --seed</span>
-                  <span class="cursor" aria-hidden="true"></span>
-                </p>
-                <p class="out">
-                  sample projects, tasks, habits<br />
-                  <span class="dim">first run · SQLite</span>
-                </p>
+              <div class="panel" role="tabpanel" id="panel-seed" aria-labelledby="tab-seed" hidden data-command="npx @baselhusam/daily-hub --seed">
+                <p class="cmd"><span class="prompt">$</span> <span class="bin">npx</span> <span class="pkg">@baselhusam/daily-hub --seed</span><span class="cursor" aria-hidden="true"></span></p>
+                <p class="out">sample projects, tasks, habits <span class="dim">· first run</span></p>
               </div>
-              <div
-                class="panel"
-                role="tabpanel"
-                id="panel-docker"
-                aria-labelledby="tab-docker"
-                hidden
-                data-command="docker compose up --build"
-              >
-                <p class="cmd">
-                  <span class="prompt">$</span>
-                  <span class="bin">docker</span>
-                  <span class="pkg">compose up --build</span>
-                  <span class="cursor" aria-hidden="true"></span>
-                </p>
-                <p class="out">
-                  Postgres + app on :9999<br />
-                  <span class="dim">self-host · volumes</span>
-                </p>
+              <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker" hidden data-command="docker compose up --build">
+                <p class="cmd"><span class="prompt">$</span> <span class="bin">docker</span> <span class="pkg">compose up --build</span><span class="cursor" aria-hidden="true"></span></p>
+                <p class="out">Postgres + app on :9999 <span class="dim">· self-host</span></p>
               </div>
             </div>
           </aside>
+
+          <div class="actions">
+            <a class="btn btn-ink" href="https://github.com/baselhusam/daily-hub" rel="noopener noreferrer">View on GitHub</a>
+            <a class="btn btn-ghost" href="https://github.com/baselhusam/daily-hub/blob/main/docs/DEPLOYMENT.md" rel="noopener noreferrer">Deploy</a>
+          </div>
+
+          <ul class="pills">
+            <li><span class="dot signal"></span>Self-hosted</li>
+            <li><span class="dot ink"></span>Single-user</li>
+            <li><span class="dot done"></span>Node 22+ or Docker</li>
+          </ul>
+        </div>
+
+        <div class="stage">
+          <div class="app" aria-label="DailyHub Today, preview">
+            <div class="app-top">
+              <div class="app-brand">
+                <svg viewBox="0 0 40 40" width="22" height="22" aria-hidden="true">
+                  <rect x="2.5" y="5.5" width="30" height="30" rx="8.5" fill="currentColor" />
+                  <path d="M10.5 21.2l5 5 10.5-11" stroke="var(--canvas)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+                  <circle cx="32" cy="8" r="6" fill="var(--paper)" />
+                  <circle cx="32" cy="8" r="4" fill="var(--signal)" />
+                </svg>
+                <span>DailyHub</span>
+              </div>
+              <div class="app-search">
+                <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Search tasks…
+                <kbd>⌘K</kbd>
+              </div>
+            </div>
+            <div class="app-body">
+              <aside class="app-side">
+                <p class="side-label">Main Menu</p>
+                <div class="side-item is-current">
+                  <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="12" width="7" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="7" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                  Today <span>4</span>
+                </div>
+                <div class="side-item">
+                  <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 7.5h16M4 12h16M4 16.5h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  Projects <span>3</span>
+                </div>
+                <div class="side-item">
+                  <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3.5v3M16 3.5v3M4 9.5h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  Habits <span>1</span>
+                </div>
+                <div class="side-item">
+                  <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Analytics
+                </div>
+              </aside>
+              <div class="app-main">
+                <p class="app-date" data-today-label>Friday 21 August</p>
+                <h2 class="app-hello" data-greeting>Good morning.</h2>
+                <div class="metrics">
+                  <div><strong data-open-count>4</strong><span>open</span></div>
+                  <div><strong>2</strong><span>done today</span></div>
+                  <div><strong>14</strong><span>day streak</span></div>
+                </div>
+                <div class="card">
+                  <div class="card-head">
+                    <span class="today-kicker">Today</span>
+                    <span class="card-meta" data-progress-label>2 / 4</span>
+                  </div>
+                  <ul class="tasks" data-tasks>
+                    <li>
+                      <button type="button" class="check is-done" aria-pressed="true" aria-label="Morning review"></button>
+                      <span class="task-title is-done">Morning review</span>
+                      <span class="tag">Habit</span>
+                    </li>
+                    <li>
+                      <button type="button" class="check is-done" aria-pressed="true" aria-label="Publish Medium post"></button>
+                      <span class="task-title is-done">Publish Medium post</span>
+                      <span class="tag">Daily</span>
+                    </li>
+                    <li>
+                      <button type="button" class="check" aria-pressed="false" aria-label="Client follow-up"></button>
+                      <span class="task-title">Client follow-up</span>
+                      <span class="tag">Inbox</span>
+                    </li>
+                    <li>
+                      <button type="button" class="check" aria-pressed="false" aria-label="Draft weekly notes"></button>
+                      <span class="task-title">Draft weekly notes</span>
+                      <span class="tag">Work</span>
+                    </li>
+                  </ul>
+                  <div class="track" aria-hidden="true"><i data-progress-bar style="width: 50%"></i></div>
+                </div>
+                <div class="card habits">
+                  <div class="card-head">
+                    <span>Today’s habits</span>
+                    <span class="card-meta">1 / 1</span>
+                  </div>
+                  <div class="habit-row">
+                    <button type="button" class="check is-done" aria-pressed="true" aria-label="Publish Medium post habit"></button>
+                    <span>Publish Medium post</span>
+                    <span class="days" aria-hidden="true">
+                      <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="part"></i><i></i><i></i><i></i><i></i>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="surfaces" aria-label="Surfaces">
-        <article>
-          <p class="kicker">01 · Today</p>
-          <h2>The morning surface</h2>
-          <p>Greeting, quick add, nudges, today’s habits, open work by project, inbox.</p>
-        </article>
-        <article>
-          <p class="kicker">02 · Projects</p>
-          <h2>What is still open</h2>
-          <p>Progress, due dates, milestones, and a stalled banner when something sits too long.</p>
-        </article>
-        <article>
-          <p class="kicker">03 · Habits</p>
-          <h2>The non-negotiables</h2>
-          <p>Weekday schedules, a 14-day consistency trail, and completion without ceremony.</p>
-        </article>
-        <article>
-          <p class="kicker">04 · Analytics</p>
-          <h2>What actually shipped</h2>
-          <p>Completions over time, project breakdown, habit rates, weekday patterns.</p>
-        </article>
+      <section id="surfaces" class="band">
+        <header class="section-head reveal">
+          <p class="eyebrow">Surfaces</p>
+          <h2>Four pages. The day still fits on one of them.</h2>
+          <p>
+            Desktop uses a left sidebar; smaller screens use a bottom tab bar.
+            Light and dark themes are built in. Check a box and it is done for
+            today — no ceremony.
+          </p>
+        </header>
+        <div class="surfaces">
+          <article class="reveal">
+            <p class="kicker">01 · Today</p>
+            <h3>The morning surface</h3>
+            <p>Greeting, quick add, nudges, snapshot stats, today’s habits, open work by project, inbox.</p>
+          </article>
+          <article class="reveal">
+            <p class="kicker">02 · Projects</p>
+            <h3>What is still open</h3>
+            <p>Progress, due dates, milestones, and a stalled banner when something sits too long.</p>
+          </article>
+          <article class="reveal">
+            <p class="kicker">03 · Habits</p>
+            <h3>The non-negotiables</h3>
+            <p>Weekday schedules, a 14-day consistency trail, and completion without ceremony.</p>
+          </article>
+          <article class="reveal">
+            <p class="kicker">04 · Analytics</p>
+            <h3>What actually shipped</h3>
+            <p>Completions over time, project breakdown, habit rates, weekday patterns.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="track" class="band split">
+        <header class="section-head reveal">
+          <p class="eyebrow">What you keep</p>
+          <h2>Projects, tasks, habits, and a log of what actually happened.</h2>
+          <p>
+            Create and edit from dialogs. Completions are written automatically
+            when you check something off, then charted on Analytics.
+          </p>
+        </header>
+        <ol class="ledger">
+          <li class="reveal">
+            <p class="kicker">Projects</p>
+            <h3>Where work belongs</h3>
+            <p>Name, icon, optional logo, status, due date, and milestones. Active, paused, or done — nothing more elaborate.</p>
+          </li>
+          <li class="reveal">
+            <p class="kicker">Tasks</p>
+            <h3>Attached, or inbox</h3>
+            <p>Title, notes, due date, estimate. Tie a task to a project, or leave it unfiled until it has a home.</p>
+          </li>
+          <li class="reveal">
+            <p class="kicker">Habits</p>
+            <h3>The weekday loop</h3>
+            <p>Recurring checklist items with icons and a weekday schedule. Toggle completes for today only.</p>
+          </li>
+          <li class="reveal">
+            <p class="kicker">Completion log</p>
+            <h3>What you already finished</h3>
+            <p>Every check writes a log. Analytics reads it — no extra step, no export ritual in v1.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="run" class="band">
+        <header class="section-head reveal">
+          <p class="eyebrow">Quick start</p>
+          <h2>One command. Your machine.</h2>
+          <p>
+            v1 has no authentication. Keep it on localhost, a private network,
+            or behind a VPN / reverse-proxy.
+          </p>
+        </header>
+        <div class="run-grid">
+          <article class="reveal">
+            <p class="kicker">A · npx</p>
+            <h3>SQLite, no Docker</h3>
+            <p>Requires Node 22+ and a free port (9999 by default). Data lives in <code>~/.daily-hub/</code>.</p>
+            <p class="cmd"><span class="prompt">$</span> npx @baselhusam/daily-hub</p>
+            <ul>
+              <li><code>data.db</code> — SQLite database</li>
+              <li><code>uploads/</code> — project and habit logos</li>
+              <li><code>--seed</code> — sample data on first run</li>
+            </ul>
+          </article>
+          <article class="reveal">
+            <p class="kicker">B · Docker</p>
+            <h3>Postgres, self-host</h3>
+            <p>App and database together. Persistent volumes for Postgres and uploads.</p>
+            <p class="cmd"><span class="prompt">$</span> docker compose up --build</p>
+            <ul>
+              <li>App on <code>:9999</code></li>
+              <li>Migrations on container start</li>
+              <li><code>npm run db:seed</code> inside the app container</li>
+            </ul>
+          </article>
+          <article class="reveal">
+            <p class="kicker">C · Notes</p>
+            <h3>Keep the files local</h3>
+            <p>SQLite and file sync do not mix. npx data and Docker data are separate workspaces.</p>
+            <ul>
+              <li>Do not put <code>~/.daily-hub/</code> in iCloud or Dropbox</li>
+              <li>Backup = copy the whole data folder</li>
+              <li>First npx download is large (~80 MB); later runs are instant</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="stack" class="band">
+        <header class="section-head reveal">
+          <p class="eyebrow">Stack</p>
+          <h2>A Next.js app you run yourself.</h2>
+        </header>
+        <dl class="stack-row reveal">
+          <div><dt>App</dt><dd>Next.js 15 · App Router · Server Actions</dd></div>
+          <div><dt>Language</dt><dd>TypeScript</dd></div>
+          <div><dt>Database</dt><dd>SQLite or PostgreSQL 16</dd></div>
+          <div><dt>ORM</dt><dd>Prisma</dd></div>
+          <div><dt>UI</dt><dd>Tailwind v4 · shadcn/ui</dd></div>
+          <div><dt>Runtime</dt><dd>Node 22+ · port 9999</dd></div>
+        </dl>
+      </section>
+
+      <section class="band">
+        <div class="close reveal">
+          <p class="eyebrow">Ready</p>
+          <h2>Check a box. It is done for today.</h2>
+          <p>Then see it on Analytics. That is the whole product.</p>
+          <div class="close-row">
+            <p class="cmd"><span class="prompt">$</span> npx @baselhusam/daily-hub</p>
+            <a class="btn btn-paper" href="https://github.com/baselhusam/daily-hub" rel="noopener noreferrer">View on GitHub</a>
+          </div>
+        </div>
       </section>
     </main>
 
     <footer class="foot">
-      <p>Single-user · self-hosted · Node 22+ · SQLite or Postgres · MIT</p>
+      <p>Single-user · self-hosted · SQLite or Postgres · MIT</p>
       <p>
         Built by
         <a href="https://baselhusam.com" rel="noopener noreferrer">Basel Husam</a>
+        ·
+        <a href="https://github.com/baselhusam/daily-hub/blob/main/docs/DESIGN.md" rel="noopener noreferrer">Design</a>
       </p>
     </footer>
 
