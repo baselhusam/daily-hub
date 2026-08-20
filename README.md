@@ -4,11 +4,15 @@
 
 <p align="center">
   <strong>A personal command center for projects, tasks, and daily habits.</strong><br>
-  <sub>Single-user · self-hosted · Next.js 15 · PostgreSQL 16 · Docker</sub>
+  <sub>Single-user · self-hosted · Next.js 15 · SQLite or PostgreSQL · Docker or npx</sub>
 </p>
 
 <p align="center">
+  <a href="https://baselhusam.github.io/daily-hub/">Site</a>
+  ·
   <a href="https://github.com/baselhusam/daily-hub">Repository</a>
+  ·
+  <a href="https://www.npmjs.com/package/@baselhusam/daily-hub">npm</a>
   ·
   <a href="docs/DEPLOYMENT.md">Deploy</a>
   ·
@@ -47,7 +51,41 @@ Create and edit from dialogs. Check a box and it is done for today — no ceremo
 
 ## Quick start
 
-**Docker (app + Postgres) — recommended**
+### Option A — npx (easiest, no Docker)
+
+Requires **Node 22+** and a free port (**9999** by default).
+
+```bash
+npx @baselhusam/daily-hub
+```
+
+Opens [http://127.0.0.1:9999](http://127.0.0.1:9999) and stores everything in `~/.daily-hub/`:
+
+| Path | Contents |
+|------|----------|
+| `~/.daily-hub/data.db` | SQLite database |
+| `~/.daily-hub/uploads/` | Project and habit logos |
+
+Useful flags:
+
+```bash
+npx @baselhusam/daily-hub --seed              # load sample data on first run
+npx @baselhusam/daily-hub --port 3000         # use a different port
+npx @baselhusam/daily-hub --no-open           # don't open the browser
+npx @baselhusam/daily-hub --data-dir ~/my-hub # custom data directory
+npx @baselhusam/daily-hub seed                # seed without starting the server
+```
+
+The first download is large (~80 MB) because the package ships the full Next.js app. Later runs are instant.
+
+**Notes**
+
+- Do not put `~/.daily-hub/` in iCloud, Dropbox, or other sync folders — SQLite and file sync can corrupt the database.
+- Backup = copy the entire `~/.daily-hub/` folder.
+- npx data and Docker/Postgres data are **separate workspaces** — there is no built-in migration between them.
+- If you see `database is locked`, stop any other DailyHub instance first (`lsof -i :9999`, then kill the process).
+
+### Option B — Docker (Postgres, self-hosting)
 
 ```bash
 docker compose up --build
@@ -59,7 +97,9 @@ Open [http://localhost:9999](http://localhost:9999). Optional sample data:
 docker compose exec app npm run db:seed
 ```
 
-**Local development** (Postgres in Docker, Next.js on the host)
+Persistent data lives in Docker volumes (`postgres_data`, `uploads_data`).
+
+### Option C — Local development (Postgres)
 
 ```bash
 docker compose up -d db
@@ -70,6 +110,21 @@ npm run db:seed
 npm run dev
 ```
 
+After pulling schema changes, apply pending migrations:
+
+```bash
+npm run db:migrate
+```
+
+### Option D — Local development (SQLite, no Docker)
+
+```bash
+npm install
+npm run dev:sqlite
+```
+
+Data is stored in `./.data/`.
+
 v1 has **no authentication**. Keep it on localhost, a private network, or behind a VPN / reverse-proxy. Details and self-hosting notes live in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Stack
@@ -78,11 +133,11 @@ v1 has **no authentication**. Keep it on localhost, a private network, or behind
 |-------|--------|
 | App | Next.js 15 (App Router, Server Actions) |
 | Language | TypeScript |
-| Database | PostgreSQL 16 |
+| Database | SQLite (`npx`) or PostgreSQL 16 (Docker) |
 | ORM | Prisma |
 | UI | Tailwind CSS v4, shadcn/ui, Motion |
 | Charts | Recharts |
-| Runtime | Node 22, port **9999** |
+| Runtime | Node 22+, port **9999** |
 
 There is no separate API server. Reads go through Server Components; writes go through Server Actions.
 
@@ -90,14 +145,40 @@ There is no separate API server. Reads go through Server Components; writes go t
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Dev server on port 9999 |
+| `npx @baselhusam/daily-hub` | Run the app locally with SQLite in `~/.daily-hub` |
+| `npm run dev` | Dev server on port 9999 (Postgres via `.env`) |
+| `npm run dev:sqlite` | Dev server with local SQLite in `.data/` |
 | `npm run build` | Production build |
 | `npm run start` | Production server on port 9999 |
 | `npm run lint` | ESLint |
-| `npm run db:migrate:dev` | Dev migrations |
-| `npm run db:migrate` | Production migrations |
+| `npm run db:migrate:dev` | Dev migrations (Postgres) |
+| `npm run db:migrate` | Production migrations (Postgres) |
+| `npm run db:migrate:sqlite` | Production migrations (SQLite) |
 | `npm run db:seed` | Seed sample data |
 | `npm run db:studio` | Prisma Studio |
+
+## Publishing (maintainers)
+
+Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/daily-hub)
+
+Build and publish:
+
+```bash
+npm publish
+```
+
+`prepack` runs automatically: generates Prisma clients, builds Next.js, copies static assets into the standalone bundle, and builds the CLI.
+
+The marketing site lives in [`site/`](site/) and deploys to [GitHub Pages](https://baselhusam.github.io/daily-hub/). Enable it once under **Settings → Pages → Source: GitHub Actions**, then push to `main`.
+
+**npm account requirements:** publishing requires **two-factor authentication** with **Authorization and publishing** enabled on [npmjs.com](https://www.npmjs.com/settings/baselhusam/tfa). Without 2FA, npm returns `403 Forbidden`.
+
+Test the tarball locally before publishing:
+
+```bash
+npm pack
+npx ./baselhusam-daily-hub-0.1.0.tgz
+```
 
 ## Documentation
 
@@ -118,11 +199,15 @@ src/
 │   ├── layout.tsx            # Fonts, theme
 │   ├── (app)/                # Today, Projects, Habits, Analytics
 │   └── actions/              # Server Actions
+├── cli/                      # npx entrypoint source
 ├── components/               # Shell, dashboard, projects, daily, analytics, ui
 └── lib/                      # Data loaders, Prisma, validation
 prisma/
-├── schema.prisma
+├── schema.prisma             # Postgres schema (Docker / dev)
+├── sqlite/schema.prisma      # SQLite schema (npx / CLI)
 └── seed.ts
+bin/
+└── daily-hub.js              # CLI entrypoint (built from src/cli)
 docker-compose.yml
 Dockerfile
 ```

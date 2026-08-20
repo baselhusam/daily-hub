@@ -1,10 +1,11 @@
 # Deployment
 
-How to run DailyHub locally, with Docker, and on a server.
+How to run DailyHub locally, with `npx`, Docker, and on a server.
 
 ## Requirements
 
-- **Docker** & Docker Compose (recommended), or Node 22+ and PostgreSQL 16
+- **Node 22+** for `npx daily-hub` or local development
+- **Docker** & Docker Compose for the Postgres self-host path
 - **Port 9999** exposed for the web app
 - **Port 5432** for PostgreSQL (local dev only if not using Docker networking)
 
@@ -12,7 +13,8 @@ How to run DailyHub locally, with Docker, and on a server.
 
 | Variable | Required | Example |
 |----------|----------|---------|
-| `DATABASE_URL` | Yes | `postgresql://dailyhub:dailyhub@localhost:5432/dailyhub` |
+| `DATABASE_URL` | Yes | `postgresql://dailyhub:dailyhub@localhost:5432/dailyhub` or `file:/path/to/data.db` |
+| `DAILYHUB_DATA_DIR` | No | `~/.daily-hub` for npx, `/app/data` in Docker |
 
 Copy from template:
 
@@ -27,7 +29,36 @@ cp .env.example .env
 | Local dev (`npm run dev`) | `localhost` |
 | App container (`docker compose`) | `db` |
 
-## Option A — Full stack with Docker (recommended)
+## Option A — npx (SQLite, zero Docker)
+
+Run DailyHub as a local desktop app:
+
+```bash
+npx @baselhusam/daily-hub
+```
+
+- App: http://localhost:9999
+- Data directory: `~/.daily-hub/`
+- Database file: `~/.daily-hub/data.db`
+- Uploads: `~/.daily-hub/uploads/`
+
+Useful flags:
+
+```bash
+npx daily-hub --port 3000
+npx daily-hub --data-dir ~/my-daily-hub
+npx daily-hub --no-open
+npx daily-hub --seed
+npx daily-hub seed
+```
+
+Notes:
+
+- Do not sync `~/.daily-hub/` through iCloud, Dropbox, or similar services. SQLite and file sync can corrupt the database.
+- Backup = copy the entire data directory.
+- Docker Postgres data and npx SQLite data are separate workspaces. There is no built-in migration between them.
+
+## Option B — Full stack with Docker (Postgres)
 
 Starts PostgreSQL + Next.js app:
 
@@ -62,10 +93,10 @@ docker compose exec app npm run db:seed
 
 | Volume | Contents |
 |--------|----------|
-| `postgres_data` | Database files |
-| `uploads_data` | Uploaded project and habit logos |
+| `postgres_data` | PostgreSQL database files |
+| `uploads_data` | Uploaded project and habit logos (`/app/data/uploads`) |
 
-## Option B — Local development
+## Option C — Local development (Postgres)
 
 Database in Docker, app on host:
 
@@ -80,7 +111,18 @@ npm run dev
 
 Open http://localhost:9999.
 
-## Option C — Production build (host)
+## Option D — Local development (SQLite)
+
+No Docker required:
+
+```bash
+npm install
+npm run dev:sqlite
+```
+
+This stores data in `./.data/`.
+
+## Option E — Production build (Postgres host)
 
 ```bash
 npm run build
@@ -94,13 +136,14 @@ Requires `DATABASE_URL` pointing to a running Postgres instance.
 
 Multi-stage build:
 
-1. `deps` — `npm ci` + Prisma generate
+1. `deps` — `npm ci` + Prisma generate (Postgres + SQLite clients)
 2. `builder` — `next build` (standalone output)
 3. `runner` — minimal Node image, runs `prisma migrate deploy && node server.js`
 
 - Exposes port **9999**
 - Runs as non-root user `nextjs`
 - `output: "standalone"` in `next.config.ts`
+- Uploads and runtime files use `DAILYHUB_DATA_DIR=/app/data`
 
 ## Self-hosting on a VPS
 
@@ -114,7 +157,7 @@ Typical steps:
 **Security notes for v1:**
 
 - No built-in auth — use network-level protection (VPN, firewall, basic auth at proxy) if exposed to the internet
-- Uploaded files in `public/uploads/` are served statically
+- Uploaded logos are served from `/uploads/*` via the app runtime
 
 ## Health checks
 
@@ -129,16 +172,17 @@ Typical steps:
 | Issue | Fix |
 |-------|-----|
 | `P1001` Can't reach database | Wait for Postgres healthcheck; verify `DATABASE_URL` host |
-| Port 9999 in use | Change port in `package.json` scripts and `docker-compose.yml` |
+| Port 9999 in use | Use `npx daily-hub --port 3000` or change port in `package.json` / `docker-compose.yml` |
 | Empty dashboard after deploy | Run `npm run db:seed` or create data via UI |
 | Logos missing after rebuild | Ensure `uploads_data` volume is attached |
-| Build fails on Prisma | Run `npx prisma generate` before `npm run build` |
+| Build fails on Prisma | Run `npm run db:generate` before `npm run build` |
+| `SQLITE_BUSY` on npx | Restart the app; ensure `~/.daily-hub` is on local disk, not a synced folder |
 
 ## CI suggestion
 
 ```bash
 npm ci
-npx prisma generate
+npm run db:generate
 npm run lint
 npm run build
 ```
