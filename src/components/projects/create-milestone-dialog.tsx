@@ -52,9 +52,10 @@ export function CreateMilestoneDialog({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     setPending(true);
     setError(null);
-    const result = await createMilestone(new FormData(event.currentTarget));
+    const result = await createMilestone(new FormData(form));
     setPending(false);
 
     if (!result.success) {
@@ -62,7 +63,7 @@ export function CreateMilestoneDialog({
       return;
     }
 
-    event.currentTarget.reset();
+    form.reset();
     onOpenChange(false);
   }
 

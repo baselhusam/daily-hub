@@ -78,12 +78,13 @@ export function CreateTaskDialog({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     setPending(true);
     setError(null);
 
     const result = isEdit
-      ? await updateTask(new FormData(event.currentTarget))
-      : await createTask(new FormData(event.currentTarget));
+      ? await updateTask(new FormData(form))
+      : await createTask(new FormData(form));
     setPending(false);
 
     if (!result.success) {
@@ -91,7 +92,7 @@ export function CreateTaskDialog({
       return;
     }
 
-    event.currentTarget.reset();
+    form.reset();
     setOpen(false);
   }
 
