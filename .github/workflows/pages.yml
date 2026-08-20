@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: GitHub Pages
 
 on:
   push:
@@ -6,6 +6,12 @@ on:
     paths:
       - "site/**"
       - ".github/workflows/pages.yml"
+      - ".github/scripts/validate-pages.py"
+  pull_request:
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+      - ".github/scripts/validate-pages.py"
   workflow_dispatch:
 
 permissions:
@@ -14,20 +20,37 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  build:
+    name: Validate and package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate static site
+        run: python3 .github/scripts/validate-pages.py
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
   deploy:
+    name: Deploy
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
