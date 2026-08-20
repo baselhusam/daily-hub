@@ -48,6 +48,7 @@
   --color-done-wash: var(--done-wash);
   --color-scrim: var(--scrim);
   --font-sans: var(--font-instrument-sans);
+  --font-display: var(--font-doto);
   --font-mono: var(--font-geist-mono);
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -268,17 +269,19 @@
 
 @layer utilities {
   .text-display {
+    font-family: var(--font-doto), ui-monospace, monospace;
     font-size: clamp(1.5rem, 3.2vw, 2rem);
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
   }
 
   .text-display-lg {
+    font-family: var(--font-doto), ui-monospace, monospace;
     font-size: clamp(1.875rem, 4.4vw, 2.625rem);
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.02;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.12;
   }
 
   .text-section {
