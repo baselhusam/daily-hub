@@ -12,6 +12,7 @@ export type TaskRowData = {
   dueColor?: string;
   dueBg?: string;
   estimateLabel?: string;
+  metaLabel?: string;
   done?: boolean;
 };
 
@@ -52,6 +53,9 @@ export function TaskRow({
           >
             {task.title}
           </div>
+          {task.metaLabel ? (
+            <div className="mt-0.5 text-[12px] text-faint">{task.metaLabel}</div>
+          ) : null}
           {task.done && (
             <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[min(100%,560px)] bg-hairline" />
           )}

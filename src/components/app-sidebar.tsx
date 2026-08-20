@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { ChainDots } from "@/components/ui/chain-dots";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
@@ -108,7 +108,7 @@ export function AppSidebar({
             })}
           </nav>
 
-          {!collapsed && stats.projects.length > 0 && (
+          {!collapsed && (stats.projects.length > 0 || stats.inboxCount > 0) && (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <div className="mb-1 flex items-center justify-between px-3">
                 <p className="text-[11.5px] font-semibold tracking-[0.02em] text-faint">
@@ -138,6 +138,21 @@ export function AppSidebar({
                     <span className="flex-1">Everything</span>
                     <span className="text-[11px] text-faint tabular-nums">
                       {stats.openTasks}
+                    </span>
+                  </Link>
+                  <Link
+                    href="/?project=inbox"
+                    className={cn(
+                      "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13.5px] font-medium",
+                      pathname === "/" && activeProjectId === "inbox"
+                        ? "bg-hover text-foreground"
+                        : "text-foreground hover:bg-hover"
+                    )}
+                  >
+                    <InboxAvatar size={18} />
+                    <span className="flex-1">Inbox</span>
+                    <span className="text-[11px] text-faint tabular-nums">
+                      {stats.inboxCount}
                     </span>
                   </Link>
                   {stats.projects.map((project) => (

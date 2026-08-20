@@ -2,7 +2,7 @@ import {
   formatDueDate,
   getTodayDate,
   isOverdue,
-  toDateOnlyString,
+  isSameCalendarDay,
   type CalendarMode,
 } from "@/lib/dates";
 import { daysUntil } from "@/lib/streak";
@@ -76,5 +76,5 @@ export function isCompletedToday(
   today = getTodayDate()
 ): boolean {
   if (!completedAt) return false;
-  return toDateOnlyString(completedAt) === toDateOnlyString(today);
+  return isSameCalendarDay(completedAt, today);
 }

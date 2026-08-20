@@ -3,19 +3,19 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Inbox, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { DashboardData } from "@/lib/dashboard";
 import { StatusChip } from "@/components/ui/option-mark";
 import { daysUntil, formatEstimate } from "@/lib/streak";
 import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
-import { formatTodayLabel, getGreeting } from "@/lib/dates";
+import { formatAddedAgo, formatTodayLabel, getGreeting, type CalendarMode } from "@/lib/dates";
 import { useDisplayDay } from "@/lib/hydration";
 import { PageHeader } from "@/components/ui/page-header";
 import { QuickAdd } from "@/components/ui/quick-add";
 import { NudgeChip } from "@/components/ui/nudge-chip";
 import { SnapshotCard } from "@/components/ui/snapshot-card";
 import { SurfaceCard, SurfaceCardHeader } from "@/components/ui/surface-card";
-import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { TaskRow } from "@/components/ui/task-row";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { toggleTask } from "@/app/actions/tasks";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
-import { cn, isTypingTarget } from "@/lib/utils";
+import { cn, isTypingTarget, sortCompletedLast } from "@/lib/utils";
 
 type EditableTask = {
   id: string;
@@ -103,12 +103,17 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const showInbox =
     !projectFilter || projectFilter === "all" || projectFilter === "inbox";
   const showHabits = !projectFilter || projectFilter === "all";
+  const inboxOnly = projectFilter === "inbox";
   const filterProject = data.projects.find((p) => p.id === projectFilter);
   const isFreshWorkspace =
     !filterProject &&
     data.projects.length === 0 &&
     data.inboxTasks.length === 0;
-  const showTodayRail = showHabits || (showInbox && !isFreshWorkspace);
+  const showTodayRail =
+    !inboxOnly && (showHabits || (showInbox && !isFreshWorkspace));
+  const openInboxCount = data.inboxTasks.filter(
+    (task) => !optimisticTasks.get(task.id, task.doneToday)
+  ).length;
 
   const optimisticOpenTasks =
     data.stats.openTasks +
@@ -164,7 +169,11 @@ export function DashboardShell({ data }: DashboardShellProps) {
           eyebrow={todayLabel}
           title={greeting}
           description={
-            data.stats.overdueTasks > 0
+            inboxOnly
+              ? openInboxCount === 0
+                ? "Inbox is clear."
+                : `${openInboxCount} in inbox.`
+              : data.stats.overdueTasks > 0
               ? `${data.stats.overdueTasks} overdue · ${optimisticOpenTasks} still open today.`
               : `${optimisticOpenTasks} open · ${data.stats.dailyCompleted}/${data.stats.dailyScheduled} habits done.`
           }
@@ -187,17 +196,21 @@ export function DashboardShell({ data }: DashboardShellProps) {
           </p>
         ) : null}
 
-        {filterProject && (
+        {(filterProject || inboxOnly) && (
           <div className="flex min-w-0 items-center gap-2 rounded-full border border-border bg-card py-1.5 pr-2 pl-2">
-            <EntityAvatar
-              name={filterProject.name}
-              color={filterProject.color}
-              logoUrl={filterProject.logoUrl}
-              iconKey={filterProject.iconKey}
-              size={22}
-            />
+            {filterProject ? (
+              <EntityAvatar
+                name={filterProject.name}
+                color={filterProject.color}
+                logoUrl={filterProject.logoUrl}
+                iconKey={filterProject.iconKey}
+                size={22}
+              />
+            ) : (
+              <InboxAvatar size={22} />
+            )}
             <span className="min-w-0 truncate text-[13px] font-semibold">
-              Filtered · {filterProject.name}
+              Filtered · {filterProject?.name ?? "Inbox"}
             </span>
             <Link
               href="/"
@@ -209,7 +222,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
           </div>
         )}
 
-        {showHabits && (
+        {(showHabits || inboxOnly) && (
           <QuickAdd
             projects={data.projects.map((p) => ({
               id: p.id,
@@ -218,7 +231,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
               logoUrl: p.logoUrl,
               color: p.color,
             }))}
-            defaultProjectId={filterProject?.id}
+            defaultProjectId={inboxOnly ? undefined : filterProject?.id}
           />
         )}
 
@@ -278,6 +291,17 @@ export function DashboardShell({ data }: DashboardShellProps) {
           </section>
         )}
 
+        {inboxOnly ? (
+          <InboxPanel
+            tasks={data.inboxTasks}
+            openCount={openInboxCount}
+            getDone={(id, fallback) => optimisticTasks.get(id, fallback)}
+            onToggle={handleToggle}
+            onEdit={setEditingTask}
+            today={today}
+            mode={mode}
+          />
+        ) : (
         <div
           className={cn(
             "grid gap-5",
@@ -306,7 +330,10 @@ export function DashboardShell({ data }: DashboardShellProps) {
             ) : (
               filteredProjects.map((project) => {
                 const dl = daysUntil(project.dueDate, today, mode);
-                const visibleTasks = project.tasks;
+                const visibleTasks = sortCompletedLast(
+                  project.tasks,
+                  (task) => optimisticTasks.get(task.id, task.doneToday)
+                );
 
                 return (
                   <SurfaceCard key={project.id}>
@@ -409,6 +436,11 @@ export function DashboardShell({ data }: DashboardShellProps) {
                               estimateLabel: formatEstimate(
                                 task.estimatedMinutes
                               ),
+                              metaLabel: formatAddedAgo(
+                                task.createdAt,
+                                today,
+                                mode
+                              ),
                             }}
                             onToggle={() =>
                               void handleToggle(task.id, done)
@@ -463,67 +495,23 @@ export function DashboardShell({ data }: DashboardShellProps) {
                 )}
 
                 {showInbox && !isFreshWorkspace && (
-                  <SurfaceCard variant="paper">
-                    <SurfaceCardHeader>
-                      <div className="flex w-full items-center gap-3">
-                        <span className="grid h-[30px] w-[30px] place-items-center rounded-md bg-border text-muted-foreground">
-                          <Inbox className="h-4 w-4" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[15px] font-semibold">Inbox</div>
-                          <div className="mt-0.5 text-[12px] text-faint">
-                            No project yet · file these or finish them
-                          </div>
-                        </div>
-                        <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
-                          {data.inboxTasks.filter(
-                            (t) =>
-                              !optimisticTasks.get(t.id, t.doneToday)
-                          ).length}
-                        </span>
-                      </div>
-                    </SurfaceCardHeader>
-                    {data.inboxTasks.length === 0 ? (
-                      <p className="px-[18px] py-5 text-[13.5px] text-faint">
-                        Inbox clear.
-                      </p>
-                    ) : (
-                      <div>
-                        {data.inboxTasks.map((task) => {
-                          const due = getDueMeta(task.dueDate, today, mode);
-                          const done = optimisticTasks.get(
-                            task.id,
-                            task.doneToday
-                          );
-                          return (
-                            <TaskRow
-                              key={task.id}
-                              task={{
-                                id: task.id,
-                                title: task.title,
-                                done,
-                                dueLabel: due?.label,
-                                dueColor: due?.color,
-                                dueBg: due?.bg,
-                                estimateLabel: formatEstimate(
-                                  task.estimatedMinutes
-                                ),
-                              }}
-                              onToggle={() =>
-                                void handleToggle(task.id, done)
-                              }
-                              onEdit={() => setEditingTask(task)}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                  </SurfaceCard>
+                  <InboxPanel
+                    tasks={data.inboxTasks}
+                    openCount={openInboxCount}
+                    getDone={(id, fallback) =>
+                      optimisticTasks.get(id, fallback)
+                    }
+                    onToggle={handleToggle}
+                    onEdit={setEditingTask}
+                    today={today}
+                    mode={mode}
+                  />
                 )}
               </div>
             </div>
           ) : null}
         </div>
+        )}
 
         {showHabits && (
           <section className="flex flex-wrap items-center gap-6 rounded-[12px] border border-foreground bg-foreground p-5 text-background shadow-float">
@@ -558,5 +546,71 @@ export function DashboardShell({ data }: DashboardShellProps) {
         )}
       </div>
     </div>
+  );
+}
+
+function InboxPanel({
+  tasks,
+  openCount,
+  getDone,
+  onToggle,
+  onEdit,
+  today,
+  mode,
+}: {
+  tasks: DashboardData["inboxTasks"];
+  openCount: number;
+  getDone: (id: string, fallback: boolean) => boolean;
+  onToggle: (id: string, done: boolean) => void;
+  onEdit: (task: EditableTask) => void;
+  today: Date;
+  mode: CalendarMode;
+}) {
+  return (
+    <SurfaceCard variant="paper">
+      <SurfaceCardHeader>
+        <div className="flex w-full items-center gap-3">
+          <InboxAvatar size={30} />
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-semibold">Inbox</div>
+            <div className="mt-0.5 text-[12px] text-faint">
+              No project yet · file these or finish them
+            </div>
+          </div>
+          <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
+            {openCount}
+          </span>
+        </div>
+      </SurfaceCardHeader>
+      {tasks.length === 0 ? (
+        <p className="px-[18px] py-5 text-[13.5px] text-faint">Inbox clear.</p>
+      ) : (
+        <div>
+          {sortCompletedLast(tasks, (task) =>
+            getDone(task.id, task.doneToday)
+          ).map((task) => {
+            const due = getDueMeta(task.dueDate, today, mode);
+            const done = getDone(task.id, task.doneToday);
+            return (
+              <TaskRow
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  done,
+                  dueLabel: due?.label,
+                  dueColor: due?.color,
+                  dueBg: due?.bg,
+                  estimateLabel: formatEstimate(task.estimatedMinutes),
+                  metaLabel: formatAddedAgo(task.createdAt, today, mode),
+                }}
+                onToggle={() => onToggle(task.id, done)}
+                onEdit={() => onEdit(task)}
+              />
+            );
+          })}
+        </div>
+      )}
+    </SurfaceCard>
   );
 }

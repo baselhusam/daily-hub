@@ -8,7 +8,7 @@ import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { EmptyState } from "@/components/brand-mark";
 import type { DashboardDailyTask } from "@/lib/dashboard";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
-import { cn } from "@/lib/utils";
+import { cn, sortCompletedLast } from "@/lib/utils";
 
 type DailyChecklistProps = {
   tasks: DashboardDailyTask[];
@@ -69,7 +69,9 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
           {error}
         </p>
       ) : null}
-      {tasks.map((task) => {
+      {sortCompletedLast(tasks, (task) =>
+        optimisticHabits.get(task.id, task.completedToday)
+      ).map((task) => {
         const done = optimisticHabits.get(task.id, task.completedToday);
         return (
           <div

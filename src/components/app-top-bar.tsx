@@ -92,7 +92,7 @@ export function AppTopBar({
           >
             <Search className="h-3.5 w-3.5 shrink-0 text-faint" />
             <span className="min-w-0 flex-1 truncate text-[13px] text-faint">
-              Search…
+              Find a task…
             </span>
             <span className="shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-[11.5px] font-semibold text-faint tabular-nums">
               ⌘K

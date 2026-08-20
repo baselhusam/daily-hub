@@ -50,6 +50,14 @@ export function calendarDaysBetween(
   );
 }
 
+export function isSameCalendarDay(
+  a: Date,
+  b: Date,
+  mode: CalendarMode = "local"
+): boolean {
+  return calendarDaysBetween(a, b, mode) === 0;
+}
+
 /** Prisma DateTime cannot serialize years outside 0001–9999. */
 export const MIN_CALENDAR_YEAR = 1900;
 export const MAX_CALENDAR_YEAR = 9999;
@@ -98,6 +106,23 @@ export function formatDueDate(
   if (days === -1) return "Yesterday";
   if (isThisYear(date)) return format(date, "EEE, MMM d");
   return format(date, "MMM d, yyyy");
+}
+
+export function formatAddedAgo(
+  createdAt: Date | null | undefined,
+  today = getTodayDate(),
+  mode: CalendarMode = "local"
+): string | undefined {
+  if (!createdAt) return undefined;
+  const age = Math.max(0, calendarDaysBetween(today, createdAt, mode));
+  if (age === 0) return "Added today";
+  if (age === 1) return "Added 1 day ago";
+  if (age < 14) return `Added ${age} days ago`;
+  const weeks = Math.round(age / 7);
+  if (age < 60) {
+    return weeks === 1 ? "Added 1 week ago" : `Added ${weeks} weeks ago`;
+  }
+  return `Added ${format(createdAt, isThisYear(createdAt) ? "MMM d" : "MMM d, yyyy")}`;
 }
 
 export function isOverdue(

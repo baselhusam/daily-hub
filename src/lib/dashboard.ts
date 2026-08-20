@@ -18,6 +18,7 @@ import {
 } from "@/lib/dates";
 import { getDueMeta, isCompletedToday } from "@/lib/due-meta";
 import { getSettings } from "@/lib/settings";
+import { sortCompletedLast } from "@/lib/utils";
 import {
   buildNotifications,
   getProjectLastTouchMap,
@@ -48,6 +49,7 @@ export type DashboardTaskItem = {
   priority: number;
   dueDate: Date | null;
   completedAt: Date | null;
+  createdAt: Date;
   estimatedMinutes: number | null;
   projectId: string | null;
   doneToday: boolean;
@@ -89,6 +91,7 @@ export type DashboardTask = {
   priority: number;
   dueDate: Date | null;
   completedAt: Date | null;
+  createdAt: Date;
   estimatedMinutes: number | null;
   projectId: string | null;
   project: { id: string; name: string } | null;
@@ -160,15 +163,19 @@ function mapTaskItem(
     priority: number;
     dueDate: Date | null;
     completedAt: Date | null;
+    createdAt: Date;
     estimatedMinutes: number | null;
     projectId: string | null;
   },
-  today: Date
+  today: Date,
+  completedTaskIdsToday: Set<string>
 ): DashboardTaskItem {
   return {
     ...task,
     doneToday:
-      task.status === "DONE" && isCompletedToday(task.completedAt, today),
+      task.status === "DONE" &&
+      (isCompletedToday(task.completedAt, today) ||
+        completedTaskIdsToday.has(task.id)),
   };
 }
 
@@ -278,6 +285,15 @@ export async function getDashboardData(): Promise<DashboardData> {
       .filter((c) => toDateOnlyString(c.completedOn) === todayKey)
       .map((c) => c.entityId)
   );
+  const completedTaskIdsToday = new Set(
+    last14Completions
+      .filter(
+        (log) =>
+          log.entityType === "TASK" &&
+          toDateOnlyString(log.completedOn) === todayKey
+      )
+      .map((log) => log.entityId)
+  );
   const completionKeysByHabit = groupCompletionDateKeys(todayCompletions);
   const dueToday = dailyTasks.filter((task) =>
     isHabitDueOn(task.weekdays, today, {
@@ -300,17 +316,25 @@ export async function getDashboardData(): Promise<DashboardData> {
       status: project.status,
       sortOrder: project.sortOrder,
       milestones: project.milestones,
-      tasks: project.tasks.map((t) => mapTaskItem(t, today)),
+      tasks: sortCompletedLast(
+        project.tasks.map((t) => mapTaskItem(t, today, completedTaskIdsToday)),
+        (task) => task.doneToday
+      ),
       openCount: openTasks.length,
       doneCount,
     };
   });
 
-  const inboxTasks: DashboardTask[] = inboxTasksRaw.map((task) => ({
-    ...task,
-    doneToday:
-      task.status === "DONE" && isCompletedToday(task.completedAt, today),
-  }));
+  const inboxTasks: DashboardTask[] = sortCompletedLast(
+    inboxTasksRaw.map((task) => ({
+      ...task,
+      doneToday:
+        task.status === "DONE" &&
+        (isCompletedToday(task.completedAt, today) ||
+          completedTaskIdsToday.has(task.id)),
+    })),
+    (task) => task.doneToday
+  );
 
   const overdueTasks = allOpenTasks.filter((t) => isOverdue(t.dueDate, today));
   const dueTodayTasks = allOpenTasks.filter(
@@ -494,17 +518,20 @@ export async function getDashboardData(): Promise<DashboardData> {
     todayLabel: formatTodayLabel(today),
     greeting: getGreeting(settings.displayName),
     projects: mappedProjects,
-    dailyTasks: dueToday.map((task) => ({
-      id: task.id,
-      title: task.title,
-      iconKey: task.iconKey,
-      logoUrl: task.logoUrl,
-      weekdays: task.weekdays,
-      sortOrder: task.sortOrder,
-      completedToday: completedDailyIds.has(task.id),
-      carriedOver: !isScheduledOn(task.weekdays, today),
-      scheduleLabel: formatWeekdays(task.weekdays),
-    })),
+    dailyTasks: sortCompletedLast(
+      dueToday.map((task) => ({
+        id: task.id,
+        title: task.title,
+        iconKey: task.iconKey,
+        logoUrl: task.logoUrl,
+        weekdays: task.weekdays,
+        sortOrder: task.sortOrder,
+        completedToday: completedDailyIds.has(task.id),
+        carriedOver: !isScheduledOn(task.weekdays, today),
+        scheduleLabel: formatWeekdays(task.weekdays),
+      })),
+      (task) => task.completedToday
+    ),
     inboxTasks,
     snapshots,
     nudges,

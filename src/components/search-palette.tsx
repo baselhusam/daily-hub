@@ -117,6 +117,14 @@ const TYPE_META: Record<
 const TYPE_ORDER: ResultType[] = ["project", "task", "milestone", "habit"];
 const EMPTY_LIMIT = 4;
 
+function queryTokens(query: string) {
+  return query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+function isInboxQuery(query: string): boolean {
+  return query.trim().toLowerCase() === "inbox";
+}
+
 function isTypeQuery(query: string, type: ResultType): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return false;
@@ -129,9 +137,25 @@ function matchesQuery(
   query: string,
   ...fields: Array<string | null | undefined>
 ) {
+  const tokens = queryTokens(query);
+  if (tokens.length === 0) return true;
+  const haystack = fields.filter(Boolean).join(" ").toLowerCase();
+  return tokens.every((token) => haystack.includes(token));
+}
+
+function matchScore(
+  query: string,
+  title: string | null | undefined
+): number {
   const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return fields.some((field) => field?.toLowerCase().includes(q));
+  if (!q) return 0;
+  const t = (title ?? "").toLowerCase();
+  if (t === q) return 0;
+  if (t.startsWith(q)) return 1;
+  const first = queryTokens(query)[0];
+  if (first && t.startsWith(first)) return 2;
+  if (t.includes(q)) return 3;
+  return 4;
 }
 
 function takeMatching<T>(
@@ -141,13 +165,50 @@ function takeMatching<T>(
   map: (item: T) => PaletteItem,
   limit: number
 ): PaletteItem[] {
-  const out: PaletteItem[] = [];
-  for (const item of list) {
-    if (!matchesQuery(query, ...fields(item))) continue;
-    out.push(map(item));
-    if (out.length >= limit) break;
+  const ranked: Array<{ item: T; score: number; index: number }> = [];
+  for (let index = 0; index < list.length; index++) {
+    const item = list[index];
+    const values = fields(item);
+    if (!matchesQuery(query, ...values)) continue;
+    ranked.push({ item, score: matchScore(query, values[0]), index });
   }
-  return out;
+  ranked.sort((a, b) => a.score - b.score || a.index - b.index);
+  return ranked
+    .slice(0, Number.isFinite(limit) ? limit : ranked.length)
+    .map((row) => map(row.item));
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function Highlight({ text, query }: { text: string; query: string }) {
+  const tokens = [
+    ...new Set(queryTokens(query).filter((token) => token.length >= 2)),
+  ].sort((a, b) => b.length - a.length);
+  const skip =
+    tokens.length === 1 &&
+    (isInboxQuery(query) || TYPE_ORDER.some((type) => isTypeQuery(query, type)));
+  if (tokens.length === 0 || skip) return text;
+
+  const pattern = new RegExp(`(${tokens.map(escapeRegExp).join("|")})`, "ig");
+  const parts = text.split(pattern);
+  return (
+    <>
+      {parts.map((part, index) => {
+        const isMatch = tokens.some(
+          (token) => token === part.toLowerCase()
+        );
+        return isMatch ? (
+          <span key={index} className="text-signal">
+            {part}
+          </span>
+        ) : (
+          <React.Fragment key={index}>{part}</React.Fragment>
+        );
+      })}
+    </>
+  );
 }
 
 function joinMeta(parts: Array<string | null | undefined>) {
@@ -193,6 +254,7 @@ function typeActions(type: ResultType): PaletteItem[] {
 function buildItems(index: SearchIndex, query: string): PaletteItem[] {
   const limit = query.trim() ? Number.POSITIVE_INFINITY : EMPTY_LIMIT;
   const items: PaletteItem[] = [];
+  const inboxHit = isInboxQuery(query);
 
   for (const type of TYPE_ORDER) {
     const typeHit = isTypeQuery(query, type);
@@ -231,27 +293,69 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
     }
 
     if (type === "task") {
+      if (inboxHit) {
+        items.push({
+          key: "see-inbox",
+          type: "task",
+          title: "See inbox",
+          subtitle: "Unfiled tasks, no project yet",
+          href: "/?project=inbox",
+          action: "see",
+          badge: "Inbox",
+          name: "Inbox",
+          logoUrl: null,
+          iconKey: null,
+          color: null,
+          inbox: true,
+        });
+        items.push({
+          key: "create-inbox",
+          type: "task",
+          title: "Add to inbox",
+          subtitle: "Capture a task without a project",
+          action: "create",
+          badge: "Create",
+          name: "Inbox",
+          logoUrl: null,
+          iconKey: null,
+          color: null,
+          inbox: true,
+        });
+      }
+
+      const taskList = inboxHit
+        ? index.tasks.filter((task) => !task.project)
+        : index.tasks;
+      const taskQuery = inboxHit ? "" : entityQuery;
+
       items.push(
         ...takeMatching(
-          index.tasks,
-          entityQuery,
-          (task) => [task.title, task.notes, task.project?.name],
+          taskList,
+          taskQuery,
+          (task) => [
+            task.title,
+            task.notes,
+            task.project?.name,
+            task.project ? null : "Inbox",
+            task.addedLabel,
+          ],
           (task) => ({
             key: `task-${task.id}`,
             type: "task",
             title: task.title,
             subtitle: joinMeta([
               task.project?.name ?? "Inbox",
+              task.addedLabel,
               task.dueLabel,
             ]),
             href: task.visibleOnToday
               ? task.projectId
                 ? `/?project=${task.projectId}#task-${task.id}`
-                : `/#task-${task.id}`
+                : `/?project=inbox#task-${task.id}`
               : task.projectId
                 ? `/projects#project-${task.projectId}`
-                : "/",
-            badge: TYPE_META.task.label,
+                : "/?project=inbox",
+            badge: task.project ? TYPE_META.task.label : "Inbox",
             name: task.project?.name ?? task.title,
             logoUrl: task.project?.logoUrl ?? null,
             iconKey: task.project?.iconKey ?? null,
@@ -442,7 +546,7 @@ export function SearchPalette({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Search everything…"
+              placeholder="Find a task or inbox…"
               className="min-w-0 flex-1 border-0 bg-transparent text-base outline-none placeholder:text-faint dh:text-[14.5px]"
               role="combobox"
               aria-expanded
@@ -463,7 +567,7 @@ export function SearchPalette({
             {items.length === 0 ? (
               <p className="px-3.5 py-8 text-center text-[13px] text-muted-foreground">
                 {query.trim()
-                  ? `No matches for “${query.trim()}”.`
+                  ? `No matches for “${query.trim()}”. Try a task title or inbox.`
                   : "Nothing to search yet."}
               </p>
             ) : (
@@ -495,7 +599,9 @@ export function SearchPalette({
                           : "hover:bg-canvas-sunk"
                       )}
                     >
-                      {item.action === "see" ? (
+                      {item.action === "see" && item.inbox ? (
+                        <InboxAvatar size={28} />
+                      ) : item.action === "see" ? (
                         <span className="inline-grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border bg-paper text-muted-foreground">
                           <ArrowUpRight className="h-3.5 w-3.5" />
                         </span>
@@ -516,7 +622,7 @@ export function SearchPalette({
                       )}
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13.5px] font-semibold">
-                          {item.title}
+                          <Highlight text={item.title} query={query} />
                         </span>
                         <span className="mt-0.5 block truncate text-[12px] text-faint">
                           {item.subtitle}
@@ -553,7 +659,7 @@ export function SearchPalette({
           </div>
           <div className="flex items-center justify-between border-t border-border px-3.5 py-2">
             <p className="text-[11.5px] text-faint">
-              Projects, tasks, milestones, habits
+              Projects, tasks, inbox, habits
             </p>
             <p className="hidden text-[11.5px] text-faint sm:block">
               ↑↓ move · ↵ open
