@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import type { DashboardData } from "@/lib/dashboard";
 import { StatusChip } from "@/components/ui/option-mark";
-import { daysUntil, formatEstimate } from "@/lib/streak";
+import { daysUntil, formatEstimate } from "@/lib/streak-utils";
 import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
 import { formatAddedAgo, formatTodayLabel, getGreeting, type CalendarMode } from "@/lib/dates";
 import { useDisplayDay } from "@/lib/hydration";

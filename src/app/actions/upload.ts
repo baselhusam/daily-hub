@@ -1,8 +1,9 @@
 "use server";
 
-import { writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { getUploadsDir } from "@/lib/data-dir";
 
 export async function uploadLogo(formData: FormData): Promise<string | null> {
   const file = formData.get("logo") as File | null;
@@ -23,9 +24,10 @@ export async function uploadLogo(formData: FormData): Promise<string | null> {
   const buffer = Buffer.from(bytes);
   const extension = file.type.split("/")[1].replace("svg+xml", "svg");
   const filename = `${randomUUID()}.${extension}`;
-  const uploadDir = join(process.cwd(), "public", "uploads");
+  const uploadDir = getUploadsDir();
   const filepath = join(uploadDir, filename);
 
+  await mkdir(uploadDir, { recursive: true });
   await writeFile(filepath, buffer);
   return `/uploads/${filename}`;
 }

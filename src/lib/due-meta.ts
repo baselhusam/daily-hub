@@ -5,7 +5,7 @@ import {
   isSameCalendarDay,
   type CalendarMode,
 } from "@/lib/dates";
-import { daysUntil } from "@/lib/streak";
+import { daysUntil } from "@/lib/streak-utils";
 
 export type DueMeta = {
   label: string;

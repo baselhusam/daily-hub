@@ -1,8 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../src/lib/prisma";
 import { addDays } from "date-fns";
 import { getTodayDate } from "../src/lib/dates";
-
-const prisma = new PrismaClient();
+import { toWeekdaysJson } from "../src/lib/weekdays-db";
 
 async function main() {
   await prisma.completionLog.deleteMany();
@@ -93,31 +92,31 @@ async function main() {
       {
         title: "Publish Medium post",
         iconKey: "newspaper",
-        weekdays: [1, 3, 5],
+        weekdays: toWeekdaysJson([1, 3, 5]),
         sortOrder: 0,
       },
       {
         title: "Check inbox",
         iconKey: "mail",
-        weekdays: [1, 2, 3, 4, 5],
+        weekdays: toWeekdaysJson([1, 2, 3, 4, 5]),
         sortOrder: 1,
       },
       {
         title: "Plan tomorrow",
         iconKey: "calendar",
-        weekdays: [0, 1, 2, 3, 4, 5, 6],
+        weekdays: toWeekdaysJson([0, 1, 2, 3, 4, 5, 6]),
         sortOrder: 2,
       },
       {
         title: "Deep work block",
         iconKey: "target",
-        weekdays: [1, 2, 3, 4, 5],
+        weekdays: toWeekdaysJson([1, 2, 3, 4, 5]),
         sortOrder: 3,
       },
       {
         title: "Weekend review",
         iconKey: "sun",
-        weekdays: [0, 6],
+        weekdays: toWeekdaysJson([0, 6]),
         sortOrder: 4,
       },
     ],

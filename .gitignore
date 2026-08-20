@@ -39,6 +39,16 @@ next-env.d.ts
 # rivet local tooling
 .rivet/
 .rivet-preview-*/
+.cursor/
+
+# npm pack artifacts
+*.tgz
+
+# generated prisma clients
+/src/generated/
+
+# local sqlite dev data
+/.data/
 
 # uploads
 /public/uploads/*

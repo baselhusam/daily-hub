@@ -12,6 +12,7 @@ import {
   getStalledProjects,
   type AppNotification,
 } from "@/lib/notifications";
+import { withParsedWeekdays } from "@/lib/weekdays-db";
 import { getStreakInfo } from "@/lib/streak";
 import { getSettings } from "@/lib/settings";
 
@@ -73,7 +74,7 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     prisma.dailyTask.findMany({
       where: { isActive: true },
       select: { id: true, weekdays: true, createdAt: true },
-    }),
+    }).then((rows) => rows.map(withParsedWeekdays)),
     prisma.completionLog.findMany({
       where: {
         entityType: "DAILY_TASK",

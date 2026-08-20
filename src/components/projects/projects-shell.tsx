@@ -21,7 +21,7 @@ import {
   type DeleteProjectTarget,
 } from "./delete-project-dialog";
 import { formatDueDate } from "@/lib/dates";
-import { daysUntil } from "@/lib/streak";
+import { daysUntil } from "@/lib/streak-utils";
 import { getDeadlineColor } from "@/lib/due-meta";
 import { useDisplayDay } from "@/lib/hydration";
 import type { ProjectStatus } from "@/lib/status";

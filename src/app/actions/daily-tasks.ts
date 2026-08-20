@@ -9,6 +9,7 @@ import {
   updateDailyTaskSchema,
 } from "@/lib/validations";
 import type { ActionResult } from "@/app/actions/types";
+import { toWeekdaysJson } from "@/lib/weekdays-db";
 
 function revalidateAll() {
   revalidateApp();
@@ -39,7 +40,7 @@ export async function createDailyTask(
       title,
       iconKey,
       logoUrl: logoUrl || null,
-      weekdays: parsed.data.weekdays,
+      weekdays: toWeekdaysJson(parsed.data.weekdays),
       isActive,
       sortOrder: count,
     },
@@ -75,7 +76,7 @@ export async function updateDailyTask(
       title,
       iconKey,
       logoUrl: logoUrl || null,
-      weekdays: parsed.data.weekdays,
+      weekdays: toWeekdaysJson(parsed.data.weekdays),
       isActive,
     },
   });

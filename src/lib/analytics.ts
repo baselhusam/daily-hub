@@ -7,6 +7,7 @@ import {
   isScheduledOn,
   toDateOnlyString,
 } from "@/lib/dates";
+import { withParsedWeekdays } from "@/lib/weekdays-db";
 
 export type AnalyticsOverview = {
   totalCompletions: number;
@@ -186,10 +187,12 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       },
       orderBy: { sortOrder: "asc" },
     }),
-    prisma.dailyTask.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-    }),
+    prisma.dailyTask
+      .findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+      })
+      .then((rows) => rows.map(withParsedWeekdays)),
     prisma.task.findMany({
       select: {
         id: true,

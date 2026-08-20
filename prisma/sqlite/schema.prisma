@@ -1,10 +1,10 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/postgres"
+  output   = "../../src/generated/sqlite"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -32,7 +32,7 @@ model Project {
   iconKey     String        @default("folder")
   logoUrl     String?
   color       String?
-  dueDate     DateTime?     @db.Date
+  dueDate     DateTime?
   status      ProjectStatus @default(ACTIVE)
   sortOrder   Int           @default(0)
   tasks       Task[]
@@ -46,7 +46,7 @@ model Milestone {
   projectId String
   project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
-  dueDate   DateTime? @db.Date
+  dueDate   DateTime?
   done      Boolean   @default(false)
   sortOrder Int       @default(0)
   createdAt DateTime  @default(now())
@@ -78,22 +78,22 @@ model Task {
 }
 
 model DailyTask {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   title     String
-  iconKey   String    @default("check")
+  iconKey   String   @default("check")
   logoUrl   String?
-  weekdays  Json      @default("[0,1,2,3,4,5,6]")
-  sortOrder Int       @default(0)
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  weekdays  Json     @default("[0,1,2,3,4,5,6]")
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CompletionLog {
   id          String     @id @default(cuid())
   entityType  EntityType
   entityId    String
-  completedOn DateTime   @db.Date
+  completedOn DateTime
   completedAt DateTime   @default(now())
   minutes     Int?
   note        String?

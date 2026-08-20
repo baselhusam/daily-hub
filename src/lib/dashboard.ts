@@ -32,7 +32,8 @@ import {
   getStreakInfo,
   mkSparkBars,
 } from "@/lib/streak";
-import type { ProjectStatus, TaskStatus } from "@prisma/client";
+import type { ProjectStatus, TaskStatus } from "@/lib/status";
+import { withParsedWeekdays } from "@/lib/weekdays-db";
 
 export type DashboardMilestone = {
   id: string;
@@ -235,7 +236,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     prisma.dailyTask.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
-    }),
+    }).then((rows) => rows.map(withParsedWeekdays)),
     prisma.task.findMany({
       where: {
         projectId: null,
@@ -608,9 +609,11 @@ export async function getDailyPageData() {
   const windowStart = subDays(today, 13);
 
   const [dailyTasks, completions] = await Promise.all([
-    prisma.dailyTask.findMany({
-      orderBy: { sortOrder: "asc" },
-    }),
+    prisma.dailyTask
+      .findMany({
+        orderBy: { sortOrder: "asc" },
+      })
+      .then((rows) => rows.map(withParsedWeekdays)),
     prisma.completionLog.findMany({
       where: {
         entityType: "DAILY_TASK",

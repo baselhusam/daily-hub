@@ -1,0 +1,8 @@
+public/uploads/*
+!public/uploads/.gitkeep
+.env
+.env.*
+.next/standalone/.env
+src/generated/
+.data/
+*.tgz

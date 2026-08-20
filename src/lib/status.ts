@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 export type ProjectStatus = "ACTIVE" | "PAUSED" | "DONE";
+export type TaskStatus = "TODO" | "DOING" | "DONE";
 export type OptionTone = "signal" | "warn" | "done" | "muted";
 
 export type StatusOption<T extends string = string> = {

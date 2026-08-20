@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatAddedAgo, formatDueDate, formatWeekdays, getTodayDate } from "@/lib/dates";
 import { isCompletedToday } from "@/lib/due-meta";
+import { parseWeekdays } from "@/lib/weekdays-db";
 
 export type SearchProject = {
   id: string;
@@ -190,7 +191,7 @@ export async function getSearchIndex(): Promise<SearchIndex> {
       title: habit.title,
       logoUrl: habit.logoUrl,
       iconKey: habit.iconKey,
-      scheduleLabel: formatWeekdays(habit.weekdays),
+      scheduleLabel: formatWeekdays(parseWeekdays(habit.weekdays)),
       isActive: habit.isActive,
     })),
   };

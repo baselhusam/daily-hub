@@ -28,11 +28,12 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://dailyhub:dailyhub@db:5432/dailyhub
+      DAILYHUB_DATA_DIR: /app/data
       NODE_ENV: production
     ports:
       - "9999:9999"
     volumes:
-      - uploads_data:/app/public/uploads
+      - uploads_data:/app/data
 
 volumes:
   postgres_data:
