@@ -1,5 +1,6 @@
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { cn } from "@/lib/utils";
+import type { SparkBar } from "@/lib/streak-utils";
 
 type SnapshotCardProps = {
   label: string;
@@ -10,7 +11,7 @@ type SnapshotCardProps = {
   hint: string;
   hintColor?: string;
   foot?: string;
-  bars?: Array<{ height: number; opacity?: number }>;
+  bars?: SparkBar[];
   logoUrl?: string | null;
   iconKey?: string | null;
   entityName?: string;
@@ -36,47 +37,32 @@ export function SnapshotCard({
 }: SnapshotCardProps) {
   const metricColor = valueColor ?? color ?? "var(--foreground)";
   const showMark = Boolean(entityName && (logoUrl || iconKey));
+  const sparkTotal = bars?.reduce((sum, bar) => sum + bar.value, 0) ?? 0;
 
   return (
     <div
       className={cn(
-        "group flex min-h-[124px] flex-col rounded-[12px] border border-border bg-card shadow-raised transition-[border-color,background-color] duration-[120ms] hover:border-border-strong hover:bg-canvas-sunk",
+        "group flex min-h-[124px] flex-col rounded-[12px] border border-border bg-card px-3.5 py-3 transition-[border-color] duration-[120ms] hover:border-border-strong",
         className
       )}
     >
-      <div className="flex flex-1 flex-col gap-3 p-[14px_15px_12px]">
+      <div className="flex items-baseline justify-between gap-2">
         <div className="text-[11px] font-semibold tracking-[0.02em] text-faint">
           {label}
         </div>
-        <div className="mt-auto flex items-end justify-between gap-2.5">
-          <div className="flex min-w-0 items-baseline gap-1.5">
-            <span
-              className="text-metric"
-              style={{ color: metricColor }}
-            >
-              {value}
-            </span>
-            {unit && (
-              <span className="text-[11.5px] text-faint">{unit}</span>
-            )}
-          </div>
-          {bars && bars.length > 0 && (
-            <div className="flex h-7 items-end gap-[3px]">
-              {bars.map((bar, i) => (
-                <span
-                  key={i}
-                  className="w-1 rounded-[1px] bg-foreground transition-colors duration-[120ms] group-hover:bg-signal"
-                  style={{
-                    height: `${bar.height}px`,
-                    opacity: bar.opacity ?? 1,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {unit ? (
+          <span className="text-[11px] text-faint">{unit}</span>
+        ) : null}
       </div>
-      <div className="flex items-center gap-1.5 border-t border-rule-soft px-[15px] py-2">
+      <div className="mt-1.5 text-metric" style={{ color: metricColor }}>
+        {value}
+      </div>
+      {bars && bars.length > 0 ? (
+        <SparkBars bars={bars} label={label} total={sparkTotal} />
+      ) : (
+        <div className="mt-3 h-9" />
+      )}
+      <div className="mt-auto flex items-center gap-1.5 pt-2.5">
         {showMark && entityName ? (
           <EntityAvatar
             name={entityName}
@@ -85,21 +71,54 @@ export function SnapshotCard({
             iconKey={iconKey}
             size={16}
           />
-        ) : (
-          <span
-            className="h-[5px] w-[5px] shrink-0 rounded-full"
-            style={{ backgroundColor: hintColor }}
-          />
-        )}
-        <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">
+        ) : null}
+        <span
+          className="min-w-0 flex-1 truncate text-[12px]"
+          style={{ color: hintColor }}
+        >
           {hint}
         </span>
-        {foot && (
-          <span className="shrink-0 text-[11px] tracking-[0.02em] text-faint tabular-nums">
+        {foot ? (
+          <span className="shrink-0 text-[11.5px] text-faint tabular-nums">
             {foot}
           </span>
-        )}
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function SparkBars({
+  bars,
+  label,
+  total,
+}: {
+  bars: SparkBar[];
+  label: string;
+  total: number;
+}) {
+  return (
+    <div
+      className="mt-3 flex h-9 items-end gap-[3px]"
+      role="img"
+      aria-label={`${total} across ${bars.length} days for ${label}`}
+    >
+      {bars.map((bar, index) => (
+        <span
+          key={index}
+          title={String(bar.value)}
+          className="min-h-[3px] flex-1 rounded-[2px]"
+          style={{
+            height: `${bar.height}%`,
+            backgroundColor: bar.empty
+              ? "var(--hairline)"
+              : bar.today
+                ? "var(--signal)"
+                : "var(--foreground)",
+            opacity: bar.empty ? 0.55 : bar.today ? 1 : 0.82,
+          }}
+        />
+      ))}
     </div>
   );
 }

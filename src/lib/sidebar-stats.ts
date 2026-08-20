@@ -28,6 +28,7 @@ export type SidebarProject = {
 export type SidebarStats = {
   openTasks: number;
   inboxCount: number;
+  inboxTotalCount: number;
   projectCount: number;
   habitCount: number;
   completionsThisWeek: number;
@@ -54,6 +55,7 @@ export async function getSidebarStats(): Promise<SidebarStats> {
   const [
     openTasks,
     inboxCount,
+    inboxTotalCount,
     completionsThisWeek,
     dailyTasks,
     todayDailyCompletions,
@@ -67,6 +69,9 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     prisma.task.count({ where: { status: { not: "DONE" } } }),
     prisma.task.count({
       where: { status: { not: "DONE" }, projectId: null },
+    }),
+    prisma.task.count({
+      where: { projectId: null },
     }),
     prisma.completionLog.count({
       where: { completedOn: { gte: thisWeekStart } },
@@ -165,6 +170,7 @@ export async function getSidebarStats(): Promise<SidebarStats> {
   return {
     openTasks,
     inboxCount,
+    inboxTotalCount,
     projectCount: projects.length,
     habitCount,
     completionsThisWeek,

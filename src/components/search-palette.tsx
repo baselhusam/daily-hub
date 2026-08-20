@@ -298,7 +298,7 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
           key: "see-inbox",
           type: "task",
           title: "See inbox",
-          subtitle: "Unfiled tasks, no project yet",
+          subtitle: "Open and logged unfiled tasks",
           href: "/?project=inbox",
           action: "see",
           badge: "Inbox",
@@ -346,15 +346,14 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
             subtitle: joinMeta([
               task.project?.name ?? "Inbox",
               task.addedLabel,
-              task.dueLabel,
+              task.completedLabel,
+              task.status === "DONE" ? null : task.dueLabel,
             ]),
-            href: task.visibleOnToday
-              ? task.projectId
+            href: !task.projectId
+              ? `/?project=inbox#task-${task.id}`
+              : task.visibleOnToday
                 ? `/?project=${task.projectId}#task-${task.id}`
-                : `/?project=inbox#task-${task.id}`
-              : task.projectId
-                ? `/projects#project-${task.projectId}`
-                : "/?project=inbox",
+                : `/projects#project-${task.projectId}`,
             badge: task.project ? TYPE_META.task.label : "Inbox",
             name: task.project?.name ?? task.title,
             logoUrl: task.project?.logoUrl ?? null,

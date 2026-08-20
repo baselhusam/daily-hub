@@ -13,6 +13,7 @@ export type TaskRowData = {
   dueBg?: string;
   estimateLabel?: string;
   metaLabel?: string;
+  note?: string;
   done?: boolean;
 };
 
@@ -57,6 +58,11 @@ export function TaskRow({
           </div>
           {task.metaLabel ? (
             <div className="mt-0.5 text-[11.5px] text-faint">{task.metaLabel}</div>
+          ) : null}
+          {task.note ? (
+            <div className="mt-0.5 truncate text-[11.5px] text-muted-foreground/80">
+              {task.note}
+            </div>
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">

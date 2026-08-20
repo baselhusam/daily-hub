@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { formatAddedAgo, formatDueDate, formatWeekdays, getTodayDate } from "@/lib/dates";
+import {
+  formatAddedAgo,
+  formatCompletedAgo,
+  formatDueDate,
+  formatWeekdays,
+  getTodayDate,
+} from "@/lib/dates";
 import { isCompletedToday } from "@/lib/due-meta";
 import { parseWeekdays } from "@/lib/weekdays-db";
 
@@ -22,6 +28,7 @@ export type SearchTask = {
   status: "TODO" | "DOING" | "DONE";
   dueLabel: string | null;
   addedLabel: string | null;
+  completedLabel: string | null;
   visibleOnToday: boolean;
   projectId: string | null;
   project: {
@@ -174,8 +181,11 @@ export async function getSearchIndex(): Promise<SearchIndex> {
         status: task.status,
         dueLabel: task.dueDate ? formatDueDate(task.dueDate) : null,
         addedLabel: formatAddedAgo(task.createdAt, today) ?? null,
+        completedLabel: formatCompletedAgo(task.completedAt, today) ?? null,
         visibleOnToday:
-          task.status !== "DONE" || isCompletedToday(task.completedAt, today),
+          !task.projectId ||
+          task.status !== "DONE" ||
+          isCompletedToday(task.completedAt, today),
         projectId: task.projectId,
         project: task.project,
       })),

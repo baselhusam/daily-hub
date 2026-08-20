@@ -29,12 +29,22 @@ export function formatEstimate(
   return `${minutes}m`;
 }
 
+export type SparkBar = {
+  value: number;
+  height: number;
+  empty: boolean;
+  today: boolean;
+};
+
 export function mkSparkBars(
-  values: number[]
-): Array<{ height: number; opacity?: number }> {
+  values: number[],
+  todayIndex = values.length - 1
+): SparkBar[] {
   const max = Math.max(1, ...values);
-  return values.map((v) => ({
-    height: Math.max(3, Math.round((v / max) * 26)),
-    opacity: v ? 1 : 0.28,
+  return values.map((value, index) => ({
+    value,
+    height: value ? Math.max(36, Math.round((value / max) * 100)) : 18,
+    empty: value === 0,
+    today: index === todayIndex,
   }));
 }

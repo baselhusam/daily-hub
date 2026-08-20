@@ -11,7 +11,7 @@ import {
 import { parseWeekdays } from "@/lib/weekdays-db";
 import type { StreakInfo } from "@/lib/streak-utils";
 
-export type { StreakInfo } from "@/lib/streak-utils";
+export type { SparkBar, StreakInfo } from "@/lib/streak-utils";
 export { daysUntil, formatEstimate, mkSparkBars } from "@/lib/streak-utils";
 
 type DailyTaskLike = {

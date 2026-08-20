@@ -18,19 +18,17 @@ import {
 } from "@/lib/dates";
 import { getDueMeta, isCompletedToday } from "@/lib/due-meta";
 import { getSettings } from "@/lib/settings";
-import { sortCompletedLast } from "@/lib/utils";
+import { sortCompletedLast, sortInboxLog } from "@/lib/utils";
 import {
-  buildNotifications,
   getProjectLastTouchMap,
-  getStalledProjects,
   idleDaysSince,
-  type AppNotification,
 } from "@/lib/notifications";
 import {
   daysUntil,
   formatEstimate,
   getStreakInfo,
   mkSparkBars,
+  type SparkBar,
 } from "@/lib/streak";
 import type { ProjectStatus, TaskStatus } from "@/lib/status";
 import { withParsedWeekdays } from "@/lib/weekdays-db";
@@ -96,6 +94,7 @@ export type DashboardTask = {
   estimatedMinutes: number | null;
   projectId: string | null;
   project: { id: string; name: string } | null;
+  done: boolean;
   doneToday: boolean;
 };
 
@@ -107,22 +106,11 @@ export type DashboardSnapshot = {
   hint: string;
   hintColor: string;
   foot: string;
-  bars?: Array<{ height: number; opacity?: number }>;
+  bars?: SparkBar[];
   logoUrl?: string | null;
   iconKey?: string | null;
   entityName?: string;
   entityColor?: string | null;
-};
-
-export type DashboardNudge = {
-  text: string;
-  variant: "warn" | "neutral";
-  actionLabel?: string;
-  projectId?: string;
-  logoUrl?: string | null;
-  iconKey?: string | null;
-  color?: string | null;
-  projectName?: string;
 };
 
 export type DashboardData = {
@@ -140,7 +128,6 @@ export type DashboardData = {
   dailyTasks: DashboardDailyTask[];
   inboxTasks: DashboardTask[];
   snapshots: DashboardSnapshot[];
-  nudges: DashboardNudge[];
   weekReview: {
     line: string;
     stats: Array<{ value: string; label: string }>;
@@ -180,27 +167,6 @@ function mapTaskItem(
   };
 }
 
-function toDashboardNudge(item: AppNotification): DashboardNudge[] {
-  if (item.kind !== "overdue" && item.kind !== "stalled") return [];
-
-  const detail =
-    item.detail.charAt(0).toLowerCase() + item.detail.slice(1);
-
-  return [
-    {
-      text:
-        item.kind === "stalled" ? `${item.title} ${detail}` : item.title,
-      variant: item.tone === "warn" ? "warn" : "neutral",
-      actionLabel: item.actionLabel,
-      projectId: item.project?.id,
-      logoUrl: item.project?.logoUrl,
-      iconKey: item.project?.iconKey,
-      color: item.project?.color,
-      projectName: item.project?.name,
-    },
-  ];
-}
-
 export async function getDashboardData(): Promise<DashboardData> {
   const today = getTodayDate();
   const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -215,7 +181,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     last14Completions,
     streakInfo,
     allOpenTasks,
-    lastTouch,
   ] = await Promise.all([
     prisma.project.findMany({
       where: { status: { not: "DONE" } },
@@ -240,10 +205,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     prisma.task.findMany({
       where: {
         projectId: null,
-        OR: [
-          { status: { not: "DONE" } },
-          { completedAt: { gte: today } },
-        ],
       },
       orderBy: [{ priority: "desc" }, { dueDate: "asc" }, { createdAt: "asc" }],
       include: {
@@ -277,7 +238,6 @@ export async function getDashboardData(): Promise<DashboardData> {
         status: true,
       },
     }),
-    getProjectLastTouchMap(),
   ]);
 
   const todayKey = toDateOnlyString(today);
@@ -326,21 +286,21 @@ export async function getDashboardData(): Promise<DashboardData> {
     };
   });
 
-  const inboxTasks: DashboardTask[] = sortCompletedLast(
-    inboxTasksRaw.map((task) => ({
-      ...task,
-      doneToday:
-        task.status === "DONE" &&
-        (isCompletedToday(task.completedAt, today) ||
-          completedTaskIdsToday.has(task.id)),
-    })),
-    (task) => task.doneToday
+  const inboxTasks: DashboardTask[] = sortInboxLog(
+    inboxTasksRaw.map((task) => {
+      const done = task.status === "DONE";
+      return {
+        ...task,
+        done,
+        doneToday:
+          done &&
+          (isCompletedToday(task.completedAt, today) ||
+            completedTaskIdsToday.has(task.id)),
+      };
+    })
   );
 
   const overdueTasks = allOpenTasks.filter((t) => isOverdue(t.dueDate, today));
-  const dueTodayTasks = allOpenTasks.filter(
-    (t) => t.dueDate && toDateOnlyString(t.dueDate) === toDateOnlyString(today)
-  );
   const dueThisWeek = allOpenTasks.filter((t) => {
     const days = daysUntil(t.dueDate, today);
     return days !== null && days >= 0 && days <= 6;
@@ -414,17 +374,21 @@ export async function getDashboardData(): Promise<DashboardData> {
       ).length
   );
 
+  const closed7 = doneSeries.reduce((sum, value) => sum + value, 0);
+  const hits7 = habitSeries.reduce((sum, value) => sum + value, 0);
+  const dueTodayCount = dueSeries[0] ?? 0;
+
   const snapshots: DashboardSnapshot[] = [
     {
       label: "Open tasks",
       value: String(allOpenTasks.length),
-      unit: "items",
+      unit: "",
       color: "var(--foreground)",
       hint: overdueTasks.length
         ? `${overdueTasks.length} overdue`
         : "nothing overdue",
       hintColor: overdueTasks.length ? "var(--destructive)" : "var(--faint)",
-      foot: "7d closed",
+      foot: closed7 === 1 ? "1 closed" : `${closed7} closed`,
       bars: mkSparkBars(doneSeries),
     },
     {
@@ -442,18 +406,20 @@ export async function getDashboardData(): Promise<DashboardData> {
         dueToday.every((t) => completedDailyIds.has(t.id))
           ? "var(--done)"
           : "var(--warn)",
-      foot: "7d hits",
+      foot: hits7 === 1 ? "1 hit" : `${hits7} hits`,
       bars: mkSparkBars(habitSeries),
     },
     {
       label: "Due this week",
       value: String(dueThisWeek.length),
-      unit: "tasks",
+      unit: "",
       color: "var(--foreground)",
       hint: dueThisWeek.length ? "next 7 days" : "clear week ahead",
       hintColor: "var(--faint)",
-      foot: "next 7d",
-      bars: mkSparkBars(dueSeries),
+      foot: dueTodayCount
+        ? `${dueTodayCount} today`
+        : "none today",
+      bars: mkSparkBars(dueSeries, 0),
     },
     {
       label: "Next deadline",
@@ -469,30 +435,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       entityColor: nearest?.color,
     },
   ];
-
-  const remainingHabits = dueToday.filter(
-    (task) => !completedDailyIds.has(task.id)
-  ).length;
-  const notifications = buildNotifications({
-    overdueCount: overdueTasks.length,
-    dueTodayCount: dueTodayTasks.length,
-    remainingHabits,
-    nudgeDays: settings.nudgeDays,
-    stalled: getStalledProjects(
-      mappedProjects.map((project) => ({
-        id: project.id,
-        name: project.name,
-        logoUrl: project.logoUrl,
-        iconKey: project.iconKey,
-        color: project.color,
-        openCount: project.openCount,
-      })),
-      lastTouch,
-      today,
-      settings.nudgeDays
-    ),
-  });
-  const nudges = notifications.flatMap(toDashboardNudge);
 
   const weekTaskCount = weekCompletions.filter(
     (l) => l.entityType === "TASK"
@@ -535,7 +477,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     ),
     inboxTasks,
     snapshots,
-    nudges,
     weekReview: {
       line: weekCompletions.length
         ? `${weekCompletions.length} things done since Monday${bestDay ? `, best on ${bestDay}.` : "."}`

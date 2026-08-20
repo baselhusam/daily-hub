@@ -221,6 +221,15 @@
   }
 }
 
+@keyframes dh-bar {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
 @layer base {
   html {
     background: var(--paper);
@@ -354,6 +363,11 @@
     animation: dh-fill 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
   }
 
+  .animate-dh-bar {
+    transform-origin: center bottom;
+    animation: dh-bar 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -364,7 +378,8 @@
       transition-duration: 0.01ms !important;
     }
 
-    .animate-dh-fill {
+    .animate-dh-fill,
+    .animate-dh-bar {
       animation: none;
     }
   }

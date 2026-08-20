@@ -21,7 +21,7 @@ type SelectMenuProps = {
   disabled?: boolean;
   className?: string;
   contentClassName?: string;
-  variant?: "field" | "compact";
+  variant?: "field" | "compact" | "plain";
 };
 
 export function SelectMenu({
@@ -56,6 +56,8 @@ export function SelectMenu({
                 "h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[9px] text-base focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16 dh:text-[14.5px]",
               variant === "compact" &&
                 "rounded-md border border-border bg-muted px-2.5 py-2 text-[13.5px] font-medium focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
+              variant === "plain" &&
+                "h-8 w-auto max-w-[10.5rem] rounded-md px-2 text-[13px] text-muted-foreground hover:bg-hover hover:text-foreground focus-visible:bg-hover focus-visible:text-foreground",
               className
             )}
           >
@@ -70,7 +72,9 @@ export function SelectMenu({
             >
               {selected?.label ?? placeholder}
             </span>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-faint" />
+            {variant === "plain" ? null : (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-faint" />
+            )}
           </button>
         </PopoverTrigger>
         <PopoverContent

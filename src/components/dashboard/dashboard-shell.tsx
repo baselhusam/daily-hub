@@ -8,11 +8,18 @@ import type { DashboardData } from "@/lib/dashboard";
 import { StatusChip } from "@/components/ui/option-mark";
 import { daysUntil, formatEstimate } from "@/lib/streak-utils";
 import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
-import { formatAddedAgo, formatTodayLabel, getGreeting, type CalendarMode } from "@/lib/dates";
+import {
+  calendarDayKey,
+  formatAddedAgo,
+  formatCompletedAgo,
+  formatLogDay,
+  formatTodayLabel,
+  getGreeting,
+  type CalendarMode,
+} from "@/lib/dates";
 import { useDisplayDay } from "@/lib/hydration";
 import { PageHeader } from "@/components/ui/page-header";
 import { QuickAdd } from "@/components/ui/quick-add";
-import { NudgeChip } from "@/components/ui/nudge-chip";
 import { SnapshotCard } from "@/components/ui/snapshot-card";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
@@ -24,7 +31,7 @@ import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { toggleTask } from "@/app/actions/tasks";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
-import { cn, isTypingTarget, sortCompletedLast } from "@/lib/utils";
+import { cn, isTypingTarget, sortCompletedLast, sortInboxLog } from "@/lib/utils";
 
 type EditableTask = {
   id: string;
@@ -52,7 +59,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
       ),
       ...data.inboxTasks.map((task) => ({
         id: task.id,
-        value: task.doneToday,
+        value: task.done,
       })),
     ],
     [data.projects, data.inboxTasks]
@@ -107,11 +114,23 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const isFreshWorkspace =
     !filterProject &&
     data.projects.length === 0 &&
-    data.inboxTasks.length === 0;
+    data.inboxTasks.every((task) => task.done);
+  const todayInboxTasks = data.inboxTasks.filter((task) => {
+    const done = optimisticTasks.get(task.id, task.done);
+    return !done || task.doneToday || !task.done;
+  });
   const showTodayRail =
-    !inboxOnly && (showHabits || (showInbox && !isFreshWorkspace));
+    !inboxOnly && (showHabits || (showInbox && todayInboxTasks.length > 0));
   const openInboxCount = data.inboxTasks.filter(
-    (task) => !optimisticTasks.get(task.id, task.doneToday)
+    (task) => !optimisticTasks.get(task.id, task.done)
+  ).length;
+  const loggedInboxCount = data.inboxTasks.length - openInboxCount;
+  const todayOpenInboxCount = todayInboxTasks.filter(
+    (task) => !optimisticTasks.get(task.id, task.done)
+  ).length;
+  const todayLoggedInboxCount = todayInboxTasks.length - todayOpenInboxCount;
+  const olderLoggedInboxCount = data.inboxTasks.filter(
+    (task) => task.done && !task.doneToday
   ).length;
 
   const optimisticOpenTasks =
@@ -169,9 +188,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
           title={greeting}
           description={
             inboxOnly
-              ? openInboxCount === 0
-                ? "Inbox is clear."
-                : `${openInboxCount} in inbox.`
+              ? inboxSummary(openInboxCount, loggedInboxCount)
               : data.stats.overdueTasks > 0
               ? `${data.stats.overdueTasks} overdue · ${optimisticOpenTasks} still open today.`
               : `${optimisticOpenTasks} open · ${data.stats.dailyCompleted}/${data.stats.dailyScheduled} habits done.`
@@ -234,43 +251,6 @@ export function DashboardShell({ data }: DashboardShellProps) {
           />
         )}
 
-        {showHabits && data.nudges.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {data.nudges.map((nudge, index) => (
-              <NudgeChip
-                key={index}
-                variant={nudge.variant}
-                leading={
-                  nudge.projectName ? (
-                    <EntityAvatar
-                      name={nudge.projectName}
-                      color={nudge.color}
-                      logoUrl={nudge.logoUrl}
-                      iconKey={nudge.iconKey}
-                      size={18}
-                    />
-                  ) : undefined
-                }
-                action={
-                  nudge.actionLabel && nudge.projectId ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(`/?project=${nudge.projectId}`)
-                      }
-                      className="text-[12.5px] font-semibold text-signal whitespace-nowrap hover:text-signal-hover"
-                    >
-                      {nudge.actionLabel} →
-                    </button>
-                  ) : undefined
-                }
-              >
-                {nudge.text}
-              </NudgeChip>
-            ))}
-          </div>
-        )}
-
         {showHabits && (
           <section className="flex flex-col gap-2.5">
             <div className="section-kicker">Daily pulse</div>
@@ -294,11 +274,13 @@ export function DashboardShell({ data }: DashboardShellProps) {
           <InboxPanel
             tasks={data.inboxTasks}
             openCount={openInboxCount}
+            loggedCount={loggedInboxCount}
             getDone={(id, fallback) => optimisticTasks.get(id, fallback)}
             onToggle={handleToggle}
             onEdit={setEditingTask}
             today={today}
             mode={mode}
+            expanded
           />
         ) : (
         <div
@@ -483,10 +465,12 @@ export function DashboardShell({ data }: DashboardShellProps) {
                   </SurfaceCard>
                 )}
 
-                {showInbox && !isFreshWorkspace && (
+                {showInbox && todayInboxTasks.length > 0 && (
                   <InboxPanel
-                    tasks={data.inboxTasks}
-                    openCount={openInboxCount}
+                    tasks={todayInboxTasks}
+                    openCount={todayOpenInboxCount}
+                    loggedCount={todayLoggedInboxCount}
+                    olderLoggedCount={olderLoggedInboxCount}
                     getDone={(id, fallback) =>
                       optimisticTasks.get(id, fallback)
                     }
@@ -538,23 +522,131 @@ export function DashboardShell({ data }: DashboardShellProps) {
   );
 }
 
+function inboxSummary(openCount: number, loggedCount: number) {
+  if (openCount === 0 && loggedCount === 0) return "Inbox is clear.";
+  if (openCount === 0) {
+    return `${loggedCount} logged.`;
+  }
+  if (loggedCount === 0) {
+    return `${openCount} in inbox.`;
+  }
+  return `${openCount} open · ${loggedCount} logged.`;
+}
+
+function inboxNote(notes: string | null) {
+  if (!notes) return undefined;
+  const line = notes.trim().split("\n")[0]?.trim();
+  if (!line) return undefined;
+  return line.length > 88 ? `${line.slice(0, 87)}…` : line;
+}
+
+function inboxMetaLabel(
+  task: DashboardData["inboxTasks"][number],
+  done: boolean,
+  today: Date,
+  mode: CalendarMode
+) {
+  const parts = [
+    formatAddedAgo(task.createdAt, today, mode),
+    done
+      ? formatCompletedAgo(task.completedAt ?? today, today, mode)
+      : undefined,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+function groupLoggedInbox(
+  tasks: DashboardData["inboxTasks"],
+  today: Date,
+  mode: CalendarMode
+) {
+  const groups: Array<{
+    key: string;
+    label: string;
+    tasks: DashboardData["inboxTasks"];
+  }> = [];
+  const index = new Map<string, number>();
+
+  for (const task of tasks) {
+    const when = task.completedAt ?? today;
+    const key = calendarDayKey(when, mode);
+    const existing = index.get(key);
+    if (existing === undefined) {
+      index.set(key, groups.length);
+      groups.push({
+        key,
+        label: formatLogDay(when, today, mode),
+        tasks: [task],
+      });
+    } else {
+      groups[existing].tasks.push(task);
+    }
+  }
+
+  return groups;
+}
+
 function InboxPanel({
   tasks,
   openCount,
+  loggedCount,
+  olderLoggedCount = 0,
   getDone,
   onToggle,
   onEdit,
   today,
   mode,
+  expanded = false,
 }: {
   tasks: DashboardData["inboxTasks"];
   openCount: number;
+  loggedCount: number;
+  olderLoggedCount?: number;
   getDone: (id: string, fallback: boolean) => boolean;
   onToggle: (id: string, done: boolean) => void;
   onEdit: (task: EditableTask) => void;
   today: Date;
   mode: CalendarMode;
+  expanded?: boolean;
 }) {
+  const visible = sortInboxLog(
+    tasks.map((task) => ({
+      ...task,
+      done: getDone(task.id, task.done),
+      completedAt: getDone(task.id, task.done)
+        ? (task.completedAt ?? today)
+        : null,
+    }))
+  );
+  const openTasks = visible.filter((task) => !task.done);
+  const loggedTasks = visible.filter((task) => task.done);
+  const loggedGroups = expanded
+    ? groupLoggedInbox(loggedTasks, today, mode)
+    : loggedTasks.length > 0
+      ? [{ key: "today", label: "Today", tasks: loggedTasks }]
+      : [];
+
+  function renderTask(task: DashboardData["inboxTasks"][number], done: boolean) {
+    const due = done ? null : getDueMeta(task.dueDate, today, mode);
+    return (
+      <TaskRow
+        key={task.id}
+        task={{
+          id: task.id,
+          title: task.title,
+          done,
+          dueLabel: due?.label,
+          dueColor: due?.color,
+          estimateLabel: formatEstimate(task.estimatedMinutes),
+          metaLabel: inboxMetaLabel(task, done, today, mode),
+          note: expanded ? inboxNote(task.notes) : undefined,
+        }}
+        onToggle={() => onToggle(task.id, done)}
+        onEdit={() => onEdit(task)}
+      />
+    );
+  }
+
   return (
     <SurfaceCard variant="quiet">
       <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-2">
@@ -562,11 +654,21 @@ function InboxPanel({
           <h2 className="text-[13px] font-semibold tracking-[-0.015em]">
             Inbox
           </h2>
-          <p className="mt-0.5 text-[12px] text-faint">Unfiled</p>
+          <p className="mt-0.5 text-[12px] text-faint">
+            {expanded ? "Unfiled, from the start" : "Today"}
+          </p>
         </div>
-        {openCount > 0 ? (
+        {tasks.length > 0 ? (
           <span className="text-[12px] text-faint tabular-nums">
-            {openCount}
+            {expanded
+              ? openCount > 0 && loggedCount > 0
+                ? `${openCount} open · ${loggedCount} logged`
+                : openCount > 0
+                  ? openCount
+                  : `${loggedCount} logged`
+              : openCount > 0
+                ? openCount
+                : null}
           </span>
         ) : null}
       </div>
@@ -574,28 +676,29 @@ function InboxPanel({
         <p className="px-4 pt-1 pb-4 text-[13px] text-faint">Inbox clear.</p>
       ) : (
         <div className="pb-1.5">
-          {sortCompletedLast(tasks, (task) =>
-            getDone(task.id, task.doneToday)
-          ).map((task) => {
-            const due = getDueMeta(task.dueDate, today, mode);
-            const done = getDone(task.id, task.doneToday);
-            return (
-              <TaskRow
-                key={task.id}
-                task={{
-                  id: task.id,
-                  title: task.title,
-                  done,
-                  dueLabel: due?.label,
-                  dueColor: due?.color,
-                  estimateLabel: formatEstimate(task.estimatedMinutes),
-                  metaLabel: formatAddedAgo(task.createdAt, today, mode),
-                }}
-                onToggle={() => onToggle(task.id, done)}
-                onEdit={() => onEdit(task)}
-              />
-            );
-          })}
+          {openTasks.map((task) => renderTask(task, false))}
+          {loggedTasks.length > 0 ? (
+            <div className={openTasks.length > 0 ? "mt-1" : undefined}>
+              {loggedGroups.map((group) => (
+                <div key={group.key}>
+                  {expanded ? (
+                    <div className="px-4 pt-2.5 pb-1 text-[11px] font-semibold tracking-[0.08em] text-faint uppercase">
+                      {group.label}
+                    </div>
+                  ) : null}
+                  {group.tasks.map((task) => renderTask(task, true))}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {!expanded && olderLoggedCount > 0 ? (
+            <Link
+              href="/?project=inbox"
+              className="block px-4 py-2 text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
+            >
+              {olderLoggedCount} logged →
+            </Link>
+          ) : null}
         </div>
       )}
     </SurfaceCard>

@@ -125,6 +125,45 @@ export function formatAddedAgo(
   return `Added ${format(createdAt, isThisYear(createdAt) ? "MMM d" : "MMM d, yyyy")}`;
 }
 
+export function formatCompletedAgo(
+  completedAt: Date | null | undefined,
+  today = getTodayDate(),
+  mode: CalendarMode = "local"
+): string | undefined {
+  if (!completedAt) return undefined;
+  const age = Math.max(0, calendarDaysBetween(today, completedAt, mode));
+  if (age === 0) return "Done today";
+  if (age === 1) return "Done yesterday";
+  if (age < 14) return `Done ${age} days ago`;
+  const weeks = Math.round(age / 7);
+  if (age < 60) {
+    return weeks === 1 ? "Done 1 week ago" : `Done ${weeks} weeks ago`;
+  }
+  return `Done ${format(completedAt, isThisYear(completedAt) ? "MMM d" : "MMM d, yyyy")}`;
+}
+
+export function formatLogDay(
+  date: Date,
+  today = getTodayDate(),
+  mode: CalendarMode = "local"
+): string {
+  const days = calendarDaysBetween(date, today, mode);
+  if (days === 0) return "Today";
+  if (days === -1) return "Yesterday";
+  if (isThisYear(date)) return format(date, "EEEE, MMM d");
+  return format(date, "EEE, MMM d, yyyy");
+}
+
+export function calendarDayKey(
+  date: Date,
+  mode: CalendarMode = "local"
+): string {
+  if (mode === "utc") {
+    return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
+  }
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
 export function isOverdue(
   dueDate: Date | null | undefined,
   today = getTodayDate(),

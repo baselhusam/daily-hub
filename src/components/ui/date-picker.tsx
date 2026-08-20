@@ -34,7 +34,7 @@ type DatePickerProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  variant?: "field" | "compact";
+  variant?: "field" | "compact" | "plain";
   allowClear?: boolean;
 };
 
@@ -93,6 +93,8 @@ export function DatePicker({
                 "h-auto w-full rounded-[10px] border border-input bg-background px-3 py-[9px] text-base focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16 dh:text-[14.5px]",
               variant === "compact" &&
                 "rounded-md border border-border bg-muted px-2.5 py-2 text-[13.5px] focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
+              variant === "plain" &&
+                "h-8 w-auto rounded-md px-2 text-[13px] text-muted-foreground hover:bg-hover hover:text-foreground focus-visible:bg-hover focus-visible:text-foreground",
               className
             )}
           >

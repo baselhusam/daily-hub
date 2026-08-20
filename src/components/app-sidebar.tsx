@@ -108,7 +108,7 @@ export function AppSidebar({
             })}
           </nav>
 
-          {!collapsed && (stats.projects.length > 0 || stats.inboxCount > 0) && (
+          {!collapsed && (stats.projects.length > 0 || stats.inboxTotalCount > 0) && (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <div className="mb-1 flex items-center justify-between px-3">
                 <p className="text-[11.5px] font-semibold tracking-[0.02em] text-faint">

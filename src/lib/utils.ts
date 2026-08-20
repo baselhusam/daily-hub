@@ -19,6 +19,26 @@ export function sortCompletedLast<T>(
   );
 }
 
+/** Open inbox items stay in incoming order; logged items follow by most recently done. */
+export function sortInboxLog<T extends {
+  done: boolean;
+  completedAt: Date | null;
+  createdAt: Date;
+}>(tasks: readonly T[]): T[] {
+  const open: T[] = [];
+  const logged: T[] = [];
+  for (const task of tasks) {
+    if (task.done) logged.push(task);
+    else open.push(task);
+  }
+  logged.sort((a, b) => {
+    const aTime = (a.completedAt ?? a.createdAt).getTime();
+    const bTime = (b.completedAt ?? b.createdAt).getTime();
+    return bTime - aTime;
+  });
+  return [...open, ...logged];
+}
+
 export function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;

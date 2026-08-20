@@ -68,7 +68,7 @@ export function QuickAdd({
     {
       value: "",
       label: "Inbox",
-      leading: <InboxAvatar size={18} />,
+      leading: <InboxAvatar size={16} />,
     },
     ...projects.map((project) => ({
       value: project.id,
@@ -79,11 +79,13 @@ export function QuickAdd({
           color={project.color}
           logoUrl={project.logoUrl}
           iconKey={project.iconKey}
-          size={18}
+          size={16}
         />
       ),
     })),
   ];
+
+  const canSubmit = Boolean(title.trim()) && !pending;
 
   return (
     <form
@@ -93,9 +95,12 @@ export function QuickAdd({
         void submit();
       }}
     >
-      <div className="group grid grid-cols-1 items-stretch gap-2 rounded-[12px] border border-border bg-card p-2 shadow-raised transition-[border-color,box-shadow] duration-[120ms] focus-within:border-signal focus-within:shadow-[0_0_0_3px_var(--signal-wash)] sm:flex sm:flex-wrap">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2.5 sm:min-w-[180px]">
-          <span className="h-[15px] w-[15px] shrink-0 rounded border-[1.6px] border-dashed border-hairline" />
+      <div className="group flex flex-wrap items-center gap-1 rounded-[12px] border border-border bg-card px-3 py-1.5 transition-[border-color] duration-[120ms] focus-within:border-signal">
+        <div className="flex min-w-[12rem] flex-1 items-center gap-2.5">
+          <span
+            className="size-3.5 shrink-0 rounded-[3px] border border-dashed border-hairline"
+            aria-hidden
+          />
           <input
             id="quick-add-title"
             value={title}
@@ -104,38 +109,42 @@ export function QuickAdd({
             autoComplete="off"
             spellCheck={false}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Add a task and hit enter…"
-            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-base outline-none placeholder:text-faint dh:text-[15px]"
+            placeholder="Add a task…"
+            className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-[15px] outline-none placeholder:text-faint"
           />
-          <kbd className="hidden shrink-0 rounded border border-border bg-paper px-1.5 py-0.5 text-[11px] font-semibold text-faint group-focus-within:hidden sm:inline">
-            N
-          </kbd>
         </div>
-        <SelectMenu
-          value={projectId}
-          onValueChange={setProjectId}
-          options={projectOptions}
-          variant="compact"
-          ariaLabel="Project"
-          className="min-w-0 sm:min-w-[148px]"
-          contentClassName="min-w-[200px]"
-        />
-        <DatePicker
-          value={dueDate}
-          onValueChange={setDueDate}
-          min={DATE_INPUT_MIN}
-          max={DATE_INPUT_MAX}
-          variant="compact"
-          placeholder="Due"
-          className="min-w-0 sm:min-w-[148px]"
-        />
-        <Button
-          type="submit"
-          disabled={pending || !title.trim()}
-          className="h-auto min-h-10 w-full px-4 py-2.5 text-[13.5px] font-semibold sm:w-auto sm:px-5"
-        >
-          {pending ? "Adding…" : "Add"}
-        </Button>
+        <div className="flex items-center gap-0.5">
+          <SelectMenu
+            value={projectId}
+            onValueChange={setProjectId}
+            options={projectOptions}
+            variant="plain"
+            ariaLabel="Project"
+            contentClassName="min-w-[200px]"
+          />
+          <DatePicker
+            value={dueDate}
+            onValueChange={setDueDate}
+            min={DATE_INPUT_MIN}
+            max={DATE_INPUT_MAX}
+            variant="plain"
+            placeholder="Due"
+          />
+          {canSubmit || pending ? (
+            <Button
+              type="submit"
+              variant="ghost"
+              disabled={!canSubmit}
+              className="h-8 px-2.5 text-[13px] font-medium text-signal hover:bg-signal-soft hover:text-signal-hover"
+            >
+              {pending ? "Adding…" : "Add"}
+            </Button>
+          ) : (
+            <span className="hidden px-2 text-[11px] text-faint group-focus-within:hidden sm:inline">
+              N
+            </span>
+          )}
+        </div>
       </div>
       {error ? (
         <p role="alert" aria-live="polite" className="px-1 text-[13px] text-destructive">
