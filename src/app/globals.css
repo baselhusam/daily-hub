@@ -329,23 +329,6 @@
     padding-right: max(clamp(14px, 2.6vw, 32px), env(safe-area-inset-right));
   }
 
-  .section-kicker {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    font-size: 0.71875rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: var(--faint);
-  }
-
-  .section-kicker::after {
-    height: 1px;
-    flex: 1;
-    background: var(--rule-soft);
-    content: "";
-  }
-
   .animate-dh-fade {
     animation: dh-fade 0.3s ease both;
   }

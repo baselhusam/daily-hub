@@ -252,21 +252,18 @@ export function DashboardShell({ data }: DashboardShellProps) {
         )}
 
         {showHabits && (
-          <section className="flex flex-col gap-2.5">
-            <div className="section-kicker">Daily pulse</div>
-            <div className="grid grid-cols-2 gap-3 dh:grid-cols-4">
-              {data.snapshots.map((snapshot) =>
-                snapshot.label === "Open tasks" ? (
-                  <SnapshotCard
-                    key={snapshot.label}
-                    {...snapshot}
-                    value={String(optimisticOpenTasks)}
-                  />
-                ) : (
-                  <SnapshotCard key={snapshot.label} {...snapshot} />
-                )
-              )}
-            </div>
+          <section aria-label="Daily pulse" className="grid grid-cols-2 gap-3 dh:grid-cols-4">
+            {data.snapshots.map((snapshot) =>
+              snapshot.label === "Open tasks" ? (
+                <SnapshotCard
+                  key={snapshot.label}
+                  {...snapshot}
+                  value={String(optimisticOpenTasks)}
+                />
+              ) : (
+                <SnapshotCard key={snapshot.label} {...snapshot} />
+              )
+            )}
           </section>
         )}
 
@@ -291,14 +288,10 @@ export function DashboardShell({ data }: DashboardShellProps) {
               : "dh:grid-cols-1"
           )}
         >
-          <div className="order-2 flex min-w-0 flex-col gap-3.5 dh:order-1">
-            <div className="flex items-baseline justify-between gap-3 px-0.5">
-              <h2 className="section-kicker flex-1">Open work</h2>
-              <span className="text-[11.5px] tracking-[0.1em] text-faint tabular-nums">
-                {optimisticOpenTasks} open
-              </span>
-            </div>
-
+          <div
+            className="order-2 flex min-w-0 flex-col gap-3.5 dh:order-1"
+            aria-label="Open work"
+          >
             {isFreshWorkspace ? (
               <SurfaceCard variant="quiet">
                 <EmptyState
