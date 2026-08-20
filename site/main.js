@@ -5,22 +5,49 @@
   let targetY = 0.28;
   let currentX = targetX;
   let currentY = targetY;
+  let targetMx = window.innerWidth * 0.62;
+  let targetMy = window.innerHeight * 0.28;
+  let spotX = targetMx;
+  let spotY = targetMy;
+  let scale = 1;
 
   window.addEventListener(
     "pointermove",
     (event) => {
+      document.body.classList.remove("is-idle");
       targetX = event.clientX / window.innerWidth;
       targetY = event.clientY / window.innerHeight;
+      targetMx = event.clientX;
+      targetMy = event.clientY;
     },
     { passive: true }
   );
 
+  document.documentElement.addEventListener("mouseleave", () => {
+    document.body.classList.add("is-idle");
+  });
+
   const tick = () => {
-    const ease = reduced ? 1 : 0.06;
-    currentX += (targetX - currentX) * ease;
-    currentY += (targetY - currentY) * ease;
+    if (reduced) {
+      root.style.setProperty("--px", "0.5");
+      root.style.setProperty("--py", "0.32");
+      return;
+    }
+
+    currentX += (targetX - currentX) * 0.035;
+    currentY += (targetY - currentY) * 0.035;
+    spotX += (targetMx - spotX) * 0.08;
+    spotY += (targetMy - spotY) * 0.08;
+
+    const speed = Math.hypot(targetMx - spotX, targetMy - spotY);
+    const nextScale = 1 + Math.min(speed / 220, 0.12);
+    scale += (nextScale - scale) * 0.08;
+
     root.style.setProperty("--px", currentX.toFixed(4));
     root.style.setProperty("--py", currentY.toFixed(4));
+    root.style.setProperty("--mx", `${spotX.toFixed(1)}px`);
+    root.style.setProperty("--my", `${spotY.toFixed(1)}px`);
+    root.style.setProperty("--spot-scale", scale.toFixed(3));
     requestAnimationFrame(tick);
   };
 
