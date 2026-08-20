@@ -47,11 +47,11 @@ export function AppSidebar({
     >
       <div
         className={cn(
-          "flex flex-col pb-3",
+          "flex min-h-0 flex-1 flex-col pb-3",
           collapsed ? "gap-3 p-2" : "gap-5 p-3.5"
         )}
       >
-        <nav className="flex flex-col gap-0.5">
+        <nav className="flex shrink-0 flex-col gap-0.5">
           {!collapsed && (
             <p className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[0.02em] text-faint">
               Main Menu
@@ -109,7 +109,7 @@ export function AppSidebar({
           </nav>
 
           {!collapsed && stats.projects.length > 0 && (
-            <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <div className="mb-1 flex items-center justify-between px-3">
                 <p className="text-[11.5px] font-semibold tracking-[0.02em] text-faint">
                   Filter Today
@@ -123,7 +123,7 @@ export function AppSidebar({
                   </Link>
                 )}
               </div>
-              <ScrollArea className="max-h-48">
+              <ScrollArea className="min-h-0 flex-1">
                 <div className="space-y-0.5 pr-2">
                   <Link
                     href="/"
@@ -171,7 +171,7 @@ export function AppSidebar({
         </div>
 
         {!collapsed && stats.showStreaks && (
-          <div className="mt-auto p-3">
+          <div className="mt-auto shrink-0 p-3">
             <div className="rounded-[10px] border border-border bg-card p-3.5">
               <p className="mb-1.5 text-[11.5px] font-semibold tracking-[0.02em] text-faint">
                 Chain
