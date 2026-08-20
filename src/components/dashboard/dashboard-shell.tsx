@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/brand-mark";
 import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { toggleTask } from "@/app/actions/tasks";
+import { useOptimisticFlags } from "@/lib/optimistic-toggle";
 import { cn, isTypingTarget } from "@/lib/utils";
 
 type EditableTask = {
@@ -43,9 +44,21 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectFilter = searchParams.get("project");
-  const [pendingTaskId, setPendingTaskId] = React.useState<string | null>(null);
   const [editingTask, setEditingTask] = React.useState<EditableTask | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const taskFlags = React.useMemo(
+    () => [
+      ...data.projects.flatMap((project) =>
+        project.tasks.map((task) => ({ id: task.id, value: task.doneToday }))
+      ),
+      ...data.inboxTasks.map((task) => ({
+        id: task.id,
+        value: task.doneToday,
+      })),
+    ],
+    [data.projects, data.inboxTasks]
+  );
+  const optimisticTasks = useOptimisticFlags(taskFlags);
   const { today, mode, hydrated } = useDisplayDay(data.todayISO);
   const todayLabel = hydrated
     ? formatTodayLabel(today)
@@ -97,6 +110,13 @@ export function DashboardShell({ data }: DashboardShellProps) {
     data.inboxTasks.length === 0;
   const showTodayRail = showHabits || (showInbox && !isFreshWorkspace);
 
+  const optimisticOpenTasks =
+    data.stats.openTasks +
+    taskFlags.reduce((delta, task) => {
+      const shown = optimisticTasks.get(task.id, task.value);
+      if (shown === task.value) return delta;
+      return delta + (shown ? -1 : 1);
+    }, 0);
   const habitProgress =
     data.stats.dailyScheduled === 0
       ? 0
@@ -104,11 +124,12 @@ export function DashboardShell({ data }: DashboardShellProps) {
           (data.stats.dailyCompleted / data.stats.dailyScheduled) * 100
         );
 
-  async function handleToggle(taskId: string) {
-    setPendingTaskId(taskId);
+  async function handleToggle(taskId: string, currentlyDone: boolean) {
     setActionError(null);
     try {
-      const result = await toggleTask(taskId);
+      const result = await optimisticTasks.run(taskId, currentlyDone, () =>
+        toggleTask(taskId)
+      );
       if (!result.success) {
         setActionError(
           result.error ?? "Could not update this task. Try again."
@@ -116,8 +137,6 @@ export function DashboardShell({ data }: DashboardShellProps) {
       }
     } catch {
       setActionError("Could not update this task. Try again.");
-    } finally {
-      setPendingTaskId(null);
     }
   }
 
@@ -146,8 +165,8 @@ export function DashboardShell({ data }: DashboardShellProps) {
           title={greeting}
           description={
             data.stats.overdueTasks > 0
-              ? `${data.stats.overdueTasks} overdue · ${data.stats.openTasks} still open today.`
-              : `${data.stats.openTasks} open · ${data.stats.dailyCompleted}/${data.stats.dailyScheduled} habits done.`
+              ? `${data.stats.overdueTasks} overdue · ${optimisticOpenTasks} still open today.`
+              : `${optimisticOpenTasks} open · ${data.stats.dailyCompleted}/${data.stats.dailyScheduled} habits done.`
           }
           actions={
             filterProject ? undefined : (
@@ -244,9 +263,17 @@ export function DashboardShell({ data }: DashboardShellProps) {
           <section className="flex flex-col gap-2.5">
             <div className="section-kicker">Daily pulse</div>
             <div className="grid grid-cols-2 gap-3 dh:grid-cols-4">
-              {data.snapshots.map((snapshot) => (
-                <SnapshotCard key={snapshot.label} {...snapshot} />
-              ))}
+              {data.snapshots.map((snapshot) =>
+                snapshot.label === "Open tasks" ? (
+                  <SnapshotCard
+                    key={snapshot.label}
+                    {...snapshot}
+                    value={String(optimisticOpenTasks)}
+                  />
+                ) : (
+                  <SnapshotCard key={snapshot.label} {...snapshot} />
+                )
+              )}
             </div>
           </section>
         )}
@@ -263,7 +290,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
             <div className="flex items-baseline justify-between gap-3 px-0.5">
               <h2 className="section-kicker flex-1">Open work</h2>
               <span className="text-[11.5px] tracking-[0.1em] text-faint tabular-nums">
-                {data.stats.openTasks} open
+                {optimisticOpenTasks} open
               </span>
             </div>
 
@@ -302,7 +329,16 @@ export function DashboardShell({ data }: DashboardShellProps) {
                             ) : null}
                           </div>
                           <p className="mt-0.5 text-[12px] text-faint">
-                            {project.openCount} open · {project.doneCount} logged
+                            {
+                              project.tasks.filter(
+                                (task) =>
+                                  !optimisticTasks.get(
+                                    task.id,
+                                    task.doneToday
+                                  )
+                              ).length
+                            }{" "}
+                            open · {project.doneCount} logged
                           </p>
                         </div>
                         {dl !== null && (
@@ -356,13 +392,17 @@ export function DashboardShell({ data }: DashboardShellProps) {
                     <div>
                       {visibleTasks.map((task) => {
                         const due = getDueMeta(task.dueDate, today, mode);
+                        const done = optimisticTasks.get(
+                          task.id,
+                          task.doneToday
+                        );
                         return (
                           <TaskRow
                             key={task.id}
                             task={{
                               id: task.id,
                               title: task.title,
-                              done: task.doneToday,
+                              done,
                               dueLabel: due?.label,
                               dueColor: due?.color,
                               dueBg: due?.bg,
@@ -370,8 +410,9 @@ export function DashboardShell({ data }: DashboardShellProps) {
                                 task.estimatedMinutes
                               ),
                             }}
-                            pending={pendingTaskId === task.id}
-                            onToggle={() => void handleToggle(task.id)}
+                            onToggle={() =>
+                              void handleToggle(task.id, done)
+                            }
                             onEdit={() => setEditingTask(task)}
                           />
                         );
@@ -435,7 +476,10 @@ export function DashboardShell({ data }: DashboardShellProps) {
                           </div>
                         </div>
                         <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">
-                          {data.inboxTasks.filter((t) => !t.doneToday).length}
+                          {data.inboxTasks.filter(
+                            (t) =>
+                              !optimisticTasks.get(t.id, t.doneToday)
+                          ).length}
                         </span>
                       </div>
                     </SurfaceCardHeader>
@@ -447,13 +491,17 @@ export function DashboardShell({ data }: DashboardShellProps) {
                       <div>
                         {data.inboxTasks.map((task) => {
                           const due = getDueMeta(task.dueDate, today, mode);
+                          const done = optimisticTasks.get(
+                            task.id,
+                            task.doneToday
+                          );
                           return (
                             <TaskRow
                               key={task.id}
                               task={{
                                 id: task.id,
                                 title: task.title,
-                                done: task.doneToday,
+                                done,
                                 dueLabel: due?.label,
                                 dueColor: due?.color,
                                 dueBg: due?.bg,
@@ -461,8 +509,9 @@ export function DashboardShell({ data }: DashboardShellProps) {
                                   task.estimatedMinutes
                                 ),
                               }}
-                              pending={pendingTaskId === task.id}
-                              onToggle={() => void handleToggle(task.id)}
+                              onToggle={() =>
+                                void handleToggle(task.id, done)
+                              }
                               onEdit={() => setEditingTask(task)}
                             />
                           );

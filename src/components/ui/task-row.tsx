@@ -17,7 +17,6 @@ export type TaskRowData = {
 
 type TaskRowProps = {
   task: TaskRowData;
-  pending?: boolean;
   onToggle: () => void;
   onEdit?: () => void;
   className?: string;
@@ -25,7 +24,6 @@ type TaskRowProps = {
 
 export function TaskRow({
   task,
-  pending,
   onToggle,
   onEdit,
   className,
@@ -40,7 +38,6 @@ export function TaskRow({
     >
       <Checkbox
         checked={task.done}
-        disabled={pending}
         onCheckedChange={onToggle}
         className="relative z-10 mt-0.5 size-[22px]"
         aria-label={`Toggle ${task.title}`}
