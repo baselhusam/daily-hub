@@ -1,6 +1,11 @@
-import { addDays, startOfWeek } from "date-fns";
+import { addDays, startOfWeek, subDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { getTodayDate, isScheduledOn } from "@/lib/dates";
+import {
+  getTodayDate,
+  groupCompletionDateKeys,
+  isHabitDueOn,
+  toDateOnlyString,
+} from "@/lib/dates";
 import {
   buildNotifications,
   getProjectLastTouchMap,
@@ -62,14 +67,14 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     }),
     prisma.dailyTask.findMany({
       where: { isActive: true },
-      select: { id: true, weekdays: true },
+      select: { id: true, weekdays: true, createdAt: true },
     }),
     prisma.completionLog.findMany({
       where: {
         entityType: "DAILY_TASK",
-        completedOn: today,
+        completedOn: { gte: subDays(today, 7) },
       },
-      select: { entityId: true },
+      select: { entityId: true, completedOn: true },
     }),
     prisma.project.findMany({
       where: { status: { not: "DONE" } },
@@ -107,23 +112,31 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     projectTaskCounts.map((row) => [row.projectId!, row._count.id])
   );
 
-  const scheduledToday = dailyTasks.filter((task) =>
-    isScheduledOn(task.weekdays, today)
+  const completedIds = new Set(
+    todayDailyCompletions
+      .filter((c) => toDateOnlyString(c.completedOn) === toDateOnlyString(today))
+      .map((c) => c.entityId)
   );
-  const completedIds = new Set(todayDailyCompletions.map((c) => c.entityId));
+  const completionKeysByHabit = groupCompletionDateKeys(todayDailyCompletions);
+  const dueToday = dailyTasks.filter((task) =>
+    isHabitDueOn(task.weekdays, today, {
+      createdAt: task.createdAt,
+      completedOnKeys: completionKeysByHabit.get(task.id),
+    })
+  );
 
   const dailyConsistencyToday =
-    scheduledToday.length === 0
+    dueToday.length === 0
       ? 0
       : Math.round(
-          (scheduledToday.filter((task) => completedIds.has(task.id)).length /
-            scheduledToday.length) *
+          (dueToday.filter((task) => completedIds.has(task.id)).length /
+            dueToday.length) *
             100
         );
 
   const streakInfo = await getStreakInfo(dailyTasks);
 
-  const remainingHabits = scheduledToday.filter(
+  const remainingHabits = dueToday.filter(
     (task) => !completedIds.has(task.id)
   ).length;
 

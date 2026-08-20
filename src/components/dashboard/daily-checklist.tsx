@@ -99,7 +99,9 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
                 {task.title}
               </div>
               <div className="mt-0.5 text-[12px] text-faint">
-                {task.scheduleLabel}
+                {task.carriedOver
+                  ? `${task.scheduleLabel} · carried over`
+                  : task.scheduleLabel}
               </div>
               {done && (
                 <span className="pointer-events-none absolute top-[9px] left-0 h-[1.5px] w-full max-w-[420px] bg-hairline" />

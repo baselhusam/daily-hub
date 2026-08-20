@@ -1,7 +1,9 @@
 import {
+  addDays,
   format,
   isThisYear,
   startOfDay,
+  subDays,
 } from "date-fns";
 
 export function getTodayDate(): Date {
@@ -109,6 +111,70 @@ export function isOverdue(
 
 export function isScheduledOn(weekdays: number[], date = new Date()): boolean {
   return weekdays.includes(date.getDay());
+}
+
+/** Most recent scheduled day strictly before `date`, within the past week. */
+export function previousScheduledDate(
+  weekdays: number[],
+  date: Date,
+  notBefore?: Date
+): Date | null {
+  if (weekdays.length === 0) return null;
+  const floor = notBefore ? startOfDay(notBefore) : undefined;
+  for (let i = 1; i <= 7; i++) {
+    const candidate = startOfDay(subDays(date, i));
+    if (floor && candidate < floor) return null;
+    if (isScheduledOn(weekdays, candidate)) return candidate;
+  }
+  return null;
+}
+
+export function groupCompletionDateKeys(
+  logs: Array<{ entityId: string; completedOn: Date }>
+): Map<string, Set<string>> {
+  const map = new Map<string, Set<string>>();
+  for (const log of logs) {
+    const key = toDateOnlyString(log.completedOn);
+    const existing = map.get(log.entityId);
+    if (existing) existing.add(key);
+    else map.set(log.entityId, new Set([key]));
+  }
+  return map;
+}
+
+/**
+ * A habit is due on its scheduled weekdays. If the last scheduled day was
+ * missed, it stays due on the days in between until the next scheduled day
+ * starts a fresh occurrence.
+ */
+export function isHabitDueOn(
+  weekdays: number[],
+  date: Date,
+  options?: {
+    createdAt?: Date | null;
+    completedOnKeys?: Iterable<string>;
+  }
+): boolean {
+  const day = startOfDay(date);
+  const createdAt = options?.createdAt
+    ? startOfDay(options.createdAt)
+    : undefined;
+  if (createdAt && day < createdAt) return false;
+  if (weekdays.length === 0) return false;
+  if (isScheduledOn(weekdays, day)) return true;
+
+  const prev = previousScheduledDate(weekdays, day, createdAt);
+  if (!prev) return false;
+
+  const completed = new Set(options?.completedOnKeys ?? []);
+  for (
+    let cursor = new Date(prev);
+    cursor < day;
+    cursor = addDays(cursor, 1)
+  ) {
+    if (completed.has(toDateOnlyString(cursor))) return false;
+  }
+  return true;
 }
 
 export const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"] as const;

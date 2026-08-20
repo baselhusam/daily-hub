@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import {
   calendarDaysBetween,
   getTodayDate,
-  isScheduledOn,
+  groupCompletionDateKeys,
+  isHabitDueOn,
   toDateOnlyString,
   type CalendarMode,
 } from "@/lib/dates";
@@ -16,6 +17,7 @@ export type StreakInfo = {
 type DailyTaskLike = {
   id: string;
   weekdays: number[];
+  createdAt?: Date;
 };
 
 export async function getStreakInfo(
@@ -26,7 +28,7 @@ export async function getStreakInfo(
     dailyTasks ??
     (await prisma.dailyTask.findMany({
       where: { isActive: true },
-      select: { id: true, weekdays: true },
+      select: { id: true, weekdays: true, createdAt: true },
     }));
 
   const logs = await prisma.completionLog.findMany({
@@ -34,15 +36,18 @@ export async function getStreakInfo(
     select: { entityId: true, completedOn: true },
   });
 
-  const logSet = new Set(
-    logs.map((l) => `${l.entityId}:${toDateOnlyString(l.completedOn)}`)
-  );
+  const keysByTask = groupCompletionDateKeys(logs);
 
   function dayOk(date: Date): boolean {
     const key = toDateOnlyString(date);
-    const scheduled = tasks.filter((t) => isScheduledOn(t.weekdays, date));
-    if (scheduled.length === 0) return true;
-    return scheduled.every((t) => logSet.has(`${t.id}:${key}`));
+    const due = tasks.filter((t) =>
+      isHabitDueOn(t.weekdays, date, {
+        createdAt: t.createdAt,
+        completedOnKeys: keysByTask.get(t.id),
+      })
+    );
+    if (due.length === 0) return true;
+    return due.every((t) => keysByTask.get(t.id)?.has(key));
   }
 
   let cursor = new Date(today);

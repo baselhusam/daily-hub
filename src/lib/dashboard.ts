@@ -10,6 +10,8 @@ import {
   formatTodayLabel,
   getGreeting,
   getTodayDate,
+  groupCompletionDateKeys,
+  isHabitDueOn,
   isOverdue,
   isScheduledOn,
   toDateOnlyString,
@@ -75,6 +77,7 @@ export type DashboardDailyTask = {
   weekdays: number[];
   sortOrder: number;
   completedToday: boolean;
+  carriedOver: boolean;
   scheduleLabel: string;
 };
 
@@ -240,8 +243,11 @@ export async function getDashboardData(): Promise<DashboardData> {
       },
     }),
     prisma.completionLog.findMany({
-      where: { entityType: "DAILY_TASK", completedOn: today },
-      select: { entityId: true },
+      where: {
+        entityType: "DAILY_TASK",
+        completedOn: { gte: subDays(today, 7) },
+      },
+      select: { entityId: true, completedOn: true },
     }),
     prisma.completionLog.findMany({
       where: { completedOn: { gte: thisWeekStart } },
@@ -266,9 +272,18 @@ export async function getDashboardData(): Promise<DashboardData> {
     getProjectLastTouchMap(),
   ]);
 
-  const completedDailyIds = new Set(todayCompletions.map((c) => c.entityId));
-  const scheduledToday = dailyTasks.filter((task) =>
-    isScheduledOn(task.weekdays, today)
+  const todayKey = toDateOnlyString(today);
+  const completedDailyIds = new Set(
+    todayCompletions
+      .filter((c) => toDateOnlyString(c.completedOn) === todayKey)
+      .map((c) => c.entityId)
+  );
+  const completionKeysByHabit = groupCompletionDateKeys(todayCompletions);
+  const dueToday = dailyTasks.filter((task) =>
+    isHabitDueOn(task.weekdays, today, {
+      createdAt: task.createdAt,
+      completedOnKeys: completionKeysByHabit.get(task.id),
+    })
   );
 
   const mappedProjects: DashboardProject[] = projects.map((project) => {
@@ -393,13 +408,13 @@ export async function getDashboardData(): Promise<DashboardData> {
       unit: "days",
       color: "var(--foreground)",
       hint:
-        scheduledToday.length > 0 &&
-        scheduledToday.every((t) => completedDailyIds.has(t.id))
+        dueToday.length > 0 &&
+        dueToday.every((t) => completedDailyIds.has(t.id))
           ? "today is safe"
           : "today still open",
       hintColor:
-        scheduledToday.length > 0 &&
-        scheduledToday.every((t) => completedDailyIds.has(t.id))
+        dueToday.length > 0 &&
+        dueToday.every((t) => completedDailyIds.has(t.id))
           ? "var(--done)"
           : "var(--warn)",
       foot: "7d hits",
@@ -430,7 +445,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
   ];
 
-  const remainingHabits = scheduledToday.filter(
+  const remainingHabits = dueToday.filter(
     (task) => !completedDailyIds.has(task.id)
   ).length;
   const notifications = buildNotifications({
@@ -479,7 +494,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     todayLabel: formatTodayLabel(today),
     greeting: getGreeting(settings.displayName),
     projects: mappedProjects,
-    dailyTasks: scheduledToday.map((task) => ({
+    dailyTasks: dueToday.map((task) => ({
       id: task.id,
       title: task.title,
       iconKey: task.iconKey,
@@ -487,6 +502,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       weekdays: task.weekdays,
       sortOrder: task.sortOrder,
       completedToday: completedDailyIds.has(task.id),
+      carriedOver: !isScheduledOn(task.weekdays, today),
       scheduleLabel: formatWeekdays(task.weekdays),
     })),
     inboxTasks,
@@ -510,10 +526,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     stats: {
       openTasks: allOpenTasks.length,
       overdueTasks: overdueTasks.length,
-      dailyCompleted: scheduledToday.filter((t) =>
+      dailyCompleted: dueToday.filter((t) =>
         completedDailyIds.has(t.id)
       ).length,
-      dailyScheduled: scheduledToday.length,
+      dailyScheduled: dueToday.length,
       completionsThisWeek: weekCompletions.length,
       streak: streakInfo.streak,
     },

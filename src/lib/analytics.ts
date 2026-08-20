@@ -1,6 +1,12 @@
 import { subDays, eachDayOfInterval, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { getTodayDate, isScheduledOn, toDateOnlyString } from "@/lib/dates";
+import {
+  getTodayDate,
+  groupCompletionDateKeys,
+  isHabitDueOn,
+  isScheduledOn,
+  toDateOnlyString,
+} from "@/lib/dates";
 
 export type AnalyticsOverview = {
   totalCompletions: number;
@@ -208,17 +214,23 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       ? 0
       : Math.round((completedTasksCount / totalTaskPool) * 100);
 
-  const scheduledToday = dailyTasks.filter((task) =>
-    isScheduledOn(task.weekdays, today)
+  const completionKeysByHabit = groupCompletionDateKeys(
+    windowCompletions.filter((log) => log.entityType === "DAILY_TASK")
+  );
+  const dueToday = dailyTasks.filter((task) =>
+    isHabitDueOn(task.weekdays, today, {
+      createdAt: task.createdAt,
+      completedOnKeys: completionKeysByHabit.get(task.id),
+    })
   );
   const completedTodayIds = new Set(todayDailyCompletions.map((c) => c.entityId));
 
   const dailyConsistencyToday =
-    scheduledToday.length === 0
+    dueToday.length === 0
       ? 0
       : Math.round(
-          (scheduledToday.filter((task) => completedTodayIds.has(task.id)).length /
-            scheduledToday.length) *
+          (dueToday.filter((task) => completedTodayIds.has(task.id)).length /
+            dueToday.length) *
             100
         );
 
