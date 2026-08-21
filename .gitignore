@@ -49,6 +49,7 @@ next-env.d.ts
 
 # local sqlite dev data
 /.data/
+/prisma/.data/
 
 # temporary Prisma engine generation
 /.tmp/

@@ -1,0 +1,27 @@
+# Keep the image build small and Linux-only. Without this, `COPY . .`
+# ships host node_modules/.next and overwrites the Alpine install.
+node_modules
+.next
+.git
+.github
+.data
+prisma/.data
+.tmp
+src/generated
+coverage
+
+.env
+.env.*
+*.tgz
+*.pem
+.DS_Store
+
+site
+branding
+docs
+.cursor
+.rivet
+.rivet-preview-*
+
+public/uploads/*
+!public/uploads/.gitkeep
