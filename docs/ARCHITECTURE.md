@@ -7,11 +7,11 @@ Technical design of DailyHub.
 ```mermaid
 flowchart TB
   subgraph client [Browser]
-    Dashboard["Dashboard /"]
+    Today["Today /"]
     Projects["Projects /projects"]
-    Daily["Daily /daily"]
+    Daily["Habits /daily"]
     Analytics["Analytics /analytics"]
-    Sidebar["App sidebar"]
+    Sidebar["App sidebar + search + notifications"]
   end
 
   subgraph nextjs [Next.js App Router]
@@ -22,31 +22,33 @@ flowchart TB
 
   subgraph data [Data layer]
     Prisma["Prisma Client"]
-    PG["PostgreSQL 16"]
+    PG["PostgreSQL 16 - Docker"]
+    SQLite["SQLite - npx CLI"]
   end
 
-  Sidebar --> Dashboard
+  Sidebar --> Today
   Sidebar --> Projects
   Sidebar --> Daily
   Sidebar --> Analytics
-  Dashboard --> RSC
+  Today --> RSC
   Projects --> RSC
   Daily --> RSC
   Analytics --> RSC
-  Dashboard --> Client
+  Today --> Client
   Analytics --> Client
   Client --> Actions
   RSC --> Prisma
   Actions --> Prisma
   Prisma --> PG
+  Prisma --> SQLite
 ```
 
 ## Request flow
 
-### Read (dashboard)
+### Read (Today)
 
-1. `src/app/(app)/page.tsx` calls `getDashboardData()` and `getAnalyticsData()` (chart subset)
-2. Parallel Prisma queries: projects+tasks, scheduled daily tasks, inbox, stats
+1. `src/app/(app)/page.tsx` calls `getDashboardData()`
+2. Parallel Prisma queries: projects+tasks, scheduled daily tasks, inbox, stats, notifications input
 3. Data passed to client `DashboardShell` with URL-based project filter
 
 ### Read (projects / daily)
@@ -66,21 +68,24 @@ flowchart TB
 2. Zod validation via `src/lib/validations.ts`
 3. Prisma write (often `$transaction` for task complete + completion log)
 4. `revalidatePath` for `/`, `/projects`, `/daily`, `/analytics`
+5. Failures return `{ success: false, error }` via `failAction()` instead of throwing
 
 ## Route groups
 
 ```
 src/app/
-├── layout.tsx           # Root: Geist fonts, ThemeProvider
+├── layout.tsx              # Instrument Sans / Doto / Geist Mono, ThemeProvider
+├── not-found.tsx
+├── global-error.tsx
+├── uploads/[filename]/     # Serves DAILYHUB_DATA_DIR/uploads
 └── (app)/
-    ├── layout.tsx       # AppSidebar + MobileNav + main
-    ├── page.tsx         # Dashboard
-    ├── projects/
-    │   └── page.tsx     # Projects management
-    ├── daily/
-    │   └── page.tsx     # Daily habit management
-    └── analytics/
-        └── page.tsx     # Analytics
+    ├── layout.tsx          # AppShell: sidebar, search, notifications
+    ├── error.tsx
+    ├── loading.tsx
+    ├── page.tsx            # Today (/)
+    ├── projects/page.tsx
+    ├── daily/page.tsx
+    └── analytics/page.tsx
 ```
 
 `(app)` is a route group — URLs remain flat (`/`, `/projects`, etc.).
@@ -112,7 +117,13 @@ erDiagram
     string id PK
     string title
     string logoUrl
-    int_array weekdays
+    json weekdays
+  }
+
+  Settings {
+    string id PK
+    string displayName
+    int nudgeDays
   }
 
   CompletionLog {
@@ -133,14 +144,14 @@ erDiagram
 
 `CompletionLog` uses a unique constraint on `(entityType, entityId, completedOn)` for daily habits.
 
-Daily tasks only appear on the dashboard when `weekdays` includes today's JS `getDay()` value.
+Daily tasks only appear on Today when `weekdays` includes today's JS `getDay()` value.
 
 ## Key libraries
 
 | Library | Usage |
 |---------|--------|
 | `motion` | Page/card stagger, checklist animations |
-| `recharts` | Analytics bar charts + compact dashboard chart |
+| `recharts` | Analytics bar charts + compact Today chart |
 | `date-fns` | Formatting, week boundaries, date ranges, overdue checks |
 | `zod` | Server Action input validation |
 | `lucide-react` | Icons via `iconKey` string lookup |
@@ -148,21 +159,31 @@ Daily tasks only appear on the dashboard when `weekdays` includes today's JS `ge
 ## File upload
 
 - Server Action: `src/app/actions/upload.ts`
-- Writes to `public/uploads/` with UUID filename
-- Max 2MB; PNG, JPG, WEBP, SVG
-- Returns path like `/uploads/{uuid}.png` stored on `Project.logoUrl` or `DailyTask.logoUrl`
+- Detection/sanitization: `src/lib/uploaded-image.ts` (magic-byte sniff; SVG allowlist sanitize)
+- Writes to `DAILYHUB_DATA_DIR/uploads/` with UUID filename (SQLite/npx: `~/.daily-hub/uploads/`; Docker: `/app/data/uploads/`)
+- Max 2MB; PNG, JPG, WEBP, SVG (sanitized)
+- Served via `src/app/uploads/[filename]/route.ts` at `/uploads/{uuid}.{ext}`
+- SVG responses include `nosniff` and a sandboxed document CSP
+
+Remote `https?://` logo URLs are stored on `Project.logoUrl` / `DailyTask.logoUrl` and rendered as `<img>` only.
 
 ## Docker services
 
 | Service | Image / build | Port | Role |
 |---------|---------------|------|------|
-| `db` | `postgres:16-alpine` | 5432 | Persistent Postgres |
+| `db` | `postgres:16-alpine` | internal only (5432 in overlay for host dev) | Persistent Postgres |
 | `app` | `Dockerfile` (standalone Next) | 9999 | App + auto migrate |
 
 Volumes: `postgres_data`, `uploads_data`.
 
+`docker-compose.dev.yml` publishes Postgres on `5432:5432` for Option C only.
+
+## Security headers
+
+`next.config.ts` sets CSP, `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` on all routes.
+
 ## Performance notes
 
-- Dashboard and analytics pages use `export const dynamic = 'force-dynamic'`
+- Today and analytics pages use `export const dynamic = 'force-dynamic'`
 - Analytics queries are bounded (14-day window, 7-day daily stats)
 - Prisma client singleton in `src/lib/prisma.ts` (dev hot-reload safe)

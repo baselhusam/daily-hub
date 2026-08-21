@@ -3,7 +3,7 @@
 import { revalidateApp } from "@/lib/revalidate";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import type { ActionResult } from "@/app/actions/types";
+import { failAction, type ActionResult } from "@/app/actions/types";
 
 const settingsSchema = z.object({
   displayName: z.string().min(1).max(80),
@@ -26,11 +26,15 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  await prisma.settings.upsert({
-    where: { id: "default" },
-    create: { id: "default", ...parsed.data },
-    update: parsed.data,
-  });
+  try {
+    await prisma.settings.upsert({
+      where: { id: "default" },
+      create: { id: "default", ...parsed.data },
+      update: parsed.data,
+    });
+  } catch (error) {
+    return failAction(error, "Failed to save settings.");
+  }
 
   revalidateApp();
 

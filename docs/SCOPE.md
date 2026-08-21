@@ -10,23 +10,27 @@ What DailyHub includes today and what is intentionally deferred.
 - [x] **Tasks** — title, notes, due date, priority; link to project (or inbox with no project)
 - [x] **Daily tasks** — habits with icons/logos and weekday schedules; toggle completes for **today**
 - [x] **Completion log** — records task completions and daily toggles for analytics
+- [x] **Settings** — display name, role, workspace label, streak visibility, nudge threshold
 
 ### UI
 
-- [x] Dashboard with bento stats, compact activity chart, project filter, simple task tables (title + due date), today's scheduled habits
-- [x] Projects page (`/projects`) — CRUD with logo, due date, description
-- [x] Daily page (`/daily`) — CRUD with logo and weekday scheduler
-- [x] Left sidebar with Dashboard, Projects, Daily, Analytics, project filter list, and quick stats
-- [x] Mobile top navigation
+- [x] Today (`/`) with greeting, quick add, snapshot stats, today's habits, open work by project, inbox
+- [x] Projects page (`/projects`) — CRUD with logo, due date, description, milestones
+- [x] Habits page (`/daily`) — CRUD with logo and weekday scheduler
+- [x] Analytics (`/analytics`) — overview cards, 14-day chart, project breakdown, daily habit rates (weekday-aware)
+- [x] Left sidebar (desktop) or bottom tab bar (mobile) with project filter and quick stats
+- [x] Command-center **notifications** in the top bar (overdue tasks, due today, remaining habits, stalled projects)
+- [x] **Search palette** — jump to projects, tasks, habits, and milestones
 - [x] Light / dark theme toggle
-- [x] Analytics: overview cards, 14-day chart, project breakdown, daily habit rates (weekday-aware)
 
 ### Infrastructure
 
 - [x] PostgreSQL in Docker
+- [x] SQLite via `npx` / CLI (`~/.daily-hub/`)
 - [x] Prisma migrations and seed data
 - [x] Full-stack `docker-compose.yml` (db + app on port 9999)
 - [x] Next.js standalone Docker image with migrate-on-start
+- [x] GitHub Actions CI (lint, typecheck, test, build)
 
 ## Out of scope (v1 — do not add without new agreement)
 
@@ -38,8 +42,8 @@ What DailyHub includes today and what is intentionally deferred.
 | Time-of-day scheduling for habits | Weekday picker only |
 | Task assignments, comments, subtasks | Flat task list |
 | Real-time sync / mobile native app | Web only |
-| S3/cloud logo storage | Local `public/uploads/` |
-| Notifications / reminders | — |
+| S3/cloud logo storage | Local `DAILYHUB_DATA_DIR/uploads/` |
+| Push / email notifications | In-app bell only |
 | Export / import | — |
 | RBAC, teams, workspaces | — |
 

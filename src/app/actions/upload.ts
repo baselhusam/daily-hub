@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { getUploadsDir } from "@/lib/data-dir";
+import { prepareUploadedImage } from "@/lib/uploaded-image";
 
 export async function uploadLogo(formData: FormData): Promise<string | null> {
   const file = formData.get("logo") as File | null;
@@ -11,23 +12,13 @@ export async function uploadLogo(formData: FormData): Promise<string | null> {
     return null;
   }
 
-  const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error("Unsupported file type. Use PNG, JPG, WEBP, or SVG.");
-  }
-
-  if (file.size > 2 * 1024 * 1024) {
-    throw new Error("Logo must be smaller than 2MB.");
-  }
-
   const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  const extension = file.type.split("/")[1].replace("svg+xml", "svg");
-  const filename = `${randomUUID()}.${extension}`;
+  const prepared = prepareUploadedImage(bytes);
+  const filename = `${randomUUID()}.${prepared.extension}`;
   const uploadDir = getUploadsDir();
   const filepath = join(uploadDir, filename);
 
   await mkdir(uploadDir, { recursive: true });
-  await writeFile(filepath, buffer);
+  await writeFile(filepath, prepared.buffer);
   return `/uploads/${filename}`;
 }

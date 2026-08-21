@@ -8,7 +8,7 @@ import {
   parseWeekdaysFromForm,
   updateDailyTaskSchema,
 } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/types";
+import { failAction, type ActionResult } from "@/app/actions/types";
 import { toWeekdaysJson } from "@/lib/weekdays-db";
 
 function revalidateAll() {
@@ -33,18 +33,23 @@ export async function createDailyTask(
   }
 
   const { title, iconKey, logoUrl, isActive } = parsed.data;
-  const count = await prisma.dailyTask.count();
 
-  await prisma.dailyTask.create({
-    data: {
-      title,
-      iconKey,
-      logoUrl: logoUrl || null,
-      weekdays: toWeekdaysJson(parsed.data.weekdays),
-      isActive,
-      sortOrder: count,
-    },
-  });
+  try {
+    const count = await prisma.dailyTask.count();
+
+    await prisma.dailyTask.create({
+      data: {
+        title,
+        iconKey,
+        logoUrl: logoUrl || null,
+        weekdays: toWeekdaysJson(parsed.data.weekdays),
+        isActive,
+        sortOrder: count,
+      },
+    });
+  } catch (error) {
+    return failAction(error, "Failed to create habit.");
+  }
 
   revalidateAll();
   return { success: true };
@@ -70,16 +75,20 @@ export async function updateDailyTask(
 
   const { id, title, iconKey, logoUrl, isActive } = parsed.data;
 
-  await prisma.dailyTask.update({
-    where: { id },
-    data: {
-      title,
-      iconKey,
-      logoUrl: logoUrl || null,
-      weekdays: toWeekdaysJson(parsed.data.weekdays),
-      isActive,
-    },
-  });
+  try {
+    await prisma.dailyTask.update({
+      where: { id },
+      data: {
+        title,
+        iconKey,
+        logoUrl: logoUrl || null,
+        weekdays: toWeekdaysJson(parsed.data.weekdays),
+        isActive,
+      },
+    });
+  } catch (error) {
+    return failAction(error, "Failed to update habit.");
+  }
 
   revalidateAll();
   return { success: true };
@@ -123,7 +132,12 @@ export async function toggleDailyTask(
 }
 
 export async function deleteDailyTask(id: string): Promise<ActionResult> {
-  await prisma.dailyTask.delete({ where: { id } });
+  try {
+    await prisma.dailyTask.delete({ where: { id } });
+  } catch (error) {
+    return failAction(error, "Failed to delete habit.");
+  }
+
   revalidateAll();
   return { success: true };
 }

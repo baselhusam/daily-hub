@@ -35,12 +35,19 @@ export async function GET(
     }
 
     const body = await readFile(filepath);
-    return new NextResponse(body, {
-      headers: {
-        "Content-Type": getContentType(filename),
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    });
+    const extension = filename.split(".").pop()?.toLowerCase() ?? "";
+    const headers: Record<string, string> = {
+      "Content-Type": getContentType(filename),
+      "Cache-Control": "public, max-age=31536000, immutable",
+    };
+
+    if (extension === "svg") {
+      headers["X-Content-Type-Options"] = "nosniff";
+      headers["Content-Security-Policy"] =
+        "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+    }
+
+    return new NextResponse(body, { headers });
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

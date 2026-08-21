@@ -5,10 +5,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: dailyhub
-      POSTGRES_PASSWORD: dailyhub
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: dailyhub
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -27,7 +25,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://dailyhub:dailyhub@db:5432/dailyhub
+      DATABASE_URL: postgresql://dailyhub:${POSTGRES_PASSWORD}@db:5432/dailyhub
       DAILYHUB_DATA_DIR: /app/data
       NODE_ENV: production
     ports:

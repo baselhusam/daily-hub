@@ -1,6 +1,6 @@
 {
   "name": "@baselhusam/daily-hub",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A personal command center for projects, tasks, and daily habits.",
   "license": "MIT",
   "author": "Basel Husam",
@@ -36,6 +36,8 @@
     "build:seed": "esbuild prisma/seed.ts --bundle --platform=node --target=node22 --outfile=bin/seed.js --format=cjs --alias:server-only=./scripts/server-only-shim.js --alias:@=./src",
     "start": "next start -p 9999",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "db:generate": "prisma generate && prisma generate --schema prisma/sqlite/schema.prisma",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
@@ -84,6 +86,7 @@
     "eslint": "^9.36.0",
     "eslint-config-next": "^15.5.6",
     "tailwindcss": "^4.1.13",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
   }
 }

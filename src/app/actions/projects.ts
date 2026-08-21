@@ -8,7 +8,7 @@ import {
   milestoneSchema,
   updateProjectSchema,
 } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/types";
+import { failAction, type ActionResult } from "@/app/actions/types";
 
 function revalidateAll() {
   revalidateApp();
@@ -170,7 +170,12 @@ export async function updateProject(formData: FormData): Promise<ActionResult> {
 }
 
 export async function deleteProject(id: string): Promise<ActionResult> {
-  await prisma.project.delete({ where: { id } });
+  try {
+    await prisma.project.delete({ where: { id } });
+  } catch (error) {
+    return failAction(error, "Failed to delete project.");
+  }
+
   revalidateAll();
   return { success: true };
 }

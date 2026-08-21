@@ -4,7 +4,7 @@ import { revalidateApp } from "@/lib/revalidate";
 import { prisma } from "@/lib/prisma";
 import { parseDateInput } from "@/lib/dates";
 import { milestoneSchema } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/types";
+import { failAction, type ActionResult } from "@/app/actions/types";
 
 function revalidateAll() {
   revalidateApp();
@@ -34,7 +34,12 @@ export async function toggleMilestone(id: string): Promise<ActionResult> {
 }
 
 export async function deleteMilestone(id: string): Promise<ActionResult> {
-  await prisma.milestone.delete({ where: { id } });
+  try {
+    await prisma.milestone.delete({ where: { id } });
+  } catch (error) {
+    return failAction(error, "Failed to delete milestone.");
+  }
+
   revalidateAll();
   return { success: true };
 }
@@ -64,19 +69,23 @@ export async function createMilestone(formData: FormData): Promise<ActionResult>
     return { success: false, error: "Project not found." };
   }
 
-  const last = await prisma.milestone.aggregate({
-    where: { projectId },
-    _max: { sortOrder: true },
-  });
+  try {
+    const last = await prisma.milestone.aggregate({
+      where: { projectId },
+      _max: { sortOrder: true },
+    });
 
-  await prisma.milestone.create({
-    data: {
-      projectId,
-      name: parsed.data.name.trim(),
-      dueDate: parseDateInput(parsed.data.dueDate),
-      sortOrder: (last._max.sortOrder ?? -1) + 1,
-    },
-  });
+    await prisma.milestone.create({
+      data: {
+        projectId,
+        name: parsed.data.name.trim(),
+        dueDate: parseDateInput(parsed.data.dueDate),
+        sortOrder: (last._max.sortOrder ?? -1) + 1,
+      },
+    });
+  } catch (error) {
+    return failAction(error, "Failed to create milestone.");
+  }
 
   revalidateAll();
   return { success: true };
@@ -110,18 +119,22 @@ export async function saveProjectMilestones(
     });
   }
 
-  await prisma.milestone.deleteMany({ where: { projectId } });
+  try {
+    await prisma.milestone.deleteMany({ where: { projectId } });
 
-  if (valid.length > 0) {
-    await prisma.milestone.createMany({
-      data: valid.map((milestone, index) => ({
-        projectId,
-        name: milestone.name,
-        dueDate: milestone.dueDate,
-        done: milestone.done,
-        sortOrder: index,
-      })),
-    });
+    if (valid.length > 0) {
+      await prisma.milestone.createMany({
+        data: valid.map((milestone, index) => ({
+          projectId,
+          name: milestone.name,
+          dueDate: milestone.dueDate,
+          done: milestone.done,
+          sortOrder: index,
+        })),
+      });
+    }
+  } catch (error) {
+    return failAction(error, "Failed to save milestones.");
   }
 
   revalidateAll();

@@ -4,7 +4,7 @@ import { revalidateApp } from "@/lib/revalidate";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate, parseDateInput } from "@/lib/dates";
 import { createTaskSchema, updateTaskSchema } from "@/lib/validations";
-import type { ActionResult } from "@/app/actions/types";
+import { failAction, type ActionResult } from "@/app/actions/types";
 
 function revalidateAll() {
   revalidateApp();
@@ -178,7 +178,12 @@ export async function toggleTask(taskId: string): Promise<ActionResult> {
 }
 
 export async function deleteTask(id: string): Promise<ActionResult> {
-  await prisma.task.delete({ where: { id } });
+  try {
+    await prisma.task.delete({ where: { id } });
+  } catch (error) {
+    return failAction(error, "Failed to delete task.");
+  }
+
   revalidateAll();
   return { success: true };
 }

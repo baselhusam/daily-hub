@@ -88,6 +88,7 @@ The first download is large (~80 MB) because the package ships the full Next.js 
 ### Option B — Docker (Postgres, self-hosting)
 
 ```bash
+cp .env.example .env   # set POSTGRES_PASSWORD to a strong value
 docker compose up --build
 ```
 
@@ -102,8 +103,8 @@ Persistent data lives in Docker volumes (`postgres_data`, `uploads_data`).
 ### Option C — Local development (Postgres)
 
 ```bash
-docker compose up -d db
-cp .env.example .env
+cp .env.example .env   # set POSTGRES_PASSWORD and match it in DATABASE_URL
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
 npm install
 npm run db:migrate:dev
 npm run db:seed
@@ -151,6 +152,8 @@ There is no separate API server. Reads go through Server Components; writes go t
 | `npm run build` | Production build |
 | `npm run start` | Production server on port 9999 |
 | `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
+| `npm test` | Vitest unit tests |
 | `npm run db:migrate:dev` | Dev migrations (Postgres) |
 | `npm run db:migrate` | Production migrations (Postgres) |
 | `npm run db:migrate:sqlite` | Production migrations (SQLite) |
@@ -163,11 +166,14 @@ Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/dai
 
 Publishing is automatic on GitHub Releases. CI uses npm trusted publishing (OIDC) — no `NPM_TOKEN` secret.
 
-1. Bump `"version"` in `package.json` (and commit).
-2. Push to `main`.
-3. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.3`).
+1. Update [`CHANGELOG.md`](CHANGELOG.md) under **Unreleased** (or add the new version section).
+2. Bump `"version"` in `package.json` (and commit).
+3. Push to `main`.
+4. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.4`). Paste the matching `CHANGELOG` section into the release body.
 
 The [Publish npm package](.github/workflows/publish.yml) workflow then builds via `prepack` (Prisma, Next.js, standalone bundle, CLI) and runs `npm publish`. Prereleases publish under the `next` npm tag.
+
+Pull requests and pushes to `main` also run the [CI](.github/workflows/ci.yml) workflow (lint, typecheck, test, build).
 
 The marketing site lives in [`site/`](site/) and deploys to [GitHub Pages](https://baselhusam.github.io/daily-hub/). Enable it once under **Settings → Pages → Source: GitHub Actions**, then push to `main`.
 
@@ -188,6 +194,7 @@ npx ./baselhusam-daily-hub-0.1.3.tgz
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data model, request flow, Docker services |
 | [docs/DESIGN.md](docs/DESIGN.md) | Visual direction, layout, and UX patterns |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker, env vars, self-hosting, troubleshooting |
+| [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
 
 ## Layout
 

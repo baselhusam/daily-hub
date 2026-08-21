@@ -7,13 +7,14 @@ How to run DailyHub locally, with `npx`, Docker, and on a server.
 - **Node 22+** for `npx daily-hub` or local development
 - **Docker** & Docker Compose for the Postgres self-host path
 - **Port 9999** exposed for the web app
-- **Port 5432** for PostgreSQL (local dev only if not using Docker networking)
+- **Port 5432** only when using the dev overlay for host-side Postgres access
 
 ## Environment variables
 
 | Variable | Required | Example |
 |----------|----------|---------|
-| `DATABASE_URL` | Yes | `postgresql://dailyhub:dailyhub@localhost:5432/dailyhub` or `file:/path/to/data.db` |
+| `POSTGRES_PASSWORD` | Yes (Docker / Postgres dev) | A strong secret you choose |
+| `DATABASE_URL` | Yes | `postgresql://dailyhub:YOUR_PASSWORD@localhost:5432/dailyhub` or `file:/path/to/data.db` |
 | `DAILYHUB_DATA_DIR` | No | `~/.daily-hub` for npx, `/app/data` in Docker |
 
 Copy from template:
@@ -21,6 +22,8 @@ Copy from template:
 ```bash
 cp .env.example .env
 ```
+
+Set `POSTGRES_PASSWORD` and use the **same password** in `DATABASE_URL`. Compose does not expand `${POSTGRES_PASSWORD}` inside `DATABASE_URL` for host `npm run dev`.
 
 ### Docker Compose values
 
@@ -60,9 +63,10 @@ Notes:
 
 ## Option B — Full stack with Docker (Postgres)
 
-Starts PostgreSQL + Next.js app:
+Starts PostgreSQL + Next.js app. Postgres is **not** published to the host by default.
 
 ```bash
+cp .env.example .env   # set POSTGRES_PASSWORD
 docker compose up --build
 ```
 
@@ -89,6 +93,8 @@ docker compose up --build
 docker compose exec app npm run db:seed
 ```
 
+If you already have a `postgres_data` volume from an older setup, keep using the same `POSTGRES_PASSWORD` Postgres was initialized with. Changing `.env` alone does not rotate the role password inside an existing volume.
+
 ### Persistent data
 
 | Volume | Contents |
@@ -98,11 +104,11 @@ docker compose exec app npm run db:seed
 
 ## Option C — Local development (Postgres)
 
-Database in Docker, app on host:
+Database in Docker (with host port 5432), app on host:
 
 ```bash
-docker compose up -d db
-cp .env.example .env
+cp .env.example .env   # set POSTGRES_PASSWORD and match DATABASE_URL
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
 npm install
 npm run db:migrate:dev
 npm run db:seed
@@ -150,14 +156,16 @@ Multi-stage build:
 Typical steps:
 
 1. Clone repo on server
-2. Set `DATABASE_URL` in `.env` or compose override
+2. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` (and `DATABASE_URL` if running the app outside Compose)
 3. `docker compose up -d --build`
 4. Put Caddy/Nginx in front if you need HTTPS on port 443 (reverse proxy to `localhost:9999`)
 
 **Security notes for v1:**
 
-- No built-in auth — use network-level protection (VPN, firewall, basic auth at proxy) if exposed to the internet
-- Uploaded logos are served from `/uploads/*` via the app runtime
+- No built-in auth — keep the instance on localhost, a private network, or behind a VPN / reverse-proxy
+- Postgres is not exposed on the host in the default Compose stack
+- Uploaded logos are served from `/uploads/*`; SVG responses use `nosniff` and a sandboxed document CSP
+- App responses include CSP, `X-Frame-Options`, and `Referrer-Policy` headers
 
 ## Health checks
 
@@ -172,6 +180,7 @@ Typical steps:
 | Issue | Fix |
 |-------|-----|
 | `P1001` Can't reach database | Wait for Postgres healthcheck; verify `DATABASE_URL` host |
+| `Set POSTGRES_PASSWORD in .env` on compose up | Copy `.env.example` and set a password before `docker compose up` |
 | Port 9999 in use | Use `npx daily-hub --port 3000` or change port in `package.json` / `docker-compose.yml` |
 | Empty dashboard after deploy | Run `npm run db:seed` or create data via UI |
 | Logos missing after rebuild | Ensure `uploads_data` volume is attached |
@@ -179,12 +188,16 @@ Typical steps:
 | Query engine missing (`darwin-arm64` / `debian-openssl`) | Update to the latest `@baselhusam/daily-hub`. The CLI ships engines for macOS, Windows, and Linux, and generates a native engine if one is missing. |
 | `SQLITE_BUSY` on npx | Restart the app; ensure `~/.daily-hub` is on local disk, not a synced folder |
 
-## CI suggestion
+## CI
+
+Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
 
 ```bash
 npm ci
 npm run db:generate
 npm run lint
+npm run typecheck
+npm test
 npm run build
 ```
 
