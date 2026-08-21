@@ -161,23 +161,21 @@ There is no separate API server. Reads go through Server Components; writes go t
 
 Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/daily-hub)
 
-Build and publish:
+Publishing is automatic on GitHub Releases. CI uses npm trusted publishing (OIDC) — no `NPM_TOKEN` secret.
 
-```bash
-npm publish
-```
+1. Bump `"version"` in `package.json` (and commit).
+2. Push to `main`.
+3. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.1`).
 
-`prepack` runs automatically: generates Prisma clients, builds Next.js, copies static assets into the standalone bundle, and builds the CLI.
+The [Publish npm package](.github/workflows/publish.yml) workflow then builds via `prepack` (Prisma, Next.js, standalone bundle, CLI) and runs `npm publish`. Prereleases publish under the `next` npm tag.
 
 The marketing site lives in [`site/`](site/) and deploys to [GitHub Pages](https://baselhusam.github.io/daily-hub/). Enable it once under **Settings → Pages → Source: GitHub Actions**, then push to `main`.
 
-**npm account requirements:** publishing requires **two-factor authentication** with **Authorization and publishing** enabled on [npmjs.com](https://www.npmjs.com/settings/baselhusam/tfa). Without 2FA, npm returns `403 Forbidden`.
-
-Test the tarball locally before publishing:
+Test the tarball locally before cutting a release:
 
 ```bash
 npm pack
-npx ./baselhusam-daily-hub-0.1.0.tgz
+npx ./baselhusam-daily-hub-0.1.1.tgz
 ```
 
 ## Documentation
