@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { SQLITE_ENGINE_FILES } from "./prisma-engines.mjs";
 
@@ -48,6 +48,24 @@ if (missing.length > 0) {
   console.error(
     "Add the matching binaryTargets in prisma/schema.prisma and re-run prisma generate."
   );
+  process.exit(1);
+}
+
+const generatedClient = readFileSync(join(generatedDest, "index.js"), "utf8");
+const missingTargets = [
+  "darwin-arm64",
+  "darwin",
+  "windows",
+  "debian-openssl-3.0.x",
+].filter((target) => !generatedClient.includes(target));
+
+if (missingTargets.length > 0) {
+  console.error(
+    "Generated Prisma Client is missing binaryTargets (packaging would fail on those platforms):"
+  );
+  for (const target of missingTargets) {
+    console.error(`  - ${target}`);
+  }
   process.exit(1);
 }
 

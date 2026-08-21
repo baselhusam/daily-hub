@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- CLI copies the host Prisma query engine into every directory the bundled Next.js client searches, and prints the installed version so a stale local `npx` copy is obvious.
+
 ## [0.1.6] - 2026-08-21
 
 ### Added

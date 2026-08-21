@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { createServer } from "node:net";
 import { homedir } from "node:os";
@@ -99,8 +99,19 @@ async function openBrowser(url: string) {
   }).unref();
 }
 
+function packageVersion(): string {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(join(packageRoot, "package.json"), "utf8")
+    ) as { version?: string };
+    return pkg.version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 function printHelp() {
-  console.log(`DailyHub CLI
+  console.log(`DailyHub CLI v${packageVersion()}
 
 Usage:
   daily-hub [options]
@@ -279,7 +290,7 @@ async function startServer(options: CliOptions) {
   });
 
   await waitForServer(url);
-  console.log(`DailyHub is running at ${url}`);
+  console.log(`DailyHub v${packageVersion()} is running at ${url}`);
   console.log(`Data directory: ${options.dataDir}`);
 
   if (options.openBrowser) {
@@ -289,6 +300,7 @@ async function startServer(options: CliOptions) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
+  console.log(`DailyHub v${packageVersion()}`);
 
   if (options.command === "seed") {
     const env = await preparePrisma(options);

@@ -43,6 +43,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify standalone Prisma engines
+        run: npm run prepare-standalone
+
   docker:
     name: Docker image (amd64)
     runs-on: ubuntu-latest

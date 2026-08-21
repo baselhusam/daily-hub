@@ -23,6 +23,31 @@ export function generatedClientDir(packageRoot: string): string {
   return join(packageRoot, ".next", "standalone", "src", "generated", "client");
 }
 
+export function queryEngineSearchDirs(packageRoot: string): string[] {
+  const standaloneRoot = join(packageRoot, ".next", "standalone");
+  return [
+    generatedClientDir(packageRoot),
+    join(packageRoot, "src", "generated", "client"),
+    join(standaloneRoot, ".next", "server"),
+    join(standaloneRoot, ".next", "server", "chunks"),
+    join(standaloneRoot, ".prisma", "client"),
+    join(standaloneRoot, "prisma"),
+    standaloneRoot,
+  ];
+}
+
+function copyEngineToSearchDirs(enginePath: string, engineName: string, packageRoot: string): string {
+  const destPath = join(generatedClientDir(packageRoot), engineName);
+  for (const dir of queryEngineSearchDirs(packageRoot)) {
+    mkdirSync(dir, { recursive: true });
+    const target = join(dir, engineName);
+    if (target !== enginePath && !existsSync(target)) {
+      cpSync(enginePath, target);
+    }
+  }
+  return destPath;
+}
+
 export function resolvePrismaCli(packageRoot: string): {
   command: string;
   prefixArgs: string[];
@@ -60,46 +85,32 @@ export async function ensureQueryEngine(
 ): Promise<string> {
   const binaryTarget = await getBinaryTargetForCurrentPlatform();
   const engineName = getNodeAPIName(binaryTarget, "fs");
-  const destDir = generatedClientDir(packageRoot);
-  const destPath = join(destDir, engineName);
 
-  const searchDirs = [
-    destDir,
-    join(packageRoot, "src", "generated", "client"),
-  ];
-
-  for (const dir of searchDirs) {
+  for (const dir of queryEngineSearchDirs(packageRoot)) {
     const candidate = join(dir, engineName);
     if (!existsSync(candidate)) {
       continue;
     }
 
-    if (candidate !== destPath) {
-      mkdirSync(destDir, { recursive: true });
-      cpSync(candidate, destPath);
-    }
-
-    return destPath;
+    return copyEngineToSearchDirs(candidate, engineName, packageRoot);
   }
 
   console.warn(
     `Prisma query engine for ${binaryTarget} is not in the package. Generating a native engine...`
   );
-  await generateNativeEngine(packageRoot, runCommand, env, destDir, destPath, engineName);
-  return destPath;
+  return generateNativeEngine(packageRoot, runCommand, env, engineName, binaryTarget);
 }
 
 async function generateNativeEngine(
   packageRoot: string,
   runCommand: RunCommand,
   env: NodeJS.ProcessEnv,
-  destDir: string,
-  destPath: string,
-  engineName: string
-): Promise<void> {
+  engineName: string,
+  binaryTarget: string
+): Promise<string> {
   const schemaPath = join(packageRoot, "prisma", "schema.prisma");
   if (!existsSync(schemaPath)) {
-    throw new Error(`Missing Prisma schema at ${schemaPath}.`);
+    throw missingEngineError(binaryTarget, engineName);
   }
 
   const tempDir = join(packageRoot, ".tmp", "prisma-native");
@@ -124,16 +135,23 @@ async function generateNativeEngine(
 
     const enginePath = join(outputDir, engineName);
     if (!existsSync(enginePath)) {
-      throw new Error(
-        `Prisma could not generate a query engine for this platform (${engineName}).`
-      );
+      throw missingEngineError(binaryTarget, engineName);
     }
 
-    mkdirSync(destDir, { recursive: true });
-    cpSync(enginePath, destPath);
+    return copyEngineToSearchDirs(enginePath, engineName, packageRoot);
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
+}
+
+function missingEngineError(binaryTarget: string, engineName: string): Error {
+  return new Error(
+    `DailyHub could not load the database engine for ${binaryTarget} (${engineName}).
+npx may be using an old install from a parent node_modules folder.
+Run the published version explicitly:
+
+  npx @baselhusam/daily-hub@latest`
+  );
 }
 
 // Backward-compatible aliases for any external imports.
