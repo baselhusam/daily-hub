@@ -284,16 +284,24 @@ export function DashboardShell({ data }: DashboardShellProps) {
           className={cn(
             "grid gap-5",
             showTodayRail
-              ? "dh:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.9fr)]"
+              ? "dh:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.9fr)] dh:items-stretch"
               : "dh:grid-cols-1"
           )}
         >
           <div
-            className="order-2 flex min-w-0 flex-col gap-3.5 dh:order-1"
+            className={cn(
+              "min-w-0",
+              isFreshWorkspace
+                ? "contents"
+                : "order-2 flex flex-col gap-3.5 dh:order-1"
+            )}
             aria-label="Open work"
           >
             {isFreshWorkspace ? (
-              <SurfaceCard variant="quiet">
+              <SurfaceCard
+                variant="quiet"
+                className="order-2 flex min-h-0 flex-col justify-center dh:order-1"
+              >
                 <EmptyState
                   title="No open work"
                   description="Add a task, or create a project to group related work."
@@ -435,10 +443,29 @@ export function DashboardShell({ data }: DashboardShellProps) {
           </div>
 
           {showTodayRail ? (
-            <div className="order-1 min-w-0 dh:order-2">
-              <div className="flex flex-col gap-3.5 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:pr-0.5">
+            <div
+              className={cn(
+                "min-w-0",
+                isFreshWorkspace && todayInboxTasks.length === 0
+                  ? "contents"
+                  : "order-1 dh:order-2"
+              )}
+            >
+              <div
+                className={cn(
+                  isFreshWorkspace && todayInboxTasks.length === 0
+                    ? "contents"
+                    : "flex h-full flex-col gap-3.5 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:pr-0.5"
+                )}
+              >
                 {showHabits && (
-                  <SurfaceCard variant="quiet">
+                  <SurfaceCard
+                    variant="quiet"
+                    className={cn(
+                      "flex min-h-0 flex-col",
+                      isFreshWorkspace && "order-1 dh:order-2"
+                    )}
+                  >
                     <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-2.5">
                       <h2 className="text-[13px] font-semibold tracking-[-0.015em]">
                         Today&apos;s habits
@@ -452,7 +479,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                       value={habitProgress}
                       className="h-px max-w-none rounded-none bg-rule-soft"
                     />
-                    <div className="py-1">
+                    <div className="flex flex-1 flex-col justify-center py-1">
                       <DailyChecklist tasks={data.dailyTasks} />
                     </div>
                   </SurfaceCard>
