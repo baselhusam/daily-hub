@@ -1,213 +1,97 @@
 <p align="center">
-  <img src="docs/assets/banner.png" alt="DailyHub — a quiet workspace that keeps the day in one place." width="100%">
+  <a href="https://baselhusam.github.io/daily-hub/">
+    <img src="docs/assets/banner.png" alt="DailyHub — a quiet workspace that keeps the day in one place." width="100%">
+  </a>
 </p>
 
 <p align="center">
-  <strong>A personal command center for projects, tasks, and daily habits.</strong><br>
-  <sub>Single-user · self-hosted · Next.js 15 · SQLite · Docker or npx</sub>
+  <a href="https://www.npmjs.com/package/@baselhusam/daily-hub"><img src="https://img.shields.io/npm/v/@baselhusam/daily-hub?style=flat&color=2383E2" alt="npm version"></a>
+  <a href="https://github.com/baselhusam/daily-hub/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/baselhusam/daily-hub/ci.yml?style=flat&label=CI" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/baselhusam/daily-hub?style=flat&color=37352F" alt="MIT License"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/@baselhusam/daily-hub?style=flat" alt="Node.js"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript"></a>
 </p>
 
 <p align="center">
-  <a href="https://baselhusam.github.io/daily-hub/">Site</a>
-  ·
-  <a href="https://github.com/baselhusam/daily-hub">Repository</a>
+  <a href="https://baselhusam.github.io/daily-hub/">Website</a>
   ·
   <a href="https://www.npmjs.com/package/@baselhusam/daily-hub">npm</a>
   ·
-  <a href="docs/DEPLOYMENT.md">Deploy</a>
+  <a href="docs/DEPLOYMENT.md">Docs</a>
   ·
-  <a href="docs/DESIGN.md">Design</a>
+  <a href="CHANGELOG.md">Changelog</a>
   ·
   <a href="https://baselhusam.com">Author</a>
 </p>
 
 ---
 
-DailyHub is for people who juggle **more than one project at a time** — founders, consultants, indie builders, anyone with client work, side projects, and a few non-negotiable daily habits.
+A personal command center for people who juggle **more than one project at a time** — founders, consultants, indie builders, anyone with client work, side projects, and a few non-negotiable daily habits.
 
-It is not a replacement for Linear, Jira, or Notion. It is the **morning surface**: what is open, what belongs where, what must happen today, and what you already finished.
+DailyHub is not a replacement for Linear, Jira, or Notion. It is the **morning surface**: what is open, what belongs where, what must happen today, and what you already finished.
 
-Local app: [http://localhost:9999](http://localhost:9999)
+## Features
 
-## Surfaces
-
-| Page | Route | What you see |
-|------|-------|----------------|
-| **Today** | `/` | Greeting, quick add, nudges, snapshot stats, today’s habits, open work by project, inbox |
-| **Projects** | `/projects` | Projects with progress, due dates, milestones, stalled banners |
-| **Habits** | `/daily` | Recurring checklist with weekday schedules, 14-day consistency, completion % |
-| **Analytics** | `/analytics` | Completions over time, project breakdown, habit rates, weekday patterns |
-
-Desktop uses a left sidebar; smaller screens use a bottom tab bar. Light and dark themes are built in.
-
-## What you can track
-
-- **Projects** — name, icon, optional logo, status, due date, milestones
-- **Tasks** — attached to a project or the inbox
-- **Daily tasks** — recurring habits with icons and weekday schedules
-- **Completion log** — written automatically when you check something off, then charted on Analytics
-
-Create and edit from dialogs. Check a box and it is done for today — no ceremony.
+- **Today** — greeting, quick add, nudges, today’s habits, open work by project, and an inbox
+- **Projects** — status, due dates, milestones, and stalled-work banners
+- **Habits** — weekday schedules, 14-day consistency, and completion rate
+- **Analytics** — completions over time, project breakdown, and weekday patterns
+- **Command palette** — jump to projects, tasks, habits, and milestones
+- **Local by default** — SQLite on disk, light and dark themes, no accounts
 
 ## Quick start
 
-### Option A — npx (easiest, no Docker)
-
-Requires **Node 22+** and a free port (**9999** by default).
+Requires [Node.js 22+](https://nodejs.org/).
 
 ```bash
 npx @baselhusam/daily-hub
 ```
 
-Opens [http://127.0.0.1:9999](http://127.0.0.1:9999) and stores everything in `~/.daily-hub/`:
-
-| Path | Contents |
-|------|----------|
-| `~/.daily-hub/data.db` | SQLite database |
-| `~/.daily-hub/uploads/` | Project and habit logos |
-
-Useful flags:
+Opens [http://127.0.0.1:9999](http://127.0.0.1:9999). Data lives in `~/.daily-hub/` (`data.db` and `uploads/`). The first download is ~80 MB because the package ships the full Next.js app; later runs are instant.
 
 ```bash
-npx @baselhusam/daily-hub --seed              # load sample data on first run
-npx @baselhusam/daily-hub --port 3000         # use a different port
-npx @baselhusam/daily-hub --no-open           # don't open the browser
-npx @baselhusam/daily-hub --data-dir ~/my-hub # custom data directory
-npx @baselhusam/daily-hub seed                # seed without starting the server
+npx @baselhusam/daily-hub --seed               # sample data on first run
+npx @baselhusam/daily-hub --port 3000          # different port
+npx @baselhusam/daily-hub --data-dir ~/my-hub  # custom data directory
+npx @baselhusam/daily-hub --no-open            # don't open the browser
 ```
 
-The first download is large (~80 MB) because the package ships the full Next.js app. Later runs are instant.
+Do not keep `~/.daily-hub/` in iCloud, Dropbox, or other file-sync folders — SQLite and file sync can corrupt the database. Backup is a copy of that folder (or your `--data-dir`).
 
-**Notes**
-
-- Do not put `~/.daily-hub/` in iCloud, Dropbox, or other sync folders — SQLite and file sync can corrupt the database.
-- Backup = copy the entire `~/.daily-hub/` folder (or your custom `--data-dir`).
-- If you see `database is locked`, stop any other DailyHub instance first (`lsof -i :9999`, then kill the process).
-
-### Option B — Docker (self-hosting)
+### Docker
 
 ```bash
 docker compose up --build
 ```
 
-Open [http://localhost:9999](http://localhost:9999). Optional sample data:
+Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume. Optional sample data:
 
 ```bash
 docker compose exec app npm run db:seed
 ```
 
-Persistent data lives in the Docker volume `dailyhub_data` (`data.db` + `uploads/` at `/app/data`).
+v1 has **no authentication**. Keep it on localhost, a private network, or behind a reverse proxy. Full self-hosting notes are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-### Option C — Local development (no Docker)
+### Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Data is stored in `./.data/` (`data.db` + `uploads/`).
+Runs on port **9999** with SQLite in `./.data/`. Commands, layout, and conventions live in [CLAUDE.md](CLAUDE.md).
 
-After pulling schema changes, apply pending migrations:
+## Built with
 
-```bash
-npm run db:migrate
-```
-
-If you previously used `dev:sqlite` and have `./.data/dev.db`, rename it:
-
-```bash
-mv .data/dev.db .data/data.db
-```
-
-v1 has **no authentication**. Keep it on localhost, a private network, or behind a VPN / reverse-proxy. Details and self-hosting notes live in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
-## Stack
-
-| Layer | Choice |
-|-------|--------|
-| App | Next.js 15 (App Router, Server Actions) |
-| Language | TypeScript |
-| Database | SQLite (`data.db` in a data directory) |
-| ORM | Prisma |
-| UI | Tailwind CSS v4, shadcn/ui, Motion |
-| Charts | Recharts |
-| Runtime | Node 22+, port **9999** |
-
-There is no separate API server. Reads go through Server Components; writes go through Server Actions.
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npx @baselhusam/daily-hub` | Run the app locally with SQLite in `~/.daily-hub` |
-| `npm run dev` | Dev server on port 9999 with SQLite in `.data/` |
-| `npm run build` | Production build |
-| `npm run start` | Production server on port 9999 |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
-| `npm test` | Vitest unit tests |
-| `npm run db:migrate:dev` | Dev migrations |
-| `npm run db:migrate` | Production migrations |
-| `npm run db:seed` | Seed sample data |
-| `npm run db:studio` | Prisma Studio |
-
-## Publishing (maintainers)
-
-Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/daily-hub)
-
-Publishing is automatic on GitHub Releases. CI uses npm trusted publishing (OIDC) — no `NPM_TOKEN` secret.
-
-1. Update [`CHANGELOG.md`](CHANGELOG.md) under **Unreleased** (or add the new version section).
-2. Bump `"version"` in `package.json` (and commit).
-3. Push to `main`.
-4. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.5`). Paste the matching `CHANGELOG` section into the release body.
-
-The [Publish npm package](.github/workflows/publish.yml) workflow then builds via `prepack` (Prisma, Next.js, standalone bundle, CLI) and runs `npm publish`. Prereleases publish under the `next` npm tag.
-
-Pull requests and pushes to `main` also run the [CI](.github/workflows/ci.yml) workflow (lint, typecheck, test, build).
-
-The marketing site lives in [`site/`](site/) and deploys to [GitHub Pages](https://baselhusam.github.io/daily-hub/). Enable it once under **Settings → Pages → Source: GitHub Actions**, then push to `main`.
-
-Test the tarball locally before cutting a release:
-
-```bash
-npm pack
-npx ./baselhusam-daily-hub-0.1.5.tgz
-```
+Next.js 15, TypeScript, SQLite, and Prisma. There is no separate API server — reads go through Server Components, writes through Server Actions.
 
 ## Documentation
 
-| Document | Read when you need… |
-|----------|---------------------|
-| [CLAUDE.md](CLAUDE.md) | Commands, layout, and conventions for AI assistants |
-| [docs/PROJECT.md](docs/PROJECT.md) | Purpose, goals, and who it is for |
-| [docs/SCOPE.md](docs/SCOPE.md) | What is in v1 — and what is intentionally out |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data model, request flow, Docker services |
-| [docs/DESIGN.md](docs/DESIGN.md) | Visual direction, layout, and UX patterns |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker, env vars, self-hosting, troubleshooting |
-| [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
-
-## Layout
-
-```
-src/
-├── app/
-│   ├── layout.tsx            # Fonts, theme
-│   ├── (app)/                # Today, Projects, Habits, Analytics
-│   └── actions/              # Server Actions
-├── cli/                      # npx entrypoint source
-├── components/               # Shell, dashboard, projects, daily, analytics, ui
-└── lib/                      # Data loaders, Prisma, validation
-prisma/
-├── schema.prisma             # SQLite schema
-├── migrations/
-└── seed.ts
-bin/
-└── daily-hub.js              # CLI entrypoint (built from src/cli)
-docker-compose.yml
-Dockerfile
-```
+- [Deployment](docs/DEPLOYMENT.md) — Docker, env vars, self-hosting, troubleshooting
+- [Architecture](docs/ARCHITECTURE.md) — data model and request flow
+- [Design](docs/DESIGN.md) — visual direction and UX patterns
+- [Changelog](CHANGELOG.md) — version history
 
 ## License
 
-MIT © [Basel Husam](https://baselhusam.com)
+[MIT](LICENSE) © [Basel Husam](https://baselhusam.com)
