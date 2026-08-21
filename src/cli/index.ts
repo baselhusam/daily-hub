@@ -5,15 +5,15 @@ import { createServer } from "node:net";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import {
-  ensureSqliteQueryEngine,
+  databaseUrl,
+  ensureQueryEngine,
   resolvePrismaCli,
-  sqliteDatabaseUrl,
 } from "./prisma-support";
 
 declare const __dirname: string;
 
 const packageRoot = resolve(__dirname, "..");
-const sqliteSchemaPath = join(packageRoot, "prisma", "sqlite", "schema.prisma");
+const schemaPath = join(packageRoot, "prisma", "schema.prisma");
 const standaloneServerPath = join(packageRoot, ".next", "standalone", "server.js");
 const bundledSeedPath = join(packageRoot, "bin", "seed.js");
 
@@ -185,7 +185,7 @@ function buildEnv(options: CliOptions, queryEnginePath?: string): NodeJS.Process
   return {
     ...process.env,
     NODE_ENV: "production",
-    DATABASE_URL: sqliteDatabaseUrl(options.dataDir),
+    DATABASE_URL: databaseUrl(options.dataDir),
     DAILYHUB_DATA_DIR: options.dataDir,
     PORT: String(options.port),
     HOSTNAME: "127.0.0.1",
@@ -197,11 +197,11 @@ function buildEnv(options: CliOptions, queryEnginePath?: string): NodeJS.Process
 
 async function preparePrisma(options: CliOptions): Promise<NodeJS.ProcessEnv> {
   const env = buildEnv(options);
-  const queryEnginePath = await ensureSqliteQueryEngine(packageRoot, runCommand, env);
+  const queryEnginePath = await ensureQueryEngine(packageRoot, runCommand, env);
   return buildEnv(options, queryEnginePath);
 }
 
-async function migrateSqlite(env: NodeJS.ProcessEnv, dataDir: string) {
+async function migrateDatabase(env: NodeJS.ProcessEnv, dataDir: string) {
   const maxAttempts = 5;
   const prisma = resolvePrismaCli(packageRoot);
 
@@ -209,7 +209,7 @@ async function migrateSqlite(env: NodeJS.ProcessEnv, dataDir: string) {
     try {
       await runCommand(
         prisma.command,
-        [...prisma.prefixArgs, "migrate", "deploy", "--schema", sqliteSchemaPath],
+        [...prisma.prefixArgs, "migrate", "deploy", "--schema", schemaPath],
         env
       );
       return;
@@ -245,7 +245,7 @@ async function startServer(options: CliOptions) {
 
   await prepareDataDir(options.dataDir);
   await assertPortAvailable(options.port);
-  await migrateSqlite(env, options.dataDir);
+  await migrateDatabase(env, options.dataDir);
 
   if (options.seed) {
     await seedDatabase(env);
@@ -293,7 +293,7 @@ async function main() {
   if (options.command === "seed") {
     const env = await preparePrisma(options);
     await prepareDataDir(options.dataDir);
-    await migrateSqlite(env, options.dataDir);
+    await migrateDatabase(env, options.dataDir);
     await seedDatabase(env);
     console.log(`Seeded DailyHub data in ${options.dataDir}`);
     return;

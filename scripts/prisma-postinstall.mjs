@@ -29,16 +29,12 @@ if (!prismaCli) {
   process.exit(0);
 }
 
-const commands = [[], ["--schema", "prisma/sqlite/schema.prisma"]];
+const result = spawnSync(process.execPath, [prismaCli, "generate"], {
+  cwd: root,
+  env: process.env,
+  stdio: "inherit",
+});
 
-for (const extraArgs of commands) {
-  const result = spawnSync(process.execPath, [prismaCli, "generate", ...extraArgs], {
-    cwd: root,
-    env: process.env,
-    stdio: "inherit",
-  });
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
+if (result.status !== 0) {
+  process.exit(result.status ?? 1);
 }

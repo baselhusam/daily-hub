@@ -1,38 +1,18 @@
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: dailyhub-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: dailyhub
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: dailyhub
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dailyhub -d dailyhub"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: dailyhub-app
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://dailyhub:${POSTGRES_PASSWORD}@db:5432/dailyhub
+      DATABASE_URL: file:/app/data/data.db
       DAILYHUB_DATA_DIR: /app/data
       NODE_ENV: production
     ports:
       - "9999:9999"
     volumes:
-      - uploads_data:/app/data
+      - dailyhub_data:/app/data
 
 volumes:
-  postgres_data:
-  uploads_data:
+  dailyhub_data:

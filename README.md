@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>A personal command center for projects, tasks, and daily habits.</strong><br>
-  <sub>Single-user · self-hosted · Next.js 15 · SQLite or PostgreSQL · Docker or npx</sub>
+  <sub>Single-user · self-hosted · Next.js 15 · SQLite · Docker or npx</sub>
 </p>
 
 <p align="center">
@@ -81,14 +81,12 @@ The first download is large (~80 MB) because the package ships the full Next.js 
 **Notes**
 
 - Do not put `~/.daily-hub/` in iCloud, Dropbox, or other sync folders — SQLite and file sync can corrupt the database.
-- Backup = copy the entire `~/.daily-hub/` folder.
-- npx data and Docker/Postgres data are **separate workspaces** — there is no built-in migration between them.
+- Backup = copy the entire `~/.daily-hub/` folder (or your custom `--data-dir`).
 - If you see `database is locked`, stop any other DailyHub instance first (`lsof -i :9999`, then kill the process).
 
-### Option B — Docker (Postgres, self-hosting)
+### Option B — Docker (self-hosting)
 
 ```bash
-cp .env.example .env   # set POSTGRES_PASSWORD to a strong value
 docker compose up --build
 ```
 
@@ -98,18 +96,16 @@ Open [http://localhost:9999](http://localhost:9999). Optional sample data:
 docker compose exec app npm run db:seed
 ```
 
-Persistent data lives in Docker volumes (`postgres_data`, `uploads_data`).
+Persistent data lives in the Docker volume `dailyhub_data` (`data.db` + `uploads/` at `/app/data`).
 
-### Option C — Local development (Postgres)
+### Option C — Local development (no Docker)
 
 ```bash
-cp .env.example .env   # set POSTGRES_PASSWORD and match it in DATABASE_URL
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
 npm install
-npm run db:migrate:dev
-npm run db:seed
 npm run dev
 ```
+
+Data is stored in `./.data/` (`data.db` + `uploads/`).
 
 After pulling schema changes, apply pending migrations:
 
@@ -117,14 +113,11 @@ After pulling schema changes, apply pending migrations:
 npm run db:migrate
 ```
 
-### Option D — Local development (SQLite, no Docker)
+If you previously used `dev:sqlite` and have `./.data/dev.db`, rename it:
 
 ```bash
-npm install
-npm run dev:sqlite
+mv .data/dev.db .data/data.db
 ```
-
-Data is stored in `./.data/`.
 
 v1 has **no authentication**. Keep it on localhost, a private network, or behind a VPN / reverse-proxy. Details and self-hosting notes live in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
@@ -134,7 +127,7 @@ v1 has **no authentication**. Keep it on localhost, a private network, or behind
 |-------|--------|
 | App | Next.js 15 (App Router, Server Actions) |
 | Language | TypeScript |
-| Database | SQLite (`npx`) or PostgreSQL 16 (Docker) |
+| Database | SQLite (`data.db` in a data directory) |
 | ORM | Prisma |
 | UI | Tailwind CSS v4, shadcn/ui, Motion |
 | Charts | Recharts |
@@ -147,16 +140,14 @@ There is no separate API server. Reads go through Server Components; writes go t
 | Command | Description |
 |---------|-------------|
 | `npx @baselhusam/daily-hub` | Run the app locally with SQLite in `~/.daily-hub` |
-| `npm run dev` | Dev server on port 9999 (Postgres via `.env`) |
-| `npm run dev:sqlite` | Dev server with local SQLite in `.data/` |
+| `npm run dev` | Dev server on port 9999 with SQLite in `.data/` |
 | `npm run build` | Production build |
 | `npm run start` | Production server on port 9999 |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript (`tsc --noEmit`) |
 | `npm test` | Vitest unit tests |
-| `npm run db:migrate:dev` | Dev migrations (Postgres) |
-| `npm run db:migrate` | Production migrations (Postgres) |
-| `npm run db:migrate:sqlite` | Production migrations (SQLite) |
+| `npm run db:migrate:dev` | Dev migrations |
+| `npm run db:migrate` | Production migrations |
 | `npm run db:seed` | Seed sample data |
 | `npm run db:studio` | Prisma Studio |
 
@@ -169,7 +160,7 @@ Publishing is automatic on GitHub Releases. CI uses npm trusted publishing (OIDC
 1. Update [`CHANGELOG.md`](CHANGELOG.md) under **Unreleased** (or add the new version section).
 2. Bump `"version"` in `package.json` (and commit).
 3. Push to `main`.
-4. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.4`). Paste the matching `CHANGELOG` section into the release body.
+4. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.5`). Paste the matching `CHANGELOG` section into the release body.
 
 The [Publish npm package](.github/workflows/publish.yml) workflow then builds via `prepack` (Prisma, Next.js, standalone bundle, CLI) and runs `npm publish`. Prereleases publish under the `next` npm tag.
 
@@ -181,7 +172,7 @@ Test the tarball locally before cutting a release:
 
 ```bash
 npm pack
-npx ./baselhusam-daily-hub-0.1.3.tgz
+npx ./baselhusam-daily-hub-0.1.5.tgz
 ```
 
 ## Documentation
@@ -208,8 +199,8 @@ src/
 ├── components/               # Shell, dashboard, projects, daily, analytics, ui
 └── lib/                      # Data loaders, Prisma, validation
 prisma/
-├── schema.prisma             # Postgres schema (Docker / dev)
-├── sqlite/schema.prisma      # SQLite schema (npx / CLI)
+├── schema.prisma             # SQLite schema
+├── migrations/
 └── seed.ts
 bin/
 └── daily-hub.js              # CLI entrypoint (built from src/cli)

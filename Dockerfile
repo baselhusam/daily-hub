@@ -11,8 +11,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=file:/app/data/data.db
 RUN npx prisma generate
-RUN npx prisma generate --schema prisma/sqlite/schema.prisma
 RUN npm run build
 RUN npm run build:seed
 
@@ -21,6 +21,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DAILYHUB_DATA_DIR=/app/data
+ENV DATABASE_URL=file:/app/data/data.db
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

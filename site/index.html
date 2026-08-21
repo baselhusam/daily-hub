@@ -101,7 +101,7 @@
               </div>
               <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker" hidden data-command="docker compose up --build">
                 <p class="cmd"><span class="prompt">$</span> <span class="bin">docker</span> <span class="pkg">compose up --build</span><span class="cursor" aria-hidden="true"></span></p>
-                <p class="out">Postgres + app on :9999 <span class="dim">· self-host</span></p>
+                <p class="out">SQLite on :9999 <span class="dim">· self-host</span></p>
               </div>
             </div>
           </aside>
@@ -302,8 +302,8 @@
           </article>
           <article class="reveal">
             <p class="kicker">B · Docker</p>
-            <h3>Postgres, self-host</h3>
-            <p>App and database together. Persistent volumes for Postgres and uploads.</p>
+            <h3>SQLite, self-host</h3>
+            <p>Single container. Persistent volume for <code>data.db</code> and uploads.</p>
             <p class="cmd"><span class="prompt">$</span> docker compose up --build</p>
             <ul>
               <li>App on <code>:9999</code></li>
@@ -314,7 +314,7 @@
           <article class="reveal">
             <p class="kicker">C · Notes</p>
             <h3>Keep the files local</h3>
-            <p>SQLite and file sync do not mix. npx data and Docker data are separate workspaces.</p>
+            <p>SQLite and file sync do not mix. npx, local dev, and Docker all use the same <code>data.db</code> format.</p>
             <ul>
               <li>Do not put <code>~/.daily-hub/</code> in iCloud or Dropbox</li>
               <li>Backup = copy the whole data folder</li>
@@ -332,7 +332,7 @@
         <dl class="stack-row reveal">
           <div><dt>App</dt><dd>Next.js 15 · App Router · Server Actions</dd></div>
           <div><dt>Language</dt><dd>TypeScript</dd></div>
-          <div><dt>Database</dt><dd>SQLite or PostgreSQL 16</dd></div>
+          <div><dt>Database</dt><dd>SQLite</dd></div>
           <div><dt>ORM</dt><dd>Prisma</dd></div>
           <div><dt>UI</dt><dd>Tailwind v4 · shadcn/ui</dd></div>
           <div><dt>Runtime</dt><dd>Node 22+ · port 9999</dd></div>
@@ -353,7 +353,7 @@
     </main>
 
     <footer class="foot">
-      <p>Single-user · self-hosted · SQLite or Postgres · MIT</p>
+      <p>Single-user · self-hosted · SQLite · MIT</p>
       <p>
         Built by
         <a href="https://baselhusam.com" rel="noopener noreferrer">Basel Husam</a>

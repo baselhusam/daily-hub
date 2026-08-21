@@ -1,5 +1,18 @@
 import { homedir } from "os";
-import { join } from "path";
+import { dirname, join } from "path";
+
+function parseSqlitePathFromUrl(databaseUrl: string): string | null {
+  if (!databaseUrl.startsWith("file:")) {
+    return null;
+  }
+
+  const pathPart = databaseUrl.slice("file:".length).split("?")[0];
+  if (!pathPart) {
+    return null;
+  }
+
+  return pathPart.startsWith("//") ? pathPart.slice(2) : pathPart;
+}
 
 export function getDataDir(): string {
   if (process.env.DAILYHUB_DATA_DIR) {
@@ -7,24 +20,16 @@ export function getDataDir(): string {
   }
 
   const databaseUrl = process.env.DATABASE_URL ?? "";
-  if (databaseUrl.startsWith("file:")) {
-    return join(homedir(), ".daily-hub");
+  const databasePath = parseSqlitePathFromUrl(databaseUrl);
+  if (databasePath) {
+    return dirname(databasePath);
   }
 
-  return process.cwd();
+  return join(homedir(), ".daily-hub");
 }
 
 export function getUploadsDir(): string {
-  if (process.env.DAILYHUB_DATA_DIR) {
-    return join(process.env.DAILYHUB_DATA_DIR, "uploads");
-  }
-
-  const databaseUrl = process.env.DATABASE_URL ?? "";
-  if (databaseUrl.startsWith("file:")) {
-    return join(homedir(), ".daily-hub", "uploads");
-  }
-
-  return join(process.cwd(), "public", "uploads");
+  return join(getDataDir(), "uploads");
 }
 
 export function getSqliteDatabasePath(dataDir = getDataDir()): string {

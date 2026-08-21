@@ -1,50 +1,45 @@
 import "server-only";
 
-import { PrismaClient as PostgresClient } from "@/generated/postgres";
-import { PrismaClient as SqliteClient } from "@/generated/sqlite";
+import { PrismaClient } from "@/generated/client";
 
-export type AppPrismaClient = PostgresClient;
+export type AppPrismaClient = PrismaClient;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: AppPrismaClient | undefined;
-  sqliteClient: SqliteClient | undefined;
-  sqliteConfigPromise: Promise<void> | undefined;
+  configPromise: Promise<void> | undefined;
 };
 
-function isSqliteUrl(url: string): boolean {
-  return url.startsWith("file:");
+function assertSqliteDatabaseUrl(url: string | undefined): asserts url is string {
+  if (!url) {
+    throw new Error("DATABASE_URL is required");
+  }
+
+  if (!url.startsWith("file:")) {
+    throw new Error(
+      "DailyHub now uses SQLite only. Set DATABASE_URL to a file URL, for example file:./.data/data.db"
+    );
+  }
 }
 
-async function configureSqlite(client: SqliteClient): Promise<void> {
-  if (globalForPrisma.sqliteConfigPromise) {
-    await globalForPrisma.sqliteConfigPromise;
+async function configureSqlite(client: PrismaClient): Promise<void> {
+  if (globalForPrisma.configPromise) {
+    await globalForPrisma.configPromise;
     return;
   }
 
-  globalForPrisma.sqliteConfigPromise = (async () => {
+  globalForPrisma.configPromise = (async () => {
     await client.$queryRawUnsafe(`PRAGMA journal_mode=WAL`);
     await client.$queryRawUnsafe(`PRAGMA busy_timeout=5000`);
     await client.$queryRawUnsafe(`PRAGMA foreign_keys=ON`);
   })();
 
-  await globalForPrisma.sqliteConfigPromise;
+  await globalForPrisma.configPromise;
 }
 
 function createPrismaClient(): AppPrismaClient {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL is required");
-  }
+  assertSqliteDatabaseUrl(process.env.DATABASE_URL);
 
-  if (isSqliteUrl(databaseUrl)) {
-    const client = new SqliteClient({
-      log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-    });
-    globalForPrisma.sqliteClient = client;
-    return client as unknown as AppPrismaClient;
-  }
-
-  return new PostgresClient({
+  return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 }
@@ -56,12 +51,9 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export async function ensureDatabaseReady(): Promise<void> {
-  if (process.env.DATABASE_URL && isSqliteUrl(process.env.DATABASE_URL)) {
-    const client = globalForPrisma.sqliteClient;
-    if (client) {
-      await configureSqlite(client);
-    }
-  }
+  await configureSqlite(prisma);
 }
 
-export { isSqliteUrl };
+export function isSqliteUrl(url: string): boolean {
+  return url.startsWith("file:");
+}

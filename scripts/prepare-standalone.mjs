@@ -6,9 +6,8 @@ const staticSrc = join(".next", "static");
 const staticDest = join(".next", "standalone", ".next", "static");
 const publicSrc = "public";
 const publicDest = join(".next", "standalone", "public");
-const generatedSrc = join("src", "generated");
-const generatedDest = join(".next", "standalone", "src", "generated");
-const sqliteGeneratedSrc = join(generatedSrc, "sqlite");
+const generatedSrc = join("src", "generated", "client");
+const generatedDest = join(".next", "standalone", "src", "generated", "client");
 const standaloneEnv = join(".next", "standalone", ".env");
 
 if (!existsSync(staticSrc)) {
@@ -27,19 +26,18 @@ if (existsSync(publicSrc)) {
   mkdirSync(join(publicDest, "uploads"), { recursive: true });
 }
 
-if (!existsSync(sqliteGeneratedSrc)) {
+if (!existsSync(generatedSrc)) {
   console.error(
-    "Missing src/generated/sqlite. Run `npm run db:generate` before packaging."
+    "Missing src/generated/client. Run `npm run db:generate` before packaging."
   );
   process.exit(1);
 }
 
-mkdirSync(join(".next", "standalone", "src"), { recursive: true });
+mkdirSync(join(".next", "standalone", "src", "generated"), { recursive: true });
 rmSync(generatedDest, { recursive: true, force: true });
 cpSync(generatedSrc, generatedDest, { recursive: true });
 
-const sqliteGeneratedDest = join(generatedDest, "sqlite");
-const present = new Set(readdirSync(sqliteGeneratedDest));
+const present = new Set(readdirSync(generatedDest));
 const missing = SQLITE_ENGINE_FILES.filter((file) => !present.has(file));
 
 if (missing.length > 0) {
@@ -48,7 +46,7 @@ if (missing.length > 0) {
     console.error(`  - ${file}`);
   }
   console.error(
-    "Add the matching binaryTargets in prisma/sqlite/schema.prisma and re-run prisma generate."
+    "Add the matching binaryTargets in prisma/schema.prisma and re-run prisma generate."
   );
   process.exit(1);
 }

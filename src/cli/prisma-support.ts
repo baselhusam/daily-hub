@@ -14,13 +14,13 @@ type RunCommand = (
   cwd?: string
 ) => Promise<void>;
 
-export function sqliteDatabaseUrl(dataDir: string): string {
+export function databaseUrl(dataDir: string): string {
   const databasePath = join(dataDir, "data.db");
   return `${pathToFileURL(databasePath).href}?busy_timeout=10000`;
 }
 
-export function sqliteGeneratedDir(packageRoot: string): string {
-  return join(packageRoot, ".next", "standalone", "src", "generated", "sqlite");
+export function generatedClientDir(packageRoot: string): string {
+  return join(packageRoot, ".next", "standalone", "src", "generated", "client");
 }
 
 export function resolvePrismaCli(packageRoot: string): {
@@ -53,19 +53,19 @@ export function resolvePrismaCli(packageRoot: string): {
   };
 }
 
-export async function ensureSqliteQueryEngine(
+export async function ensureQueryEngine(
   packageRoot: string,
   runCommand: RunCommand,
   env: NodeJS.ProcessEnv
 ): Promise<string> {
   const binaryTarget = await getBinaryTargetForCurrentPlatform();
   const engineName = getNodeAPIName(binaryTarget, "fs");
-  const destDir = sqliteGeneratedDir(packageRoot);
+  const destDir = generatedClientDir(packageRoot);
   const destPath = join(destDir, engineName);
 
   const searchDirs = [
     destDir,
-    join(packageRoot, "src", "generated", "sqlite"),
+    join(packageRoot, "src", "generated", "client"),
   ];
 
   for (const dir of searchDirs) {
@@ -85,11 +85,11 @@ export async function ensureSqliteQueryEngine(
   console.warn(
     `Prisma query engine for ${binaryTarget} is not in the package. Generating a native engine...`
   );
-  await generateNativeSqliteEngine(packageRoot, runCommand, env, destDir, destPath, engineName);
+  await generateNativeEngine(packageRoot, runCommand, env, destDir, destPath, engineName);
   return destPath;
 }
 
-async function generateNativeSqliteEngine(
+async function generateNativeEngine(
   packageRoot: string,
   runCommand: RunCommand,
   env: NodeJS.ProcessEnv,
@@ -97,7 +97,7 @@ async function generateNativeSqliteEngine(
   destPath: string,
   engineName: string
 ): Promise<void> {
-  const schemaPath = join(packageRoot, "prisma", "sqlite", "schema.prisma");
+  const schemaPath = join(packageRoot, "prisma", "schema.prisma");
   if (!existsSync(schemaPath)) {
     throw new Error(`Missing Prisma schema at ${schemaPath}.`);
   }
@@ -135,3 +135,8 @@ async function generateNativeSqliteEngine(
     rmSync(tempDir, { recursive: true, force: true });
   }
 }
+
+// Backward-compatible aliases for any external imports.
+export const sqliteDatabaseUrl = databaseUrl;
+export const sqliteGeneratedDir = generatedClientDir;
+export const ensureSqliteQueryEngine = ensureQueryEngine;

@@ -25,10 +25,9 @@ What DailyHub includes today and what is intentionally deferred.
 
 ### Infrastructure
 
-- [x] PostgreSQL in Docker
-- [x] SQLite via `npx` / CLI (`~/.daily-hub/`)
+- [x] SQLite everywhere (`npx`, local dev, Docker)
 - [x] Prisma migrations and seed data
-- [x] Full-stack `docker-compose.yml` (db + app on port 9999)
+- [x] Single-service `docker-compose.yml` (app on port 9999)
 - [x] Next.js standalone Docker image with migrate-on-start
 - [x] GitHub Actions CI (lint, typecheck, test, build)
 

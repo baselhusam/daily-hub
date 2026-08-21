@@ -15,29 +15,20 @@ DailyHub is a **single-user, self-hosted** productivity web app for organizing w
 |-------|--------|
 | Framework | Next.js 15 (App Router, Server Actions) |
 | Language | TypeScript (strict) |
-| Database | PostgreSQL 16 (Docker) or SQLite (`npx` / `dev:sqlite`) |
+| Database | SQLite (`data.db` in a data directory) |
 | ORM | Prisma |
 | UI | Tailwind CSS v4, shadcn/ui (new-york), Motion |
 | Charts | Recharts (Analytics page only) |
-| Runtime | Node 22+, port **9999** |
+| Runtime | Node 22, port **9999** |
 
 **No separate backend** — mutations use Server Actions, not REST/FastAPI.
 
 ## Commands
 
 ```bash
-# Database (Docker) — host dev needs the dev overlay for port 5432
-cp .env.example .env   # set POSTGRES_PASSWORD + matching DATABASE_URL
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
-
-# Dev (Postgres)
+# Dev (SQLite in ./.data/)
 npm install
-npm run db:migrate:dev
-npm run db:seed
 npm run dev                    # http://localhost:9999
-
-# Dev (SQLite, no Docker)
-npm run dev:sqlite
 
 # Quality
 npm run lint
@@ -45,8 +36,8 @@ npm run typecheck
 npm test
 npm run build
 
-# Full stack (app + db)
-docker compose up --build      # requires POSTGRES_PASSWORD in .env
+# Full stack (Docker, SQLite volume)
+docker compose up --build
 
 # Seed inside Docker app container
 docker compose exec app npm run db:seed
@@ -59,38 +50,27 @@ src/
 ├── app/
 │   ├── layout.tsx              # Root: fonts, ThemeProvider
 │   ├── (app)/
-│   │   ├── layout.tsx          # AppShell: sidebar, search, notifications
+│   │   ├── layout.tsx          # Sidebar + mobile nav shell
 │   │   ├── page.tsx            # Today (/)
-│   │   ├── projects/page.tsx
-│   │   ├── daily/page.tsx
-│   │   └── analytics/page.tsx
-│   ├── uploads/[filename]/     # Serve uploaded logos
+│   │   └── analytics/page.tsx  # Analytics (/analytics)
 │   └── actions/                # Server Actions (mutations)
-├── cli/                        # npx entrypoint source
 ├── components/
-│   ├── app-sidebar.tsx
-│   ├── search-palette.tsx
-│   ├── notification-bell.tsx
-│   ├── dashboard/
-│   ├── projects/
-│   ├── daily/
-│   ├── analytics/
-│   └── ui/
+│   ├── app-sidebar.tsx         # Left nav + quick stats
+│   ├── dashboard/              # Dashboard UI
+│   ├── analytics/              # Charts and analytics UI
+│   └── ui/                     # shadcn primitives — prefer extending, not rewriting
 └── lib/
-    ├── dashboard.ts
-    ├── analytics.ts
-    ├── notifications.ts
-    ├── uploaded-image.ts       # Magic-byte sniff + SVG sanitize
-    ├── prisma.ts
-    ├── validations.ts
-    └── dates.ts
+    ├── dashboard.ts            # Dashboard data loader
+    ├── analytics.ts            # Analytics aggregations
+    ├── sidebar-stats.ts        # Sidebar quick stats
+    ├── prisma.ts               # Prisma singleton (SQLite only)
+    ├── data-dir.ts             # DAILYHUB_DATA_DIR + uploads path
+    ├── validations.ts          # Zod schemas for actions
+    └── dates.ts                # Local-day helpers (getTodayDate)
 prisma/
-├── schema.prisma               # Postgres (Docker / dev)
-├── sqlite/schema.prisma        # SQLite (npx / CLI)
+├── schema.prisma               # SQLite schema
 ├── seed.ts
 └── migrations/
-bin/
-└── daily-hub.js                # CLI entrypoint (built from src/cli)
 ```
 
 ## Data model (summary)
@@ -98,7 +78,6 @@ bin/
 - **Project** → first-class workstream; has Tasks and Milestones
 - **Task** → optional `projectId`; inbox = no project
 - **DailyTask** → recurring checklist item with icon; completion state is per-day in `CompletionLog`
-- **Settings** → single row (`id = "default"`) for greeting/workspace preferences
 - **CompletionLog** → polymorphic via `entityType` (`TASK` | `DAILY_TASK`) + `entityId` + `completedOn` (date)
 
 **Important:** `CompletionLog` has **no FK** to Task/DailyTask — `entityId` is logical only. Do not re-add a Prisma relation on `entityId`.
@@ -108,8 +87,8 @@ bin/
 1. **Single-user, no auth** in v1
 2. **Minimal neutral UI** — light/dark only; no loud colors or heavy decoration
 3. **Port 9999** for local and Docker exposure
-4. **One-shot Today focus** — main work happens on `/`; Analytics is `/analytics`
-5. **Logo uploads** go to `DAILYHUB_DATA_DIR/uploads/` via `src/app/actions/upload.ts` (not `public/uploads/`)
+4. **One-shot dashboard focus** — main work happens on `/`; Analytics is `/analytics`
+5. **Logo uploads** go to `DAILYHUB_DATA_DIR/uploads/` via `src/app/actions/upload.ts`
 
 ## UI / UX conventions
 
@@ -117,25 +96,25 @@ bin/
 - Theme via `next-themes`; CSS variables in `src/app/globals.css` (oklch neutrals)
 - Motion for subtle entrance/checkbox feedback — not excessive animation
 - Server Components for data loading; client components for interactivity and charts
-- After mutations: `revalidateApp()` (covers `/`, `/projects`, `/daily`, `/analytics`)
+- After mutations: `revalidatePath('/')` (and `/analytics` if analytics data changes)
 
 ## Adding features (typical flow)
 
-1. Update `prisma/schema.prisma` (and `prisma/sqlite/schema.prisma` if shared) → `npm run db:migrate:dev`
+1. Update `prisma/schema.prisma` if schema changes → `npm run db:migrate:dev`
 2. Add Zod schema in `src/lib/validations.ts`
-3. Add Server Action in `src/app/actions/` (return `ActionResult`; use `failAction` on Prisma errors)
+3. Add Server Action in `src/app/actions/`
 4. Extend data loader in `src/lib/dashboard.ts` or `src/lib/analytics.ts`
-5. Build UI in the relevant `src/components/` folder
+5. Build UI in `src/components/dashboard/` or `src/components/analytics/`
 6. Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`
 
 ## Environment
 
 ```env
-POSTGRES_PASSWORD=your-strong-secret
-DATABASE_URL="postgresql://dailyhub:your-strong-secret@localhost:5432/dailyhub"
+DATABASE_URL="file:./.data/data.db"
+DAILYHUB_DATA_DIR="./.data"
 ```
 
-Docker app service uses `postgresql://dailyhub:${POSTGRES_PASSWORD}@db:5432/dailyhub`.
+Docker uses `DATABASE_URL=file:/app/data/data.db` and `DAILYHUB_DATA_DIR=/app/data`.
 
 ## Further reading
 
@@ -144,4 +123,3 @@ Docker app service uses `postgresql://dailyhub:${POSTGRES_PASSWORD}@db:5432/dail
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — technical design
 - [docs/DESIGN.md](docs/DESIGN.md) — visual and UX direction
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — Docker and hosting
-- [CHANGELOG.md](CHANGELOG.md) — version history

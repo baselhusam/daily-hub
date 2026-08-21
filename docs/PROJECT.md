@@ -46,4 +46,4 @@ Navigation: left sidebar (desktop) or top tabs (mobile).
 
 ## Origin
 
-Built as a greenfield Next.js app in the `daily-hub` repository, designed in conversation around a minimal one-page dashboard with optional analytics and Dockerized PostgreSQL — no separate Python/FastAPI backend.
+Built as a greenfield Next.js app in the `daily-hub` repository, designed in conversation around a minimal one-page dashboard with optional analytics and a Dockerized SQLite stack — no separate Python/FastAPI backend.

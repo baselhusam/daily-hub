@@ -22,8 +22,7 @@ flowchart TB
 
   subgraph data [Data layer]
     Prisma["Prisma Client"]
-    PG["PostgreSQL 16 - Docker"]
-    SQLite["SQLite - npx CLI"]
+    SQLite["SQLite data.db"]
   end
 
   Sidebar --> Today
@@ -39,7 +38,6 @@ flowchart TB
   Client --> Actions
   RSC --> Prisma
   Actions --> Prisma
-  Prisma --> PG
   Prisma --> SQLite
 ```
 
@@ -160,7 +158,7 @@ Daily tasks only appear on Today when `weekdays` includes today's JS `getDay()` 
 
 - Server Action: `src/app/actions/upload.ts`
 - Detection/sanitization: `src/lib/uploaded-image.ts` (magic-byte sniff; SVG allowlist sanitize)
-- Writes to `DAILYHUB_DATA_DIR/uploads/` with UUID filename (SQLite/npx: `~/.daily-hub/uploads/`; Docker: `/app/data/uploads/`)
+- Writes to `DAILYHUB_DATA_DIR/uploads/` with UUID filename
 - Max 2MB; PNG, JPG, WEBP, SVG (sanitized)
 - Served via `src/app/uploads/[filename]/route.ts` at `/uploads/{uuid}.{ext}`
 - SVG responses include `nosniff` and a sandboxed document CSP
@@ -171,12 +169,9 @@ Remote `https?://` logo URLs are stored on `Project.logoUrl` / `DailyTask.logoUr
 
 | Service | Image / build | Port | Role |
 |---------|---------------|------|------|
-| `db` | `postgres:16-alpine` | internal only (5432 in overlay for host dev) | Persistent Postgres |
-| `app` | `Dockerfile` (standalone Next) | 9999 | App + auto migrate |
+| `app` | `Dockerfile` (standalone Next) | 9999 | App + SQLite + auto migrate |
 
-Volumes: `postgres_data`, `uploads_data`.
-
-`docker-compose.dev.yml` publishes Postgres on `5432:5432` for Option C only.
+Volume: `dailyhub_data` → `/app/data` (`data.db` + `uploads/`).
 
 ## Security headers
 
@@ -187,3 +182,4 @@ Volumes: `postgres_data`, `uploads_data`.
 - Today and analytics pages use `export const dynamic = 'force-dynamic'`
 - Analytics queries are bounded (14-day window, 7-day daily stats)
 - Prisma client singleton in `src/lib/prisma.ts` (dev hot-reload safe)
+- SQLite runs with WAL mode, `busy_timeout`, and foreign keys enabled at startup

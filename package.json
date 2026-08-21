@@ -1,6 +1,6 @@
 {
   "name": "@baselhusam/daily-hub",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A personal command center for projects, tasks, and daily habits.",
   "license": "MIT",
   "author": "Basel Husam",
@@ -28,8 +28,7 @@
     "package.json"
   ],
   "scripts": {
-    "dev": "next dev -p 9999",
-    "dev:sqlite": "mkdir -p .data/uploads && DATABASE_URL=file:./.data/dev.db DAILYHUB_DATA_DIR=./.data npm run db:migrate:sqlite && DATABASE_URL=file:./.data/dev.db DAILYHUB_DATA_DIR=./.data npm run dev",
+    "dev": "mkdir -p .data/uploads && DATABASE_URL=file:./.data/data.db DAILYHUB_DATA_DIR=./.data npm run db:migrate && DATABASE_URL=file:./.data/data.db DAILYHUB_DATA_DIR=./.data next dev -p 9999",
     "build": "next build",
     "prepare-standalone": "node scripts/prepare-standalone.mjs",
     "build:cli": "esbuild src/cli/index.ts --bundle --platform=node --target=node22 --outfile=bin/daily-hub.js --format=cjs --banner:js=\"#!/usr/bin/env node\"",
@@ -38,11 +37,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:generate": "prisma generate && prisma generate --schema prisma/sqlite/schema.prisma",
+    "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "db:migrate:sqlite": "prisma migrate deploy --schema prisma/sqlite/schema.prisma",
-    "db:migrate:sqlite:dev": "prisma migrate dev --schema prisma/sqlite/schema.prisma",
     "db:push": "prisma db push",
     "db:seed": "node scripts/run-seed.mjs",
     "db:studio": "prisma studio",

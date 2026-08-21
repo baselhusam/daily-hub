@@ -16941,12 +16941,12 @@ var import_node_module = require("node:module");
 var import_node_path = require("node:path");
 var import_node_url = require("node:url");
 var import_get_platform = __toESM(require_dist2());
-function sqliteDatabaseUrl(dataDir) {
+function databaseUrl(dataDir) {
   const databasePath = (0, import_node_path.join)(dataDir, "data.db");
   return `${(0, import_node_url.pathToFileURL)(databasePath).href}?busy_timeout=10000`;
 }
-function sqliteGeneratedDir(packageRoot2) {
-  return (0, import_node_path.join)(packageRoot2, ".next", "standalone", "src", "generated", "sqlite");
+function generatedClientDir(packageRoot2) {
+  return (0, import_node_path.join)(packageRoot2, ".next", "standalone", "src", "generated", "client");
 }
 function resolvePrismaCli(packageRoot2) {
   const candidates = [
@@ -16970,14 +16970,14 @@ function resolvePrismaCli(packageRoot2) {
     prefixArgs: ["prisma"]
   };
 }
-async function ensureSqliteQueryEngine(packageRoot2, runCommand2, env) {
+async function ensureQueryEngine(packageRoot2, runCommand2, env) {
   const binaryTarget = await (0, import_get_platform.getBinaryTargetForCurrentPlatform)();
   const engineName = (0, import_get_platform.getNodeAPIName)(binaryTarget, "fs");
-  const destDir = sqliteGeneratedDir(packageRoot2);
+  const destDir = generatedClientDir(packageRoot2);
   const destPath = (0, import_node_path.join)(destDir, engineName);
   const searchDirs = [
     destDir,
-    (0, import_node_path.join)(packageRoot2, "src", "generated", "sqlite")
+    (0, import_node_path.join)(packageRoot2, "src", "generated", "client")
   ];
   for (const dir of searchDirs) {
     const candidate = (0, import_node_path.join)(dir, engineName);
@@ -16993,13 +16993,13 @@ async function ensureSqliteQueryEngine(packageRoot2, runCommand2, env) {
   console.warn(
     `Prisma query engine for ${binaryTarget} is not in the package. Generating a native engine...`
   );
-  await generateNativeSqliteEngine(packageRoot2, runCommand2, env, destDir, destPath, engineName);
+  await generateNativeEngine(packageRoot2, runCommand2, env, destDir, destPath, engineName);
   return destPath;
 }
-async function generateNativeSqliteEngine(packageRoot2, runCommand2, env, destDir, destPath, engineName) {
-  const schemaPath = (0, import_node_path.join)(packageRoot2, "prisma", "sqlite", "schema.prisma");
-  if (!(0, import_node_fs.existsSync)(schemaPath)) {
-    throw new Error(`Missing Prisma schema at ${schemaPath}.`);
+async function generateNativeEngine(packageRoot2, runCommand2, env, destDir, destPath, engineName) {
+  const schemaPath2 = (0, import_node_path.join)(packageRoot2, "prisma", "schema.prisma");
+  if (!(0, import_node_fs.existsSync)(schemaPath2)) {
+    throw new Error(`Missing Prisma schema at ${schemaPath2}.`);
   }
   const tempDir = (0, import_node_path.join)(packageRoot2, ".tmp", "prisma-native");
   (0, import_node_fs.rmSync)(tempDir, { recursive: true, force: true });
@@ -17007,7 +17007,7 @@ async function generateNativeSqliteEngine(packageRoot2, runCommand2, env, destDi
   const outputDir = (0, import_node_path.join)(tempDir, "client");
   const tempSchemaPath = (0, import_node_path.join)(tempDir, "schema.prisma");
   try {
-    const schema = (0, import_node_fs.readFileSync)(schemaPath, "utf8").replace(/output\s*=\s*"[^"]+"/, `output = "${outputDir.replace(/\\/g, "/")}"`).replace(/binaryTargets\s*=\s*\[[^\]]*\]/, 'binaryTargets = ["native"]');
+    const schema = (0, import_node_fs.readFileSync)(schemaPath2, "utf8").replace(/output\s*=\s*"[^"]+"/, `output = "${outputDir.replace(/\\/g, "/")}"`).replace(/binaryTargets\s*=\s*\[[^\]]*\]/, 'binaryTargets = ["native"]');
     (0, import_node_fs.writeFileSync)(tempSchemaPath, schema);
     const prisma = resolvePrismaCli(packageRoot2);
     await runCommand2(
@@ -17031,7 +17031,7 @@ async function generateNativeSqliteEngine(packageRoot2, runCommand2, env, destDi
 
 // src/cli/index.ts
 var packageRoot = (0, import_node_path2.resolve)(__dirname, "..");
-var sqliteSchemaPath = (0, import_node_path2.join)(packageRoot, "prisma", "sqlite", "schema.prisma");
+var schemaPath = (0, import_node_path2.join)(packageRoot, "prisma", "schema.prisma");
 var standaloneServerPath = (0, import_node_path2.join)(packageRoot, ".next", "standalone", "server.js");
 var bundledSeedPath = (0, import_node_path2.join)(packageRoot, "bin", "seed.js");
 function parseArgs(argv) {
@@ -17160,7 +17160,7 @@ function buildEnv(options, queryEnginePath) {
   return {
     ...process.env,
     NODE_ENV: "production",
-    DATABASE_URL: sqliteDatabaseUrl(options.dataDir),
+    DATABASE_URL: databaseUrl(options.dataDir),
     DAILYHUB_DATA_DIR: options.dataDir,
     PORT: String(options.port),
     HOSTNAME: "127.0.0.1",
@@ -17169,17 +17169,17 @@ function buildEnv(options, queryEnginePath) {
 }
 async function preparePrisma(options) {
   const env = buildEnv(options);
-  const queryEnginePath = await ensureSqliteQueryEngine(packageRoot, runCommand, env);
+  const queryEnginePath = await ensureQueryEngine(packageRoot, runCommand, env);
   return buildEnv(options, queryEnginePath);
 }
-async function migrateSqlite(env, dataDir) {
+async function migrateDatabase(env, dataDir) {
   const maxAttempts = 5;
   const prisma = resolvePrismaCli(packageRoot);
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       await runCommand(
         prisma.command,
-        [...prisma.prefixArgs, "migrate", "deploy", "--schema", sqliteSchemaPath],
+        [...prisma.prefixArgs, "migrate", "deploy", "--schema", schemaPath],
         env
       );
       return;
@@ -17210,7 +17210,7 @@ async function startServer(options) {
   const url = `http://127.0.0.1:${options.port}`;
   await prepareDataDir(options.dataDir);
   await assertPortAvailable(options.port);
-  await migrateSqlite(env, options.dataDir);
+  await migrateDatabase(env, options.dataDir);
   if (options.seed) {
     await seedDatabase(env);
   }
@@ -17248,7 +17248,7 @@ async function main() {
   if (options.command === "seed") {
     const env = await preparePrisma(options);
     await prepareDataDir(options.dataDir);
-    await migrateSqlite(env, options.dataDir);
+    await migrateDatabase(env, options.dataDir);
     await seedDatabase(env);
     console.log(`Seeded DailyHub data in ${options.dataDir}`);
     return;
