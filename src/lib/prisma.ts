@@ -41,10 +41,6 @@ function createPrismaClient(): AppPrismaClient {
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     });
     globalForPrisma.sqliteClient = client;
-    void configureSqlite(client).catch((error) => {
-      console.error("Failed to configure SQLite:", error);
-    });
-
     return client as unknown as AppPrismaClient;
   }
 

@@ -4,5 +4,6 @@ public/uploads/*
 .env.*
 .next/standalone/.env
 src/generated/
+!.next/standalone/src/generated/**
 .data/
 *.tgz

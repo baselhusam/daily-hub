@@ -1,14 +1,21 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { createServer } from "node:net";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import {
+  ensureSqliteQueryEngine,
+  resolvePrismaCli,
+  sqliteDatabaseUrl,
+} from "./prisma-support";
 
 declare const __dirname: string;
 
 const packageRoot = resolve(__dirname, "..");
 const sqliteSchemaPath = join(packageRoot, "prisma", "sqlite", "schema.prisma");
 const standaloneServerPath = join(packageRoot, ".next", "standalone", "server.js");
+const bundledSeedPath = join(packageRoot, "bin", "seed.js");
 
 type CliOptions = {
   port: number;
@@ -74,11 +81,6 @@ function parseArgs(argv: string[]): CliOptions {
   }
 
   return options;
-}
-
-function sqliteDatabaseUrl(dataDir: string): string {
-  const databasePath = join(dataDir, "data.db");
-  return `file:${databasePath}?busy_timeout=10000`;
 }
 
 async function openBrowser(url: string) {
@@ -179,7 +181,7 @@ async function prepareDataDir(dataDir: string) {
   await mkdir(join(dataDir, "uploads"), { recursive: true });
 }
 
-function buildEnv(options: CliOptions): NodeJS.ProcessEnv {
+function buildEnv(options: CliOptions, queryEnginePath?: string): NodeJS.ProcessEnv {
   return {
     ...process.env,
     NODE_ENV: "production",
@@ -187,17 +189,27 @@ function buildEnv(options: CliOptions): NodeJS.ProcessEnv {
     DAILYHUB_DATA_DIR: options.dataDir,
     PORT: String(options.port),
     HOSTNAME: "127.0.0.1",
+    ...(queryEnginePath
+      ? { PRISMA_QUERY_ENGINE_LIBRARY: queryEnginePath }
+      : {}),
   };
+}
+
+async function preparePrisma(options: CliOptions): Promise<NodeJS.ProcessEnv> {
+  const env = buildEnv(options);
+  const queryEnginePath = await ensureSqliteQueryEngine(packageRoot, runCommand, env);
+  return buildEnv(options, queryEnginePath);
 }
 
 async function migrateSqlite(env: NodeJS.ProcessEnv, dataDir: string) {
   const maxAttempts = 5;
+  const prisma = resolvePrismaCli(packageRoot);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       await runCommand(
-        process.platform === "win32" ? "npx.cmd" : "npx",
-        ["prisma", "migrate", "deploy", "--schema", sqliteSchemaPath],
+        prisma.command,
+        [...prisma.prefixArgs, "migrate", "deploy", "--schema", sqliteSchemaPath],
         env
       );
       return;
@@ -219,15 +231,16 @@ async function migrateSqlite(env: NodeJS.ProcessEnv, dataDir: string) {
 }
 
 async function seedDatabase(env: NodeJS.ProcessEnv) {
-  await runCommand(
-    process.platform === "win32" ? "npx.cmd" : "npx",
-    ["prisma", "db", "seed"],
-    env
-  );
+  if (existsSync(bundledSeedPath)) {
+    await runCommand(process.execPath, [bundledSeedPath], env);
+    return;
+  }
+
+  await runCommand("npx", ["tsx", join(packageRoot, "prisma", "seed.ts")], env);
 }
 
 async function startServer(options: CliOptions) {
-  const env = buildEnv(options);
+  const env = await preparePrisma(options);
   const url = `http://127.0.0.1:${options.port}`;
 
   await prepareDataDir(options.dataDir);
@@ -278,7 +291,7 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
 
   if (options.command === "seed") {
-    const env = buildEnv(options);
+    const env = await preparePrisma(options);
     await prepareDataDir(options.dataDir);
     await migrateSqlite(env, options.dataDir);
     await seedDatabase(env);

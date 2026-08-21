@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**/*": [
       "./src/generated/**/*",
+      "./src/generated/**/*.node",
       "./prisma/**/*",
       "./node_modules/.prisma/**/*",
       "./node_modules/@prisma/client/**/*",

@@ -165,7 +165,7 @@ Publishing is automatic on GitHub Releases. CI uses npm trusted publishing (OIDC
 
 1. Bump `"version"` in `package.json` (and commit).
 2. Push to `main`.
-3. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.2`).
+3. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.3`).
 
 The [Publish npm package](.github/workflows/publish.yml) workflow then builds via `prepack` (Prisma, Next.js, standalone bundle, CLI) and runs `npm publish`. Prereleases publish under the `next` npm tag.
 
@@ -175,7 +175,7 @@ Test the tarball locally before cutting a release:
 
 ```bash
 npm pack
-npx ./baselhusam-daily-hub-0.1.2.tgz
+npx ./baselhusam-daily-hub-0.1.3.tgz
 ```
 
 ## Documentation

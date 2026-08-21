@@ -50,6 +50,9 @@ next-env.d.ts
 # local sqlite dev data
 /.data/
 
+# temporary Prisma engine generation
+/.tmp/
+
 # uploads
 /public/uploads/*
 !/public/uploads/.gitkeep

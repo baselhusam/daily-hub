@@ -165,7 +165,7 @@ Typical steps:
 |-------|---------|
 | App responds | `curl -s -o /dev/null -w "%{http_code}" http://localhost:9999` |
 | DB healthy | `docker compose ps` (db healthcheck) |
-| Migrations applied | `docker compose exec app npx prisma migrate status` |
+| Migrations applied | `docker compose exec app node node_modules/prisma/build/index.js migrate status` |
 
 ## Troubleshooting
 
@@ -176,6 +176,7 @@ Typical steps:
 | Empty dashboard after deploy | Run `npm run db:seed` or create data via UI |
 | Logos missing after rebuild | Ensure `uploads_data` volume is attached |
 | Build fails on Prisma | Run `npm run db:generate` before `npm run build` |
+| Query engine missing (`darwin-arm64` / `debian-openssl`) | Update to the latest `@baselhusam/daily-hub`. The CLI ships engines for macOS, Windows, and Linux, and generates a native engine if one is missing. |
 | `SQLITE_BUSY` on npx | Restart the app; ensure `~/.daily-hub` is on local disk, not a synced folder |
 
 ## CI suggestion
