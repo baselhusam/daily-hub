@@ -169,7 +169,7 @@ Remote `https?://` logo URLs are stored on `Project.logoUrl` / `DailyTask.logoUr
 
 | Service | Image / build | Port | Role |
 |---------|---------------|------|------|
-| `app` | `Dockerfile` (standalone Next) | 9999 | App + SQLite + auto migrate |
+| `app` | `ghcr.io/baselhusam/daily-hub` (or local `Dockerfile`) | 9999 | App + SQLite + auto migrate |
 
 Volume: `dailyhub_data` → `/app/data` (`data.db` + `uploads/`).
 

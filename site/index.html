@@ -99,9 +99,9 @@
                 <p class="cmd"><span class="prompt">$</span> <span class="bin">npx</span> <span class="pkg">@baselhusam/daily-hub --seed</span><span class="cursor" aria-hidden="true"></span></p>
                 <p class="out">sample projects, tasks, habits <span class="dim">· first run</span></p>
               </div>
-              <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker" hidden data-command="docker compose up --build">
-                <p class="cmd"><span class="prompt">$</span> <span class="bin">docker</span> <span class="pkg">compose up --build</span><span class="cursor" aria-hidden="true"></span></p>
-                <p class="out">SQLite on :9999 <span class="dim">· self-host</span></p>
+              <div class="panel" role="tabpanel" id="panel-docker" aria-labelledby="tab-docker" hidden data-command="docker run -d --name dailyhub -p 9999:9999 -v dailyhub_data:/app/data ghcr.io/baselhusam/daily-hub:latest">
+                <p class="cmd"><span class="prompt">$</span> <span class="bin">docker</span> <span class="pkg">run -d --name dailyhub -p 9999:9999 -v dailyhub_data:/app/data ghcr.io/baselhusam/daily-hub:latest</span><span class="cursor" aria-hidden="true"></span></p>
+                <p class="out">http://localhost:9999 <span class="dim">· ghcr.io</span></p>
               </div>
             </div>
           </aside>
@@ -303,12 +303,12 @@
           <article class="reveal">
             <p class="kicker">B · Docker</p>
             <h3>SQLite, self-host</h3>
-            <p>Single container. Persistent volume for <code>data.db</code> and uploads.</p>
-            <p class="cmd"><span class="prompt">$</span> docker compose up --build</p>
+            <p>Single container from GHCR. Persistent volume for <code>data.db</code> and uploads.</p>
+            <p class="cmd"><span class="prompt">$</span> docker run -d --name dailyhub -p 9999:9999 -v dailyhub_data:/app/data ghcr.io/baselhusam/daily-hub:latest</p>
             <ul>
               <li>App on <code>:9999</code></li>
               <li>Migrations on container start</li>
-              <li><code>npm run db:seed</code> inside the app container</li>
+              <li>Clone and <code>docker compose up --build</code> to compile locally</li>
             </ul>
           </article>
           <article class="reveal">

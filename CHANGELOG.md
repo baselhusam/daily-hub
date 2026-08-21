@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- GitHub Releases publish a multi-arch image to `ghcr.io/baselhusam/daily-hub` (`linux/amd64`, `linux/arm64`) with the npm version tag, plus `:latest` (stable) or `:next` (prereleases).
+- CI builds the Docker image on pull requests and `main` (amd64, no push).
+
+### Changed
+
+- `docker-compose.yml` pulls `ghcr.io/baselhusam/daily-hub:latest` and still supports `docker compose up --build` for local builds.
+
 ## [0.1.5] - 2026-08-21
 
 ### Changed

@@ -340,7 +340,7 @@ main,
 }
 
 .command {
-  max-width: 460px;
+  max-width: 540px;
   margin-bottom: 18px;
   border: 1px solid var(--rule);
   border-radius: 12px;

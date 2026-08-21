@@ -17,6 +17,8 @@
   ·
   <a href="https://www.npmjs.com/package/@baselhusam/daily-hub">npm</a>
   ·
+  <a href="https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub">GHCR</a>
+  ·
   <a href="docs/DEPLOYMENT.md">Docs</a>
   ·
   <a href="CHANGELOG.md">Changelog</a>
@@ -61,14 +63,18 @@ Do not keep `~/.daily-hub/` in iCloud, Dropbox, or other file-sync folders — S
 ### Docker
 
 ```bash
-docker compose up --build
+docker run -d --name dailyhub -p 9999:9999 \
+  -v dailyhub_data:/app/data \
+  ghcr.io/baselhusam/daily-hub:latest
 ```
 
-Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume. Optional sample data:
+Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume. Pin a version with `ghcr.io/baselhusam/daily-hub:X.Y.Z` (same as the npm version). Optional sample data:
 
 ```bash
-docker compose exec app npm run db:seed
+docker exec dailyhub npm run db:seed
 ```
+
+From a clone, `docker compose up -d` pulls the same image; `docker compose up --build` compiles from this tree. The image is published on GitHub Releases — until the next release, use `--build`.
 
 v1 has **no authentication**. Keep it on localhost, a private network, or behind a reverse proxy. Full self-hosting notes are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 

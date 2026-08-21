@@ -1,5 +1,6 @@
 services:
   app:
+    image: ghcr.io/baselhusam/daily-hub:latest
     build:
       context: .
       dockerfile: Dockerfile

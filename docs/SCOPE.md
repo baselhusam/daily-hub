@@ -29,7 +29,8 @@ What DailyHub includes today and what is intentionally deferred.
 - [x] Prisma migrations and seed data
 - [x] Single-service `docker-compose.yml` (app on port 9999)
 - [x] Next.js standalone Docker image with migrate-on-start
-- [x] GitHub Actions CI (lint, typecheck, test, build)
+- [x] Published GHCR image (`linux/amd64` + `linux/arm64`) on GitHub Releases
+- [x] GitHub Actions CI (lint, typecheck, test, build, amd64 Docker image)
 
 ## Out of scope (v1 — do not add without new agreement)
 

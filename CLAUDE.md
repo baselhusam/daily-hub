@@ -37,7 +37,8 @@ npm test
 npm run build
 
 # Full stack (Docker, SQLite volume)
-docker compose up --build
+docker compose up -d           # pull ghcr.io/baselhusam/daily-hub:latest
+docker compose up -d --build   # compile from this tree
 
 # Seed inside Docker app container
 docker compose exec app npm run db:seed
@@ -118,16 +119,24 @@ Docker uses `DATABASE_URL=file:/app/data/data.db` and `DAILYHUB_DATA_DIR=/app/da
 
 ## Publishing
 
-Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/daily-hub)
+Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/daily-hub)  
+Image: [`ghcr.io/baselhusam/daily-hub`](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub)
 
-Publishing is automatic on GitHub Releases. CI uses npm trusted publishing (OIDC) — no `NPM_TOKEN` secret.
+Publishing is automatic on GitHub Releases. npm uses trusted publishing (OIDC) — no `NPM_TOKEN`. GHCR uses `GITHUB_TOKEN` (`packages: write`) — no Docker Hub credentials.
 
 1. Update [`CHANGELOG.md`](CHANGELOG.md) under **Unreleased** (or add the new version section).
 2. Bump `"version"` in `package.json` (and commit).
 3. Push to `main`.
 4. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.5`). Paste the matching `CHANGELOG` section into the release body.
 
-The [Publish npm package](.github/workflows/publish.yml) workflow then builds via `prepack` and runs `npm publish`. Prereleases publish under the `next` npm tag. The marketing site in [`site/`](site/) deploys to [GitHub Pages](https://baselhusam.github.io/daily-hub/).
+The [Publish](.github/workflows/publish.yml) workflow then:
+
+- Builds via `prepack` and runs `npm publish`
+- Builds `linux/amd64` + `linux/arm64` and pushes `ghcr.io/baselhusam/daily-hub:X.Y.Z`
+
+Stable releases also move npm `latest` and the image tag `:latest`. Prereleases use the npm `next` dist-tag and image tag `:next` (they do not move `:latest`). The first GHCR package may be private — set it to public in GitHub Packages settings after the first push.
+
+The marketing site in [`site/`](site/) deploys to [GitHub Pages](https://baselhusam.github.io/daily-hub/).
 
 Test the tarball locally before cutting a release:
 
