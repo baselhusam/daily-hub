@@ -74,7 +74,7 @@ Open [http://localhost:9999](http://localhost:9999). Data persists in the `daily
 docker exec dailyhub npm run db:seed
 ```
 
-From a clone, `docker compose up -d` pulls the same image; `docker compose up --build` compiles from this tree. The image is published on GitHub Releases — until the next release, use `--build`.
+From a clone, `docker compose up -d` pulls the same image; `docker compose up --build` compiles from this tree.
 
 v1 has **no authentication**. Keep it on localhost, a private network, or behind a reverse proxy. Full self-hosting notes are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 

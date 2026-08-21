@@ -64,8 +64,6 @@ Pre-built images live at [`ghcr.io/baselhusam/daily-hub`](https://github.com/bas
 
 The first GHCR package created by Actions is often **private**. After the first successful publish, open GitHub → Packages → `daily-hub` → Package settings → change visibility to **Public**. Anonymous `docker pull` will fail until then. Repo Settings → Actions → General → Workflow permissions must allow `GITHUB_TOKEN` **read and write**.
 
-Images are published starting with the next GitHub Release after this workflow landed. Until that release exists, use **Build from source** below.
-
 ### Pull the image
 
 ```bash
