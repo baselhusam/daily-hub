@@ -5,6 +5,8 @@ const staticSrc = join(".next", "static");
 const staticDest = join(".next", "standalone", ".next", "static");
 const publicSrc = "public";
 const publicDest = join(".next", "standalone", "public");
+const generatedSrc = join("src", "generated");
+const generatedDest = join(".next", "standalone", "src", "generated");
 const standaloneEnv = join(".next", "standalone", ".env");
 
 if (!existsSync(staticSrc)) {
@@ -23,6 +25,12 @@ if (existsSync(publicSrc)) {
   mkdirSync(join(publicDest, "uploads"), { recursive: true });
 }
 
+if (existsSync(generatedSrc)) {
+  mkdirSync(join(".next", "standalone", "src"), { recursive: true });
+  rmSync(generatedDest, { recursive: true, force: true });
+  cpSync(generatedSrc, generatedDest, { recursive: true });
+}
+
 rmSync(standaloneEnv, { force: true });
 
-console.log("Prepared standalone bundle with static assets.");
+console.log("Prepared standalone bundle with static assets and Prisma engines.");
