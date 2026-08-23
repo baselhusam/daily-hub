@@ -40,10 +40,6 @@ DailyHub is not a replacement for Linear, Jira, or Notion. It is the **morning s
   </video>
 </p>
 
-<p align="center">
-  <a href="https://github.com/user-attachments/assets/4581af2e-845f-4ead-a4a9-2e44c5c1fc1e">▶ Watch the 27-second launch film</a>
-</p>
-
 ## Features
 
 - **Today** — greeting, quick add, nudges, today’s habits, open work by project, and an inbox
