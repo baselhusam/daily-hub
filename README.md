@@ -32,6 +32,18 @@ A personal command center for people who juggle **more than one project at a tim
 
 DailyHub is not a replacement for Linear, Jira, or Notion. It is the **morning surface**: what is open, what belongs where, what must happen today, and what you already finished.
 
+## See it in action
+
+<p align="center">
+  <a href="branding/announcing_video/Daily%20Hub%20Launch%20Film%20-%20Professional%20Master.mp4">
+    <img src="branding/announcing_video/professional-master-poster.jpg" alt="Watch the DailyHub launch film" width="100%">
+  </a>
+</p>
+
+<p align="center">
+  <a href="branding/announcing_video/Daily%20Hub%20Launch%20Film%20-%20Professional%20Master.mp4">▶ Watch the 27-second launch film</a>
+</p>
+
 ## Features
 
 - **Today** — greeting, quick add, nudges, today’s habits, open work by project, and an inbox
