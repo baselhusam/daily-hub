@@ -3,6 +3,7 @@
 import { revalidateApp } from "@/lib/revalidate";
 import { prisma } from "@/lib/prisma";
 import { getTodayDate, parseDateInput } from "@/lib/dates";
+import { touchProjects } from "@/lib/project-activity";
 import { createTaskSchema, updateTaskSchema } from "@/lib/validations";
 import { failAction, type ActionResult } from "@/app/actions/types";
 
@@ -51,7 +52,7 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
   try {
     await assertProjectExists(resolvedProjectId);
 
-    await prisma.task.create({
+    const task = await prisma.task.create({
       data: {
         title,
         notes: notes || null,
@@ -61,6 +62,7 @@ export async function createTask(formData: FormData): Promise<ActionResult> {
         dueDate: parseDateInput(parsed.data.dueDate),
       },
     });
+    await touchProjects([task.projectId]);
   } catch (error) {
     return {
       success: false,
@@ -88,7 +90,12 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
   try {
     await assertProjectExists(resolvedProjectId);
 
-    await prisma.task.update({
+    const existingTask = await prisma.task.findUnique({
+      where: { id },
+      select: { projectId: true },
+    });
+
+    const task = await prisma.task.update({
       where: { id },
       data: {
         title,
@@ -99,6 +106,7 @@ export async function updateTask(formData: FormData): Promise<ActionResult> {
         dueDate: parseDateInput(parsed.data.dueDate),
       },
     });
+    await touchProjects([existingTask?.projectId, task.projectId]);
   } catch (error) {
     return {
       success: false,
@@ -165,6 +173,7 @@ export async function toggleTask(taskId: string): Promise<ActionResult> {
         }),
       ]);
     }
+    await touchProjects([task.projectId]);
   } catch (error) {
     return {
       success: false,
@@ -179,7 +188,11 @@ export async function toggleTask(taskId: string): Promise<ActionResult> {
 
 export async function deleteTask(id: string): Promise<ActionResult> {
   try {
-    await prisma.task.delete({ where: { id } });
+    const task = await prisma.task.delete({
+      where: { id },
+      select: { projectId: true },
+    });
+    await touchProjects([task.projectId]);
   } catch (error) {
     return failAction(error, "Failed to delete task.");
   }

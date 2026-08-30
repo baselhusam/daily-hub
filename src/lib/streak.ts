@@ -9,7 +9,7 @@ import {
   toDateOnlyString,
 } from "@/lib/dates";
 import { parseWeekdays } from "@/lib/weekdays-db";
-import type { StreakInfo } from "@/lib/streak-utils";
+import { emptyStreakInfo, type StreakInfo } from "@/lib/streak-utils";
 
 export type { SparkBar, StreakInfo } from "@/lib/streak-utils";
 export { daysUntil, formatEstimate, mkSparkBars } from "@/lib/streak-utils";
@@ -38,6 +38,10 @@ export async function getStreakInfo(
     where: { entityType: "DAILY_TASK" },
     select: { entityId: true, completedOn: true },
   });
+
+  // A streak measures completed habits. With no active habits there is
+  // nothing to complete, so every past day must not count as a success.
+  if (tasks.length === 0) return emptyStreakInfo();
 
   const keysByTask = groupCompletionDateKeys(logs);
 

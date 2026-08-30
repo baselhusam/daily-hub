@@ -32,6 +32,9 @@ import {
 } from "@/lib/streak";
 import type { ProjectStatus, TaskStatus } from "@/lib/status";
 import { withParsedWeekdays } from "@/lib/weekdays-db";
+import { sortProjectsByRecentActivity } from "@/lib/project-sort";
+
+export { sortProjectsByRecentActivity } from "@/lib/project-sort";
 
 export type DashboardMilestone = {
   id: string;
@@ -184,7 +187,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   ] = await Promise.all([
     prisma.project.findMany({
       where: { status: { not: "DONE" } },
-      orderBy: { sortOrder: "asc" },
+      orderBy: [{ updatedAt: "desc" }, { sortOrder: "asc" }],
       include: {
         milestones: { orderBy: { sortOrder: "asc" } },
         tasks: {
@@ -263,7 +266,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     })
   );
 
-  const mappedProjects: DashboardProject[] = projects.map((project) => {
+  const mappedProjects: DashboardProject[] = projects
+    .slice()
+    .sort(sortProjectsByRecentActivity)
+    .map((project) => {
     const openTasks = project.tasks.filter((t) => t.status !== "DONE");
     const doneCount = project.tasks.filter((t) => t.status === "DONE").length;
     return {
@@ -284,7 +290,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       openCount: openTasks.length,
       doneCount,
     };
-  });
+    });
 
   const inboxTasks: DashboardTask[] = sortInboxLog(
     inboxTasksRaw.map((task) => {

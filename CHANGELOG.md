@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-08-30
+
 ### Fixed
 
+- Projects on the Today dashboard now move to the top after a project, task, or milestone is changed, completed, created, or deleted.
+- Empty workspaces now correctly report a 0-day habit streak instead of displaying the 400-day calculation safeguard as a real streak.
 - CLI copies the host Prisma query engine into every directory the bundled Next.js client searches, and prints the installed version so a stale local `npx` copy is obvious.
+
+### Changed
+
+- Added regression coverage for recent project activity ordering and the empty-habits streak state.
 
 ## [0.1.6] - 2026-08-21
 
@@ -96,7 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose path with PostgreSQL 16 and migrate-on-start.
 - Today, Projects, Habits, and Analytics surfaces with completion logging.
 
-[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/baselhusam/daily-hub/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/baselhusam/daily-hub/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/baselhusam/daily-hub/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/baselhusam/daily-hub/compare/v0.1.3...v0.1.4

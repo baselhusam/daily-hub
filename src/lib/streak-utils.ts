@@ -9,6 +9,13 @@ export type StreakInfo = {
   dots: Array<{ color: string }>;
 };
 
+export function emptyStreakInfo(): StreakInfo {
+  return {
+    streak: 0,
+    dots: Array.from({ length: 14 }, () => ({ color: "var(--track)" })),
+  };
+}
+
 export function daysUntil(
   date: Date | null | undefined,
   today = getTodayDate(),

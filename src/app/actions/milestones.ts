@@ -3,6 +3,7 @@
 import { revalidateApp } from "@/lib/revalidate";
 import { prisma } from "@/lib/prisma";
 import { parseDateInput } from "@/lib/dates";
+import { touchProjects } from "@/lib/project-activity";
 import { milestoneSchema } from "@/lib/validations";
 import { failAction, type ActionResult } from "@/app/actions/types";
 
@@ -21,6 +22,7 @@ export async function toggleMilestone(id: string): Promise<ActionResult> {
       where: { id },
       data: { done: !milestone.done },
     });
+    await touchProjects([milestone.projectId]);
   } catch (error) {
     return {
       success: false,
@@ -35,7 +37,11 @@ export async function toggleMilestone(id: string): Promise<ActionResult> {
 
 export async function deleteMilestone(id: string): Promise<ActionResult> {
   try {
-    await prisma.milestone.delete({ where: { id } });
+    const milestone = await prisma.milestone.delete({
+      where: { id },
+      select: { projectId: true },
+    });
+    await touchProjects([milestone.projectId]);
   } catch (error) {
     return failAction(error, "Failed to delete milestone.");
   }
@@ -83,6 +89,7 @@ export async function createMilestone(formData: FormData): Promise<ActionResult>
         sortOrder: (last._max.sortOrder ?? -1) + 1,
       },
     });
+    await touchProjects([projectId]);
   } catch (error) {
     return failAction(error, "Failed to create milestone.");
   }
@@ -133,6 +140,7 @@ export async function saveProjectMilestones(
         })),
       });
     }
+    await touchProjects([projectId]);
   } catch (error) {
     return failAction(error, "Failed to save milestones.");
   }
