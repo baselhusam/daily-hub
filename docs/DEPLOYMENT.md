@@ -42,9 +42,23 @@ Useful flags:
 npx daily-hub --port 3000
 npx daily-hub --data-dir ~/my-daily-hub
 npx daily-hub --no-open
+npx daily-hub --detach
 npx daily-hub --seed
 npx daily-hub seed
 ```
+
+### Run with no terminal open
+
+Use `--detach` to start the local app in the background. The command waits until the app is ready, then returns; you can close the terminal without stopping DailyHub.
+
+```bash
+npx @baselhusam/daily-hub --detach
+npx @baselhusam/daily-hub status
+npx @baselhusam/daily-hub logs
+npx @baselhusam/daily-hub stop
+```
+
+DailyHub stores its background-process state in `daily-hub.pid` and its output in `daily-hub.log`, alongside `data.db` in the selected data directory. Use the same `--data-dir` for the management commands when the data directory is customized. Detached mode does not automatically restart after a reboot; use Docker, `launchd`, systemd, or another service manager when you need that.
 
 Notes:
 

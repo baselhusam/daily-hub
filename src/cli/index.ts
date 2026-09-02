@@ -1,5 +1,12 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import {
+  closeSync,
+  existsSync,
+  openSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { createServer } from "node:net";
 import { homedir } from "node:os";
@@ -22,7 +29,15 @@ type CliOptions = {
   dataDir: string;
   openBrowser: boolean;
   seed: boolean;
-  command: "start" | "seed";
+  detach: boolean;
+  detachedChild: boolean;
+  command: "start" | "seed" | "status" | "stop" | "logs";
+};
+
+type BackgroundState = {
+  pid: number;
+  port: number;
+  startedAt: string;
 };
 
 function parseArgs(argv: string[]): CliOptions {
@@ -31,14 +46,27 @@ function parseArgs(argv: string[]): CliOptions {
     dataDir: process.env.DAILYHUB_DATA_DIR ?? join(homedir(), ".daily-hub"),
     openBrowser: true,
     seed: false,
+    detach: false,
+    detachedChild: false,
     command: "start",
   };
 
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
 
-    if (arg === "seed") {
-      options.command = "seed";
+    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs") {
+      options.command = arg;
+      continue;
+    }
+
+    if (arg === "--detach") {
+      options.detach = true;
+      continue;
+    }
+
+    if (arg === "--detach-child") {
+      options.detachedChild = true;
+      options.openBrowser = false;
       continue;
     }
 
@@ -78,6 +106,10 @@ function parseArgs(argv: string[]): CliOptions {
     }
 
     throw new Error(`Unknown argument: ${arg}`);
+  }
+
+  if (options.detach && options.command !== "start") {
+    throw new Error("--detach can only be used when starting DailyHub.");
   }
 
   return options;
@@ -121,9 +153,115 @@ Options:
   --port <number>     Port for the web app (default: 9999)
   --data-dir <path>   Data directory (default: ~/.daily-hub)
   --no-open           Do not open the browser automatically
+  --detach            Start in the background and return after it is ready
   --seed              Seed sample data on first start
+
+Commands:
+  start               Start DailyHub (default)
+  seed                Seed sample data and exit
+  status              Show whether a detached instance is running
+  stop                Stop a detached instance
+  logs                Print the most recent detached-instance log output
   -h, --help          Show this help message
 `);
+}
+
+function backgroundStatePath(dataDir: string) {
+  return join(dataDir, "daily-hub.pid");
+}
+
+function backgroundLogPath(dataDir: string) {
+  return join(dataDir, "daily-hub.log");
+}
+
+function readBackgroundState(dataDir: string): BackgroundState | undefined {
+  try {
+    const state = JSON.parse(readFileSync(backgroundStatePath(dataDir), "utf8")) as BackgroundState;
+    if (!Number.isInteger(state.pid) || state.pid < 1 || !Number.isInteger(state.port)) {
+      return undefined;
+    }
+    return state;
+  } catch {
+    return undefined;
+  }
+}
+
+function isProcessRunning(pid: number) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function removeBackgroundState(dataDir: string, pid?: number) {
+  const state = readBackgroundState(dataDir);
+  if (pid !== undefined && state?.pid !== pid) {
+    return;
+  }
+
+  try {
+    unlinkSync(backgroundStatePath(dataDir));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+  }
+}
+
+function writeBackgroundState(dataDir: string, port: number) {
+  const state: BackgroundState = {
+    pid: process.pid,
+    port,
+    startedAt: new Date().toISOString(),
+  };
+  writeFileSync(backgroundStatePath(dataDir), `${JSON.stringify(state)}\n`, "utf8");
+}
+
+function printBackgroundStatus(dataDir: string) {
+  const state = readBackgroundState(dataDir);
+  if (!state) {
+    console.log("DailyHub is not running in the background.");
+    return;
+  }
+
+  if (!isProcessRunning(state.pid)) {
+    removeBackgroundState(dataDir);
+    console.log("DailyHub is not running in the background (removed stale state).");
+    return;
+  }
+
+  console.log(`DailyHub is running in the background at http://127.0.0.1:${state.port} (PID ${state.pid}).`);
+  console.log(`Log file: ${backgroundLogPath(dataDir)}`);
+}
+
+function stopBackgroundServer(dataDir: string) {
+  const state = readBackgroundState(dataDir);
+  if (!state) {
+    console.log("DailyHub is not running in the background.");
+    return;
+  }
+
+  if (!isProcessRunning(state.pid)) {
+    removeBackgroundState(dataDir);
+    console.log("DailyHub is not running in the background (removed stale state).");
+    return;
+  }
+
+  process.kill(state.pid, "SIGTERM");
+  console.log(`Stopping DailyHub background process (PID ${state.pid}).`);
+}
+
+function printBackgroundLogs(dataDir: string) {
+  const logPath = backgroundLogPath(dataDir);
+  if (!existsSync(logPath)) {
+    console.log(`No background log has been created at ${logPath}.`);
+    return;
+  }
+
+  const lines = readFileSync(logPath, "utf8").trimEnd().split("\n");
+  console.log(lines.slice(-100).join("\n"));
 }
 
 function runCommand(
@@ -250,6 +388,76 @@ async function seedDatabase(env: NodeJS.ProcessEnv) {
   await runCommand("npx", ["tsx", join(packageRoot, "prisma", "seed.ts")], env);
 }
 
+async function startDetached(options: CliOptions, rawArgs: string[]) {
+  await prepareDataDir(options.dataDir);
+
+  const logPath = backgroundLogPath(options.dataDir);
+  const logFile = openSync(logPath, "a");
+  const childArgs = rawArgs.filter((arg) => arg !== "--detach");
+  childArgs.push("--detach-child", "--no-open");
+
+  const child = spawn(process.execPath, [process.argv[1], ...childArgs], {
+    cwd: process.cwd(),
+    detached: true,
+    stdio: ["ignore", logFile, logFile],
+  });
+
+  let childFailure: Error | undefined;
+  child.once("error", (error) => {
+    childFailure = error;
+  });
+  child.once("exit", (code, signal) => {
+    childFailure = new Error(
+      `Background process exited ${signal ? `from ${signal}` : `with code ${code ?? "unknown"}`}.`
+    );
+  });
+  child.unref();
+  closeSync(logFile);
+
+  const url = `http://127.0.0.1:${options.port}`;
+  try {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 120_000) {
+      if (childFailure) {
+        throw childFailure;
+      }
+
+      try {
+        const response = await fetch(url, { redirect: "manual" });
+        if (response.ok || response.status === 307 || response.status === 308) {
+          break;
+        }
+      } catch {
+        // Server not ready yet.
+      }
+
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 500));
+    }
+
+    if (childFailure) {
+      throw childFailure;
+    }
+
+    if (Date.now() - startedAt >= 120_000) {
+      throw new Error(`Timed out waiting for DailyHub at ${url}`);
+    }
+  } catch (error) {
+    throw new Error(
+      `DailyHub did not start in the background. Check ${logPath} for details. ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+
+  console.log(`DailyHub v${packageVersion()} is running in the background at ${url}`);
+  console.log(`Log file: ${logPath}`);
+  console.log(`Manage it with: npx @baselhusam/daily-hub status | logs | stop`);
+
+  if (options.openBrowser) {
+    await openBrowser(url);
+  }
+}
+
 async function startServer(options: CliOptions) {
   const env = await preparePrisma(options);
   const url = `http://127.0.0.1:${options.port}`;
@@ -268,6 +476,10 @@ async function startServer(options: CliOptions) {
     stdio: "inherit",
   });
 
+  if (options.detachedChild) {
+    writeBackgroundState(options.dataDir, options.port);
+  }
+
   const shutdown = async () => {
     if (!server.killed) {
       server.kill("SIGTERM");
@@ -278,11 +490,17 @@ async function startServer(options: CliOptions) {
   process.on("SIGTERM", shutdown);
 
   server.on("error", (error) => {
+    if (options.detachedChild) {
+      removeBackgroundState(options.dataDir, process.pid);
+    }
     console.error(error);
     process.exit(1);
   });
 
   server.on("exit", (code, signal) => {
+    if (options.detachedChild) {
+      removeBackgroundState(options.dataDir, process.pid);
+    }
     if (signal) {
       process.exit(0);
     }
@@ -299,8 +517,24 @@ async function startServer(options: CliOptions) {
 }
 
 async function main() {
-  const options = parseArgs(process.argv.slice(2));
+  const rawArgs = process.argv.slice(2);
+  const options = parseArgs(rawArgs);
   console.log(`DailyHub v${packageVersion()}`);
+
+  if (options.command === "status") {
+    printBackgroundStatus(options.dataDir);
+    return;
+  }
+
+  if (options.command === "stop") {
+    stopBackgroundServer(options.dataDir);
+    return;
+  }
+
+  if (options.command === "logs") {
+    printBackgroundLogs(options.dataDir);
+    return;
+  }
 
   if (options.command === "seed") {
     const env = await preparePrisma(options);
@@ -308,6 +542,11 @@ async function main() {
     await migrateDatabase(env, options.dataDir);
     await seedDatabase(env);
     console.log(`Seeded DailyHub data in ${options.dataDir}`);
+    return;
+  }
+
+  if (options.detach) {
+    await startDetached(options, rawArgs);
     return;
   }
 

@@ -1107,7 +1107,7 @@ var require_chunk_3UEKS5W6 = __commonJS({
           }
           return data;
         };
-        var writeFileSync2 = (path3, data, options) => {
+        var writeFileSync3 = (path3, data, options) => {
           try {
             fs.writeFileSync(path3, data, options);
           } catch (err) {
@@ -1120,13 +1120,13 @@ var require_chunk_3UEKS5W6 = __commonJS({
           }
         };
         var writeAtomicSync = (path3, data, options) => {
-          writeFileSync2(path3 + newExt, data, options);
+          writeFileSync3(path3 + newExt, data, options);
           fs.renameSync(path3 + newExt, path3);
         };
         var writeSync = (path3, data, options) => {
           const opts = options || {};
           const processedData = serializeToJsonMaybe(data, opts.jsonIndent);
-          let writeStrategy = writeFileSync2;
+          let writeStrategy = writeFileSync3;
           if (opts.atomic) {
             writeStrategy = writeAtomicSync;
           }
@@ -10393,14 +10393,14 @@ var require_chunk_3UEKS5W6 = __commonJS({
             return close;
           })(fs.close);
           fs.closeSync = (function(fs$closeSync) {
-            function closeSync(fd) {
+            function closeSync2(fd) {
               fs$closeSync.apply(fs, arguments);
               resetQueue();
             }
-            Object.defineProperty(closeSync, previousSymbol, {
+            Object.defineProperty(closeSync2, previousSymbol, {
               value: fs$closeSync
             });
-            return closeSync;
+            return closeSync2;
           })(fs.closeSync);
           if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || "")) {
             process.on("exit", function() {
@@ -16948,6 +16948,29 @@ function databaseUrl(dataDir) {
 function generatedClientDir(packageRoot2) {
   return (0, import_node_path.join)(packageRoot2, ".next", "standalone", "src", "generated", "client");
 }
+function queryEngineSearchDirs(packageRoot2) {
+  const standaloneRoot = (0, import_node_path.join)(packageRoot2, ".next", "standalone");
+  return [
+    generatedClientDir(packageRoot2),
+    (0, import_node_path.join)(packageRoot2, "src", "generated", "client"),
+    (0, import_node_path.join)(standaloneRoot, ".next", "server"),
+    (0, import_node_path.join)(standaloneRoot, ".next", "server", "chunks"),
+    (0, import_node_path.join)(standaloneRoot, ".prisma", "client"),
+    (0, import_node_path.join)(standaloneRoot, "prisma"),
+    standaloneRoot
+  ];
+}
+function copyEngineToSearchDirs(enginePath, engineName, packageRoot2) {
+  const destPath = (0, import_node_path.join)(generatedClientDir(packageRoot2), engineName);
+  for (const dir of queryEngineSearchDirs(packageRoot2)) {
+    (0, import_node_fs.mkdirSync)(dir, { recursive: true });
+    const target = (0, import_node_path.join)(dir, engineName);
+    if (target !== enginePath && !(0, import_node_fs.existsSync)(target)) {
+      (0, import_node_fs.cpSync)(enginePath, target);
+    }
+  }
+  return destPath;
+}
 function resolvePrismaCli(packageRoot2) {
   const candidates = [
     (0, import_node_path.join)(packageRoot2, "node_modules", "prisma", "build", "index.js"),
@@ -16973,33 +16996,22 @@ function resolvePrismaCli(packageRoot2) {
 async function ensureQueryEngine(packageRoot2, runCommand2, env) {
   const binaryTarget = await (0, import_get_platform.getBinaryTargetForCurrentPlatform)();
   const engineName = (0, import_get_platform.getNodeAPIName)(binaryTarget, "fs");
-  const destDir = generatedClientDir(packageRoot2);
-  const destPath = (0, import_node_path.join)(destDir, engineName);
-  const searchDirs = [
-    destDir,
-    (0, import_node_path.join)(packageRoot2, "src", "generated", "client")
-  ];
-  for (const dir of searchDirs) {
+  for (const dir of queryEngineSearchDirs(packageRoot2)) {
     const candidate = (0, import_node_path.join)(dir, engineName);
     if (!(0, import_node_fs.existsSync)(candidate)) {
       continue;
     }
-    if (candidate !== destPath) {
-      (0, import_node_fs.mkdirSync)(destDir, { recursive: true });
-      (0, import_node_fs.cpSync)(candidate, destPath);
-    }
-    return destPath;
+    return copyEngineToSearchDirs(candidate, engineName, packageRoot2);
   }
   console.warn(
     `Prisma query engine for ${binaryTarget} is not in the package. Generating a native engine...`
   );
-  await generateNativeEngine(packageRoot2, runCommand2, env, destDir, destPath, engineName);
-  return destPath;
+  return generateNativeEngine(packageRoot2, runCommand2, env, engineName, binaryTarget);
 }
-async function generateNativeEngine(packageRoot2, runCommand2, env, destDir, destPath, engineName) {
+async function generateNativeEngine(packageRoot2, runCommand2, env, engineName, binaryTarget) {
   const schemaPath2 = (0, import_node_path.join)(packageRoot2, "prisma", "schema.prisma");
   if (!(0, import_node_fs.existsSync)(schemaPath2)) {
-    throw new Error(`Missing Prisma schema at ${schemaPath2}.`);
+    throw missingEngineError(binaryTarget, engineName);
   }
   const tempDir = (0, import_node_path.join)(packageRoot2, ".tmp", "prisma-native");
   (0, import_node_fs.rmSync)(tempDir, { recursive: true, force: true });
@@ -17018,15 +17030,21 @@ async function generateNativeEngine(packageRoot2, runCommand2, env, destDir, des
     );
     const enginePath = (0, import_node_path.join)(outputDir, engineName);
     if (!(0, import_node_fs.existsSync)(enginePath)) {
-      throw new Error(
-        `Prisma could not generate a query engine for this platform (${engineName}).`
-      );
+      throw missingEngineError(binaryTarget, engineName);
     }
-    (0, import_node_fs.mkdirSync)(destDir, { recursive: true });
-    (0, import_node_fs.cpSync)(enginePath, destPath);
+    return copyEngineToSearchDirs(enginePath, engineName, packageRoot2);
   } finally {
     (0, import_node_fs.rmSync)(tempDir, { recursive: true, force: true });
   }
+}
+function missingEngineError(binaryTarget, engineName) {
+  return new Error(
+    `DailyHub could not load the database engine for ${binaryTarget} (${engineName}).
+npx may be using an old install from a parent node_modules folder.
+Run the published version explicitly:
+
+  npx @baselhusam/daily-hub@latest`
+  );
 }
 
 // src/cli/index.ts
@@ -17040,12 +17058,23 @@ function parseArgs(argv) {
     dataDir: process.env.DAILYHUB_DATA_DIR ?? (0, import_node_path2.join)((0, import_node_os.homedir)(), ".daily-hub"),
     openBrowser: true,
     seed: false,
+    detach: false,
+    detachedChild: false,
     command: "start"
   };
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
-    if (arg === "seed") {
-      options.command = "seed";
+    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs") {
+      options.command = arg;
+      continue;
+    }
+    if (arg === "--detach") {
+      options.detach = true;
+      continue;
+    }
+    if (arg === "--detach-child") {
+      options.detachedChild = true;
+      options.openBrowser = false;
       continue;
     }
     if (arg === "--no-open") {
@@ -17080,6 +17109,9 @@ function parseArgs(argv) {
     }
     throw new Error(`Unknown argument: ${arg}`);
   }
+  if (options.detach && options.command !== "start") {
+    throw new Error("--detach can only be used when starting DailyHub.");
+  }
   return options;
 }
 async function openBrowser(url) {
@@ -17090,8 +17122,18 @@ async function openBrowser(url) {
     stdio: "ignore"
   }).unref();
 }
+function packageVersion() {
+  try {
+    const pkg = JSON.parse(
+      (0, import_node_fs2.readFileSync)((0, import_node_path2.join)(packageRoot, "package.json"), "utf8")
+    );
+    return pkg.version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
 function printHelp() {
-  console.log(`DailyHub CLI
+  console.log(`DailyHub CLI v${packageVersion()}
 
 Usage:
   daily-hub [options]
@@ -17101,9 +17143,101 @@ Options:
   --port <number>     Port for the web app (default: 9999)
   --data-dir <path>   Data directory (default: ~/.daily-hub)
   --no-open           Do not open the browser automatically
+  --detach            Start in the background and return after it is ready
   --seed              Seed sample data on first start
+
+Commands:
+  start               Start DailyHub (default)
+  seed                Seed sample data and exit
+  status              Show whether a detached instance is running
+  stop                Stop a detached instance
+  logs                Print the most recent detached-instance log output
   -h, --help          Show this help message
 `);
+}
+function backgroundStatePath(dataDir) {
+  return (0, import_node_path2.join)(dataDir, "daily-hub.pid");
+}
+function backgroundLogPath(dataDir) {
+  return (0, import_node_path2.join)(dataDir, "daily-hub.log");
+}
+function readBackgroundState(dataDir) {
+  try {
+    const state = JSON.parse((0, import_node_fs2.readFileSync)(backgroundStatePath(dataDir), "utf8"));
+    if (!Number.isInteger(state.pid) || state.pid < 1 || !Number.isInteger(state.port)) {
+      return void 0;
+    }
+    return state;
+  } catch {
+    return void 0;
+  }
+}
+function isProcessRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function removeBackgroundState(dataDir, pid) {
+  const state = readBackgroundState(dataDir);
+  if (pid !== void 0 && state?.pid !== pid) {
+    return;
+  }
+  try {
+    (0, import_node_fs2.unlinkSync)(backgroundStatePath(dataDir));
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+}
+function writeBackgroundState(dataDir, port) {
+  const state = {
+    pid: process.pid,
+    port,
+    startedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  (0, import_node_fs2.writeFileSync)(backgroundStatePath(dataDir), `${JSON.stringify(state)}
+`, "utf8");
+}
+function printBackgroundStatus(dataDir) {
+  const state = readBackgroundState(dataDir);
+  if (!state) {
+    console.log("DailyHub is not running in the background.");
+    return;
+  }
+  if (!isProcessRunning(state.pid)) {
+    removeBackgroundState(dataDir);
+    console.log("DailyHub is not running in the background (removed stale state).");
+    return;
+  }
+  console.log(`DailyHub is running in the background at http://127.0.0.1:${state.port} (PID ${state.pid}).`);
+  console.log(`Log file: ${backgroundLogPath(dataDir)}`);
+}
+function stopBackgroundServer(dataDir) {
+  const state = readBackgroundState(dataDir);
+  if (!state) {
+    console.log("DailyHub is not running in the background.");
+    return;
+  }
+  if (!isProcessRunning(state.pid)) {
+    removeBackgroundState(dataDir);
+    console.log("DailyHub is not running in the background (removed stale state).");
+    return;
+  }
+  process.kill(state.pid, "SIGTERM");
+  console.log(`Stopping DailyHub background process (PID ${state.pid}).`);
+}
+function printBackgroundLogs(dataDir) {
+  const logPath = backgroundLogPath(dataDir);
+  if (!(0, import_node_fs2.existsSync)(logPath)) {
+    console.log(`No background log has been created at ${logPath}.`);
+    return;
+  }
+  const lines = (0, import_node_fs2.readFileSync)(logPath, "utf8").trimEnd().split("\n");
+  console.log(lines.slice(-100).join("\n"));
 }
 function runCommand(command, args, env, cwd = packageRoot) {
   return new Promise((resolvePromise, reject) => {
@@ -17205,6 +17339,62 @@ async function seedDatabase(env) {
   }
   await runCommand("npx", ["tsx", (0, import_node_path2.join)(packageRoot, "prisma", "seed.ts")], env);
 }
+async function startDetached(options, rawArgs) {
+  await prepareDataDir(options.dataDir);
+  const logPath = backgroundLogPath(options.dataDir);
+  const logFile = (0, import_node_fs2.openSync)(logPath, "a");
+  const childArgs = rawArgs.filter((arg) => arg !== "--detach");
+  childArgs.push("--detach-child", "--no-open");
+  const child = (0, import_node_child_process.spawn)(process.execPath, [process.argv[1], ...childArgs], {
+    cwd: process.cwd(),
+    detached: true,
+    stdio: ["ignore", logFile, logFile]
+  });
+  let childFailure;
+  child.once("error", (error) => {
+    childFailure = error;
+  });
+  child.once("exit", (code, signal) => {
+    childFailure = new Error(
+      `Background process exited ${signal ? `from ${signal}` : `with code ${code ?? "unknown"}`}.`
+    );
+  });
+  child.unref();
+  (0, import_node_fs2.closeSync)(logFile);
+  const url = `http://127.0.0.1:${options.port}`;
+  try {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < 12e4) {
+      if (childFailure) {
+        throw childFailure;
+      }
+      try {
+        const response = await fetch(url, { redirect: "manual" });
+        if (response.ok || response.status === 307 || response.status === 308) {
+          break;
+        }
+      } catch {
+      }
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 500));
+    }
+    if (childFailure) {
+      throw childFailure;
+    }
+    if (Date.now() - startedAt >= 12e4) {
+      throw new Error(`Timed out waiting for DailyHub at ${url}`);
+    }
+  } catch (error) {
+    throw new Error(
+      `DailyHub did not start in the background. Check ${logPath} for details. ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+  console.log(`DailyHub v${packageVersion()} is running in the background at ${url}`);
+  console.log(`Log file: ${logPath}`);
+  console.log(`Manage it with: npx @baselhusam/daily-hub status | logs | stop`);
+  if (options.openBrowser) {
+    await openBrowser(url);
+  }
+}
 async function startServer(options) {
   const env = await preparePrisma(options);
   const url = `http://127.0.0.1:${options.port}`;
@@ -17219,6 +17409,9 @@ async function startServer(options) {
     env,
     stdio: "inherit"
   });
+  if (options.detachedChild) {
+    writeBackgroundState(options.dataDir, options.port);
+  }
   const shutdown = async () => {
     if (!server.killed) {
       server.kill("SIGTERM");
@@ -17227,30 +17420,54 @@ async function startServer(options) {
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
   server.on("error", (error) => {
+    if (options.detachedChild) {
+      removeBackgroundState(options.dataDir, process.pid);
+    }
     console.error(error);
     process.exit(1);
   });
   server.on("exit", (code, signal) => {
+    if (options.detachedChild) {
+      removeBackgroundState(options.dataDir, process.pid);
+    }
     if (signal) {
       process.exit(0);
     }
     process.exit(code ?? 0);
   });
   await waitForServer(url);
-  console.log(`DailyHub is running at ${url}`);
+  console.log(`DailyHub v${packageVersion()} is running at ${url}`);
   console.log(`Data directory: ${options.dataDir}`);
   if (options.openBrowser) {
     await openBrowser(url);
   }
 }
 async function main() {
-  const options = parseArgs(process.argv.slice(2));
+  const rawArgs = process.argv.slice(2);
+  const options = parseArgs(rawArgs);
+  console.log(`DailyHub v${packageVersion()}`);
+  if (options.command === "status") {
+    printBackgroundStatus(options.dataDir);
+    return;
+  }
+  if (options.command === "stop") {
+    stopBackgroundServer(options.dataDir);
+    return;
+  }
+  if (options.command === "logs") {
+    printBackgroundLogs(options.dataDir);
+    return;
+  }
   if (options.command === "seed") {
     const env = await preparePrisma(options);
     await prepareDataDir(options.dataDir);
     await migrateDatabase(env, options.dataDir);
     await seedDatabase(env);
     console.log(`Seeded DailyHub data in ${options.dataDir}`);
+    return;
+  }
+  if (options.detach) {
+    await startDetached(options, rawArgs);
     return;
   }
   await startServer(options);

@@ -64,7 +64,18 @@ npx @baselhusam/daily-hub --seed               # sample data on first run
 npx @baselhusam/daily-hub --port 3000          # different port
 npx @baselhusam/daily-hub --data-dir ~/my-hub  # custom data directory
 npx @baselhusam/daily-hub --no-open            # don't open the browser
+npx @baselhusam/daily-hub --detach             # run in the background
 ```
+
+`--detach` starts DailyHub in the background, opens the app when it is ready, and lets you close the terminal. Manage that instance later with:
+
+```bash
+npx @baselhusam/daily-hub status
+npx @baselhusam/daily-hub logs
+npx @baselhusam/daily-hub stop
+```
+
+The background process and log are recorded in the selected data directory (`~/.daily-hub/` by default); pass the same `--data-dir` to the management commands if you use a custom location. It remains running until stopped or the computer restarts; use Docker or a system service if you need automatic restarts.
 
 Do not keep `~/.daily-hub/` in iCloud, Dropbox, or other file-sync folders — SQLite and file sync can corrupt the database. Backup is a copy of that folder (or your `--data-dir`).
 
