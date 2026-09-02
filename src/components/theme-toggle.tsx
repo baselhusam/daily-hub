@@ -7,10 +7,13 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+let isThemeTransitionRunning = false;
+
 function switchThemeFromEvent(
   event: React.MouseEvent<HTMLButtonElement>,
   nextTheme: "light" | "dark",
-  setTheme: (theme: string) => void
+  setTheme: (theme: string) => void,
+  onFinish: () => void
 ) {
   const apply = () => {
     flushSync(() => {
@@ -24,6 +27,7 @@ function switchThemeFromEvent(
 
   if (reducedMotion || typeof document.startViewTransition !== "function") {
     apply();
+    onFinish();
     return;
   }
 
@@ -36,11 +40,19 @@ function switchThemeFromEvent(
     Math.max(y, window.innerHeight - y)
   );
 
-  const transition = document.startViewTransition(apply);
+  let transition: ViewTransition;
+
+  try {
+    transition = document.startViewTransition(apply);
+  } catch {
+    apply();
+    onFinish();
+    return;
+  }
 
   transition.ready
     .then(() => {
-      document.documentElement.animate(
+      const animation = document.documentElement.animate(
         {
           clipPath: [
             `circle(0px at ${x}px ${y}px)`,
@@ -53,15 +65,21 @@ function switchThemeFromEvent(
           pseudoElement: "::view-transition-new(root)",
         }
       );
+
+      return animation.finished;
     })
     .catch(() => {
       // Transition skipped (tab hidden, reduced motion, or already running).
+    })
+    .finally(() => {
+      onFinish();
     });
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
+  const [isSwitching, setIsSwitching] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -77,12 +95,21 @@ export function ThemeToggle({ className }: { className?: string }) {
         className
       )}
       aria-label="Toggle theme"
+      aria-busy={isSwitching || undefined}
+      disabled={!mounted || isSwitching}
       onClick={(event) => {
-        if (!mounted) return;
+        if (!mounted || isThemeTransitionRunning) return;
+
+        isThemeTransitionRunning = true;
+        setIsSwitching(true);
         switchThemeFromEvent(
           event,
           resolvedTheme === "dark" ? "light" : "dark",
-          setTheme
+          setTheme,
+          () => {
+            isThemeTransitionRunning = false;
+            setIsSwitching(false);
+          }
         );
       }}
     >
