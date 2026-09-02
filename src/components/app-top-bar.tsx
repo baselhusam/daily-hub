@@ -6,6 +6,7 @@ import {
   BarChart3,
   CalendarCheck,
   FolderKanban,
+  Github,
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
@@ -14,6 +15,7 @@ import {
 import { BrandMark } from "@/components/brand-mark";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
@@ -100,6 +102,22 @@ export function AppTopBar({
           </button>
           <ThemeToggle />
           <NotificationBell notifications={stats.notifications} />
+          <Button
+            asChild
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-border bg-card text-muted-foreground shadow-none hover:text-foreground"
+          >
+            <a
+              href="https://github.com/baselhusam/daily-hub"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="View DailyHub on GitHub"
+              title="View DailyHub on GitHub"
+            >
+              <Github className="h-4 w-4" />
+            </a>
+          </Button>
         </div>
       </header>
     </>
