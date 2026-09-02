@@ -1,6 +1,10 @@
+import { subDays } from "date-fns";
 import {
   calendarDaysBetween,
   getTodayDate,
+  groupCompletionDateKeys,
+  isHabitDueOn,
+  toDateOnlyString,
   type CalendarMode,
 } from "@/lib/dates";
 
@@ -14,6 +18,70 @@ export function emptyStreakInfo(): StreakInfo {
     streak: 0,
     dots: Array.from({ length: 14 }, () => ({ color: "var(--track)" })),
   };
+}
+
+export type StreakTaskLike = {
+  id: string;
+  weekdays: number[];
+  createdAt?: Date;
+};
+
+export function calculateStreakInfo(
+  tasks: StreakTaskLike[],
+  logs: Array<{ entityId: string; completedOn: Date }>,
+  today = getTodayDate()
+): StreakInfo {
+  // A streak measures completed habits. With no active habits there is
+  // nothing to complete, so every past day must not count as a success.
+  if (tasks.length === 0) return emptyStreakInfo();
+
+  const keysByTask = groupCompletionDateKeys(logs);
+  const startedOn = tasks.reduce<Date | null>((earliest, task) => {
+    if (!task.createdAt) return earliest;
+    const createdAt = startOfCalendarDay(task.createdAt);
+    return !earliest || createdAt < earliest ? createdAt : earliest;
+  }, null);
+
+  function dayOk(date: Date): boolean {
+    if (startedOn && date < startedOn) return false;
+
+    const key = toDateOnlyString(date);
+    const due = tasks.filter((task) =>
+      isHabitDueOn(task.weekdays, date, {
+        createdAt: task.createdAt,
+        completedOnKeys: keysByTask.get(task.id),
+      })
+    );
+    if (due.length === 0) return true;
+    return due.every((task) => keysByTask.get(task.id)?.has(key));
+  }
+
+  let cursor = new Date(today);
+  if (!dayOk(cursor)) cursor = subDays(cursor, 1);
+
+  let streak = 0;
+  while (dayOk(cursor)) {
+    streak++;
+    cursor = subDays(cursor, 1);
+  }
+
+  const dots: Array<{ color: string }> = [];
+  for (let k = 13; k >= 0; k--) {
+    const ok = dayOk(subDays(today, k));
+    dots.push({
+      color: ok
+        ? k === 0
+          ? "var(--chart-hit)"
+          : "var(--chart-hit-soft)"
+        : "var(--track)",
+    });
+  }
+
+  return { streak, dots };
+}
+
+function startOfCalendarDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 export function daysUntil(

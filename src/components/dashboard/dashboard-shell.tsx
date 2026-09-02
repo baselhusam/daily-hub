@@ -252,18 +252,29 @@ export function DashboardShell({ data }: DashboardShellProps) {
         )}
 
         {showHabits && (
-          <section aria-label="Daily pulse" className="grid grid-cols-2 gap-3 dh:grid-cols-4">
-            {data.snapshots.map((snapshot) =>
-              snapshot.label === "Open tasks" ? (
-                <SnapshotCard
-                  key={snapshot.label}
-                  {...snapshot}
-                  value={String(optimisticOpenTasks)}
-                />
-              ) : (
-                <SnapshotCard key={snapshot.label} {...snapshot} />
-              )
+          <section
+            aria-label="Daily pulse"
+            className={cn(
+              "grid grid-cols-2 gap-3",
+              data.settings.showStreaks ? "dh:grid-cols-4" : "dh:grid-cols-3"
             )}
+          >
+            {data.snapshots
+              .filter(
+                (snapshot) =>
+                  data.settings.showStreaks || snapshot.label !== "Current streak"
+              )
+              .map((snapshot) =>
+                snapshot.label === "Open tasks" ? (
+                  <SnapshotCard
+                    key={snapshot.label}
+                    {...snapshot}
+                    value={String(optimisticOpenTasks)}
+                  />
+                ) : (
+                  <SnapshotCard key={snapshot.label} {...snapshot} />
+                )
+              )}
           </section>
         )}
 
