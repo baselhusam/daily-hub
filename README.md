@@ -66,7 +66,10 @@ npx @baselhusam/daily-hub --data-dir ~/my-hub  # custom data directory
 npx @baselhusam/daily-hub --no-open            # don't open the browser
 npx @baselhusam/daily-hub --no-mcp             # disable the local MCP endpoint
 npx @baselhusam/daily-hub --detach             # run in the background
+npx @baselhusam/daily-hub --update             # run the latest published version
 ```
+
+`--update` (or `update`) fetches and runs the latest published DailyHub release. Any other options are preserved, so `npx @baselhusam/daily-hub --update --port 3000` updates and starts it on port 3000.
 
 `--detach` starts DailyHub in the background, opens the app when it is ready, and lets you close the terminal. Manage that instance later with:
 

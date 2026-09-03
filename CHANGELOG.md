@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `daily-hub update` and `daily-hub --update` now fetch and run the latest published DailyHub release.
+
 ## [0.1.9] - 2026-09-02
 
 ### Added

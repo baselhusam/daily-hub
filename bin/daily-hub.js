@@ -17053,6 +17053,7 @@ var packageRoot = (0, import_node_path2.resolve)(__dirname, "..");
 var schemaPath = (0, import_node_path2.join)(packageRoot, "prisma", "schema.prisma");
 var standaloneServerPath = (0, import_node_path2.join)(packageRoot, ".next", "standalone", "server.js");
 var bundledSeedPath = (0, import_node_path2.join)(packageRoot, "bin", "seed.js");
+var packageName = "@baselhusam/daily-hub";
 function parseArgs(argv) {
   const options = {
     port: 9999,
@@ -17066,8 +17067,12 @@ function parseArgs(argv) {
   };
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
-    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs" || arg === "mcp") {
+    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs" || arg === "mcp" || arg === "update") {
       options.command = arg;
+      continue;
+    }
+    if (arg === "--update") {
+      options.command = "update";
       continue;
     }
     if (arg === "--detach") {
@@ -17115,8 +17120,8 @@ function parseArgs(argv) {
     }
     throw new Error(`Unknown argument: ${arg}`);
   }
-  if (options.detach && options.command !== "start") {
-    throw new Error("--detach can only be used when starting DailyHub.");
+  if (options.detach && options.command !== "start" && options.command !== "update") {
+    throw new Error("--detach can only be used when starting or updating DailyHub.");
   }
   if (!options.mcpEnabled && options.command === "mcp") {
     throw new Error("--no-mcp cannot be used with the mcp command.");
@@ -17155,6 +17160,7 @@ Options:
   --no-mcp            Disable the local MCP endpoint
   --detach            Start in the background and return after it is ready
   --seed              Seed sample data on first start
+  --update            Run the latest published DailyHub version
 
 Commands:
   start               Start DailyHub (default)
@@ -17163,6 +17169,7 @@ Commands:
   stop                Stop a detached instance
   logs                Print the most recent detached-instance log output
   mcp                 Print MCP connection details for a running instance
+  update              Run the latest published DailyHub version
   -h, --help          Show this help message
 `);
 }
@@ -17498,6 +17505,18 @@ async function startServer(options) {
     await openBrowser(url);
   }
 }
+async function runLatest(rawArgs) {
+  const forwardedArgs = rawArgs.filter(
+    (arg) => arg !== "update" && arg !== "--update"
+  );
+  console.log("Updating DailyHub and starting the latest published version...");
+  await runCommand(
+    "npx",
+    ["--yes", `${packageName}@latest`, ...forwardedArgs],
+    process.env,
+    process.cwd()
+  );
+}
 async function main() {
   const rawArgs = process.argv.slice(2);
   const options = parseArgs(rawArgs);
@@ -17516,6 +17535,10 @@ async function main() {
   }
   if (options.command === "mcp") {
     printMcpConnection(options.dataDir, options.port);
+    return;
+  }
+  if (options.command === "update") {
+    await runLatest(rawArgs);
     return;
   }
   if (options.command === "seed") {
