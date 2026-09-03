@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import {
   closeSync,
+  chmodSync,
   existsSync,
   openSync,
   readFileSync,
@@ -11,6 +12,7 @@ import { mkdir } from "node:fs/promises";
 import { createServer } from "node:net";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { randomBytes } from "node:crypto";
 import {
   databaseUrl,
   ensureQueryEngine,
@@ -29,9 +31,10 @@ type CliOptions = {
   dataDir: string;
   openBrowser: boolean;
   seed: boolean;
+  mcpEnabled: boolean;
   detach: boolean;
   detachedChild: boolean;
-  command: "start" | "seed" | "status" | "stop" | "logs";
+  command: "start" | "seed" | "status" | "stop" | "logs" | "mcp";
 };
 
 type BackgroundState = {
@@ -40,12 +43,17 @@ type BackgroundState = {
   startedAt: string;
 };
 
+type McpConfig = {
+  token: string;
+};
+
 function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
     port: 9999,
     dataDir: process.env.DAILYHUB_DATA_DIR ?? join(homedir(), ".daily-hub"),
     openBrowser: true,
     seed: false,
+    mcpEnabled: true,
     detach: false,
     detachedChild: false,
     command: "start",
@@ -54,7 +62,7 @@ function parseArgs(argv: string[]): CliOptions {
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
 
-    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs") {
+    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs" || arg === "mcp") {
       options.command = arg;
       continue;
     }
@@ -72,6 +80,11 @@ function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--no-open") {
       options.openBrowser = false;
+      continue;
+    }
+
+    if (arg === "--no-mcp") {
+      options.mcpEnabled = false;
       continue;
     }
 
@@ -110,6 +123,10 @@ function parseArgs(argv: string[]): CliOptions {
 
   if (options.detach && options.command !== "start") {
     throw new Error("--detach can only be used when starting DailyHub.");
+  }
+
+  if (!options.mcpEnabled && options.command === "mcp") {
+    throw new Error("--no-mcp cannot be used with the mcp command.");
   }
 
   return options;
@@ -153,6 +170,7 @@ Options:
   --port <number>     Port for the web app (default: 9999)
   --data-dir <path>   Data directory (default: ~/.daily-hub)
   --no-open           Do not open the browser automatically
+  --no-mcp            Disable the local MCP endpoint
   --detach            Start in the background and return after it is ready
   --seed              Seed sample data on first start
 
@@ -162,6 +180,7 @@ Commands:
   status              Show whether a detached instance is running
   stop                Stop a detached instance
   logs                Print the most recent detached-instance log output
+  mcp                 Print MCP connection details for a running instance
   -h, --help          Show this help message
 `);
 }
@@ -172,6 +191,49 @@ function backgroundStatePath(dataDir: string) {
 
 function backgroundLogPath(dataDir: string) {
   return join(dataDir, "daily-hub.log");
+}
+
+function mcpConfigPath(dataDir: string) {
+  return join(dataDir, "daily-hub-mcp.json");
+}
+
+function readMcpConfig(dataDir: string): McpConfig | undefined {
+  try {
+    const config = JSON.parse(readFileSync(mcpConfigPath(dataDir), "utf8")) as McpConfig;
+    return typeof config.token === "string" && config.token.length >= 32 ? config : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getOrCreateMcpConfig(dataDir: string): McpConfig {
+  const existing = readMcpConfig(dataDir);
+  if (existing) return existing;
+
+  const config = { token: randomBytes(32).toString("base64url") };
+  writeFileSync(mcpConfigPath(dataDir), `${JSON.stringify(config)}\n`, {
+    encoding: "utf8",
+    mode: 0o600,
+  });
+  chmodSync(mcpConfigPath(dataDir), 0o600);
+  return config;
+}
+
+function printMcpConnection(dataDir: string, port: number) {
+  const config = readMcpConfig(dataDir);
+  if (!config) {
+    console.log(`No DailyHub MCP configuration was found at ${mcpConfigPath(dataDir)}.`);
+    console.log("Start DailyHub without --no-mcp first.");
+    return;
+  }
+
+  const url = `http://127.0.0.1:${port}/mcp`;
+  console.log(`DailyHub MCP endpoint: ${url}`);
+  console.log("Configure your MCP client with:");
+  console.log(JSON.stringify({
+    url,
+    headers: { Authorization: `Bearer ${config.token}` },
+  }, null, 2));
 }
 
 function readBackgroundState(dataDir: string): BackgroundState | undefined {
@@ -330,7 +392,11 @@ async function prepareDataDir(dataDir: string) {
   await mkdir(join(dataDir, "uploads"), { recursive: true });
 }
 
-function buildEnv(options: CliOptions, queryEnginePath?: string): NodeJS.ProcessEnv {
+function buildEnv(
+  options: CliOptions,
+  queryEnginePath?: string,
+  mcpConfig?: McpConfig
+): NodeJS.ProcessEnv {
   return {
     ...process.env,
     NODE_ENV: "production",
@@ -338,16 +404,21 @@ function buildEnv(options: CliOptions, queryEnginePath?: string): NodeJS.Process
     DAILYHUB_DATA_DIR: options.dataDir,
     PORT: String(options.port),
     HOSTNAME: "127.0.0.1",
+    DAILYHUB_MCP_ENABLED: String(options.mcpEnabled),
+    ...(mcpConfig ? { DAILYHUB_MCP_TOKEN: mcpConfig.token } : {}),
     ...(queryEnginePath
       ? { PRISMA_QUERY_ENGINE_LIBRARY: queryEnginePath }
       : {}),
   };
 }
 
-async function preparePrisma(options: CliOptions): Promise<NodeJS.ProcessEnv> {
-  const env = buildEnv(options);
+async function preparePrisma(
+  options: CliOptions,
+  mcpConfig?: McpConfig
+): Promise<NodeJS.ProcessEnv> {
+  const env = buildEnv(options, undefined, mcpConfig);
   const queryEnginePath = await ensureQueryEngine(packageRoot, runCommand, env);
-  return buildEnv(options, queryEnginePath);
+  return buildEnv(options, queryEnginePath, mcpConfig);
 }
 
 async function migrateDatabase(env: NodeJS.ProcessEnv, dataDir: string) {
@@ -459,10 +530,13 @@ async function startDetached(options: CliOptions, rawArgs: string[]) {
 }
 
 async function startServer(options: CliOptions) {
-  const env = await preparePrisma(options);
   const url = `http://127.0.0.1:${options.port}`;
 
   await prepareDataDir(options.dataDir);
+  const mcpConfig = options.mcpEnabled
+    ? getOrCreateMcpConfig(options.dataDir)
+    : undefined;
+  const env = await preparePrisma(options, mcpConfig);
   await assertPortAvailable(options.port);
   await migrateDatabase(env, options.dataDir);
 
@@ -510,6 +584,10 @@ async function startServer(options: CliOptions) {
   await waitForServer(url);
   console.log(`DailyHub v${packageVersion()} is running at ${url}`);
   console.log(`Data directory: ${options.dataDir}`);
+  if (mcpConfig) {
+    console.log(`MCP server: ${url}/mcp`);
+    console.log(`Run \"daily-hub mcp\" to print the connection configuration.`);
+  }
 
   if (options.openBrowser) {
     await openBrowser(url);
@@ -533,6 +611,11 @@ async function main() {
 
   if (options.command === "logs") {
     printBackgroundLogs(options.dataDir);
+    return;
+  }
+
+  if (options.command === "mcp") {
+    printMcpConnection(options.dataDir, options.port);
     return;
   }
 

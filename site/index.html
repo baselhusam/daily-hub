@@ -307,6 +307,46 @@
         </ol>
       </section>
 
+      <section id="mcp" class="band">
+        <header class="section-head reveal">
+          <p class="eyebrow">MCP integration</p>
+          <h2>Your workspace, available to your AI tools.</h2>
+          <p>
+            DailyHub includes a local Model Context Protocol server, so an MCP
+            client can work with the same projects, tasks, habits, inbox, and
+            analytics you see in the app.
+          </p>
+        </header>
+        <div class="mcp-grid">
+          <article class="reveal">
+            <p class="kicker">01 · Local by default</p>
+            <h3>Private connection</h3>
+            <p>
+              The endpoint runs on your machine at <code>/mcp</code>, bound to
+              <code>127.0.0.1</code> and protected with a bearer token.
+            </p>
+          </article>
+          <article class="reveal">
+            <p class="kicker">02 · One command</p>
+            <h3>Get the connection details</h3>
+            <p class="cmd"><span class="prompt">$</span> npx @baselhusam/daily-hub mcp</p>
+            <p>
+              It prints the endpoint and token-ready client configuration.
+              Start with <code>--no-mcp</code> whenever you want it disabled.
+            </p>
+          </article>
+          <article class="reveal">
+            <p class="kicker">03 · Work, not busywork</p>
+            <h3>Manage the day conversationally</h3>
+            <p>
+              List, create, and update projects, tasks, habits, and inbox
+              items; complete tasks and habits; or ask for a concise snapshot
+              of your progress.
+            </p>
+          </article>
+        </div>
+      </section>
+
       <section id="run" class="band">
         <header class="section-head reveal">
           <p class="eyebrow">Quick start</p>

@@ -22,6 +22,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Keep the standalone server at `.next/standalone/server.js`, which is the
+  // location launched by the published npx CLI even when a parent directory
+  // contains another lockfile.
+  outputFileTracingRoot: process.cwd(),
   outputFileTracingIncludes: {
     "/**/*": [
       "./src/generated/**/*",

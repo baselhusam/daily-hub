@@ -64,6 +64,7 @@ npx @baselhusam/daily-hub --seed               # sample data on first run
 npx @baselhusam/daily-hub --port 3000          # different port
 npx @baselhusam/daily-hub --data-dir ~/my-hub  # custom data directory
 npx @baselhusam/daily-hub --no-open            # don't open the browser
+npx @baselhusam/daily-hub --no-mcp             # disable the local MCP endpoint
 npx @baselhusam/daily-hub --detach             # run in the background
 ```
 
@@ -76,6 +77,16 @@ npx @baselhusam/daily-hub stop
 ```
 
 The background process and log are recorded in the selected data directory (`~/.daily-hub/` by default); pass the same `--data-dir` to the management commands if you use a custom location. It remains running until stopped or the computer restarts; use Docker or a system service if you need automatic restarts.
+
+### MCP integration
+
+DailyHub starts a local, token-protected MCP endpoint by default at `/mcp` on the selected app port. After starting the app, print a ready-to-copy client configuration with:
+
+```bash
+npx @baselhusam/daily-hub mcp
+```
+
+The endpoint is bound to `127.0.0.1` and requires the bearer token in that output. The token is stored with owner-only permissions in `~/.daily-hub/daily-hub-mcp.json`. Disable the endpoint for a launch with `--no-mcp`.
 
 Do not keep `~/.daily-hub/` in iCloud, Dropbox, or other file-sync folders — SQLite and file sync can corrupt the database. Backup is a copy of that folder (or your `--data-dir`).
 

@@ -47,6 +47,7 @@
     "prepack": "npm run db:generate && npm run build && npm run prepare-standalone && npm run build:cli && npm run build:seed"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@prisma/client": "^6.19.0",
     "@prisma/get-platform": "^6.19.3",
     "@radix-ui/react-checkbox": "^1.3.3",
