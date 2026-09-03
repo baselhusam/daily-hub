@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-09-03
+
 ### Added
 
-- `daily-hub update` and `daily-hub --update` now fetch and run the latest published DailyHub release.
+- Local Model Context Protocol (MCP) server support, including tools for working with DailyHub data from compatible AI clients.
+- `daily-hub update` and `daily-hub --update`, which fetch and run the latest published DailyHub release.
+
+### Changed
+
+- Projects in the sidebar can now be reordered with drag and drop; the selected project stays in place and the custom order persists.
+
+### Fixed
+
+- Theme changes now transition smoothly without flashes or abrupt visual changes.
+
 
 ## [0.1.9] - 2026-09-02
 
