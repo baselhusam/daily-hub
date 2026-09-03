@@ -1,8 +1,15 @@
 import type { NextConfig } from "next";
 
+// Next's development runtime uses eval for module loading and Fast Refresh.
+// Keep the production policy strict while allowing the local app to hydrate.
+const scriptSource =
+  process.env.NODE_ENV === "development"
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : "script-src 'self' 'unsafe-inline'";
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  scriptSource,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self'",

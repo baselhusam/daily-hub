@@ -6,11 +6,14 @@ import {
   BarChart3,
   CalendarCheck,
   FolderKanban,
+  GripVertical,
   LayoutDashboard,
 } from "lucide-react";
+import * as React from "react";
 import { ChainDots } from "@/components/ui/chain-dots";
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { reorderProjects } from "@/app/actions/projects";
 import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
@@ -35,6 +38,112 @@ export function AppSidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeProjectId = searchParams.get("project");
+  const [projects, setProjects] = React.useState(stats.projects);
+  const projectsRef = React.useRef(stats.projects);
+  const [draggedProjectId, setDraggedProjectId] = React.useState<string | null>(null);
+  const [dropProjectId, setDropProjectId] = React.useState<string | null>(null);
+  const draggedProjectIdRef = React.useRef<string | null>(null);
+  const dropProjectIdRef = React.useRef<string | null>(null);
+  const projectOrderSaveRef = React.useRef<Promise<unknown>>(Promise.resolve());
+
+  React.useEffect(() => {
+    projectsRef.current = stats.projects;
+    setProjects(stats.projects);
+  }, [stats.projects]);
+
+  const saveProjectOrder = React.useCallback((nextProjects: typeof projects) => {
+    const ids = nextProjects.map((project) => project.id);
+    projectOrderSaveRef.current = projectOrderSaveRef.current
+      .catch(() => undefined)
+      .then(() => reorderProjects(ids));
+  }, []);
+
+  const moveProject = React.useCallback(
+    (sourceId: string, destinationId: string) => {
+      if (sourceId === destinationId) return;
+
+      const current = projectsRef.current;
+      const sourceIndex = current.findIndex((project) => project.id === sourceId);
+      const destinationIndex = current.findIndex(
+        (project) => project.id === destinationId
+      );
+      if (sourceIndex === -1 || destinationIndex === -1) return;
+
+      const next = [...current];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(destinationIndex, 0, moved);
+      projectsRef.current = next;
+      setProjects(next);
+      saveProjectOrder(next);
+    },
+    [saveProjectOrder]
+  );
+
+  const moveProjectByOffset = React.useCallback(
+    (projectId: string, offset: -1 | 1) => {
+      const index = projectsRef.current.findIndex((project) => project.id === projectId);
+      const destination = projectsRef.current[index + offset];
+      if (destination) moveProject(projectId, destination.id);
+    },
+    [moveProject]
+  );
+
+  const clearProjectDrag = React.useCallback(() => {
+    draggedProjectIdRef.current = null;
+    dropProjectIdRef.current = null;
+    setDraggedProjectId(null);
+    setDropProjectId(null);
+  }, []);
+
+  const startProjectDrag = React.useCallback((projectId: string) => {
+    draggedProjectIdRef.current = projectId;
+    dropProjectIdRef.current = null;
+    setDraggedProjectId(projectId);
+    setDropProjectId(null);
+  }, []);
+
+  const updateProjectDrop = React.useCallback((clientX: number, clientY: number) => {
+    const sourceId = draggedProjectIdRef.current;
+    if (!sourceId) return;
+
+    const row = document
+      .elementFromPoint(clientX, clientY)
+      ?.closest<HTMLElement>("[data-project-row]");
+    const nextDropProjectId = row?.dataset.projectId ?? null;
+    const validDropProjectId =
+      nextDropProjectId === sourceId ? null : nextDropProjectId;
+
+    if (dropProjectIdRef.current !== validDropProjectId) {
+      dropProjectIdRef.current = validDropProjectId;
+      setDropProjectId(validDropProjectId);
+    }
+  }, []);
+
+  const finishProjectDrag = React.useCallback(() => {
+    const sourceId = draggedProjectIdRef.current;
+    const destinationId = dropProjectIdRef.current;
+    if (sourceId && destinationId) moveProject(sourceId, destinationId);
+    clearProjectDrag();
+  }, [clearProjectDrag, moveProject]);
+
+  React.useEffect(() => {
+    const handleMove = (event: MouseEvent) =>
+      updateProjectDrop(event.clientX, event.clientY);
+
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("pointerup", finishProjectDrag);
+    window.addEventListener("mouseup", finishProjectDrag);
+    window.addEventListener("pointercancel", clearProjectDrag);
+
+    return () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("pointerup", finishProjectDrag);
+      window.removeEventListener("mouseup", finishProjectDrag);
+      window.removeEventListener("pointercancel", clearProjectDrag);
+    };
+  }, [clearProjectDrag, finishProjectDrag, updateProjectDrop]);
 
   return (
     <aside
@@ -155,29 +264,67 @@ export function AppSidebar({
                       {stats.inboxCount}
                     </span>
                   </Link>
-                  {stats.projects.map((project) => (
-                    <Link
+                  {projects.map((project) => (
+                    <div
                       key={project.id}
-                      href={`/?project=${project.id}`}
+                      data-project-row
+                      data-project-id={project.id}
                       className={cn(
-                        "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13.5px] font-medium",
+                        "group/project relative flex items-center gap-1 rounded-md py-1.5 pr-3 text-[13.5px] font-medium transition-[background-color,opacity,box-shadow] duration-150",
                         pathname === "/" && activeProjectId === project.id
                           ? "bg-hover"
-                          : "hover:bg-hover"
+                          : "hover:bg-hover",
+                        draggedProjectId === project.id && "select-none opacity-45",
+                        dropProjectId === project.id &&
+                          "bg-signal/10 shadow-[inset_0_2px_0_var(--color-signal)]"
                       )}
                     >
-                      <EntityAvatar
-                        name={project.name}
-                        color={project.color}
-                        logoUrl={project.logoUrl}
-                        iconKey={project.iconKey}
-                        size={18}
-                      />
-                      <span className="flex-1 truncate">{project.name}</span>
-                      <span className="text-[11px] text-faint tabular-nums">
-                        {project.openCount}
-                      </span>
-                    </Link>
+                      <button
+                        type="button"
+                        data-project-drag-handle
+                        className="grid h-[18px] w-[18px] shrink-0 touch-none cursor-grab place-items-center rounded text-faint/70 opacity-45 transition-opacity active:cursor-grabbing group-hover/project:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50"
+                        aria-label={`Reorder ${project.name}`}
+                        title="Drag to reorder"
+                        onPointerDown={(event) => {
+                          if (event.button !== 0) return;
+                          event.preventDefault();
+                          startProjectDrag(project.id);
+                        }}
+                        onMouseDown={(event) => {
+                          if (event.button !== 0) return;
+                          event.preventDefault();
+                          startProjectDrag(project.id);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "ArrowUp") {
+                            event.preventDefault();
+                            moveProjectByOffset(project.id, -1);
+                          }
+                          if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            moveProjectByOffset(project.id, 1);
+                          }
+                        }}
+                      >
+                        <GripVertical className="h-3.5 w-3.5" strokeWidth={2.3} />
+                      </button>
+                      <Link
+                        href={`/?project=${project.id}`}
+                        className="flex min-w-0 flex-1 items-center gap-2"
+                      >
+                        <EntityAvatar
+                          name={project.name}
+                          color={project.color}
+                          logoUrl={project.logoUrl}
+                          iconKey={project.iconKey}
+                          size={18}
+                        />
+                        <span className="flex-1 truncate">{project.name}</span>
+                        <span className="text-[11px] text-faint tabular-nums">
+                          {project.openCount}
+                        </span>
+                      </Link>
+                    </div>
                   ))}
                 </div>
               </ScrollArea>

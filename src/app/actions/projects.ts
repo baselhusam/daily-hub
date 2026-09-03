@@ -179,3 +179,37 @@ export async function deleteProject(id: string): Promise<ActionResult> {
   revalidateAll();
   return { success: true };
 }
+
+/** Persist the order chosen in the sidebar for all visible projects. */
+export async function reorderProjects(ids: string[]): Promise<ActionResult> {
+  const uniqueIds = [...new Set(ids)];
+
+  if (uniqueIds.length !== ids.length || ids.some((id) => !id)) {
+    return { success: false, error: "Invalid project order." };
+  }
+
+  try {
+    const projects = await prisma.project.findMany({
+      where: { status: { not: "DONE" } },
+      select: { id: true },
+    });
+
+    if (
+      projects.length !== uniqueIds.length ||
+      projects.some((project) => !uniqueIds.includes(project.id))
+    ) {
+      return { success: false, error: "Your project list has changed. Try again." };
+    }
+
+    await prisma.$transaction(
+      uniqueIds.map((id, sortOrder) =>
+        prisma.project.update({ where: { id }, data: { sortOrder } })
+      )
+    );
+  } catch (error) {
+    return failAction(error, "Failed to reorder projects.");
+  }
+
+  revalidateAll();
+  return { success: true };
+}
