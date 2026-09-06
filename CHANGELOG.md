@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-09-06
+
+### Added
+
+- Project cards on the Projects page now open that project's filtered task list.
+- Completed project tasks now have the same dated history as inbox items.
+
+### Changed
+
+- Tightened dashboard spacing across the page header, task composer, summary cards, task rows, and project panels.
+
 ## [0.1.10] - 2026-09-03
 
 ### Added
@@ -137,7 +148,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose path with PostgreSQL 16 and migrate-on-start.
 - Today, Projects, Habits, and Analytics surfaces with completion logging.
 
-[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.1.9...HEAD
+[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.1.11...HEAD
+[0.1.11]: https://github.com/baselhusam/daily-hub/compare/v0.1.10...v0.1.11
 [0.1.9]: https://github.com/baselhusam/daily-hub/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/baselhusam/daily-hub/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/baselhusam/daily-hub/compare/v0.1.6...v0.1.7
