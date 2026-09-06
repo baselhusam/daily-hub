@@ -95,7 +95,7 @@ export function QuickAdd({
         void submit();
       }}
     >
-      <div className="group flex flex-wrap items-center gap-1 rounded-[12px] border border-border bg-card px-3 py-1.5 transition-[border-color] duration-[120ms] focus-within:border-signal">
+      <div className="group flex flex-wrap items-center gap-1 rounded-[12px] border border-border bg-card px-3 py-1 transition-[border-color] duration-[120ms] focus-within:border-signal">
         <div className="flex min-w-[12rem] flex-1 items-center gap-2.5">
           <span
             className="size-3.5 shrink-0 rounded-[3px] border border-dashed border-hairline"
@@ -110,7 +110,7 @@ export function QuickAdd({
             spellCheck={false}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Add a task…"
-            className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-[15px] outline-none placeholder:text-faint"
+            className="min-w-0 flex-1 border-0 bg-transparent py-1 text-[15px] outline-none placeholder:text-faint"
           />
         </div>
         <div className="flex items-center gap-0.5">

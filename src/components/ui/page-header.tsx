@@ -21,7 +21,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "flex flex-wrap items-end justify-between gap-x-5 gap-y-4",
+        "flex flex-wrap items-end justify-between gap-x-5 gap-y-3",
         className
       )}
     >
@@ -33,7 +33,7 @@ export function PageHeader({
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-[54ch] text-[14.5px] leading-relaxed text-muted-foreground text-pretty">
+          <p className="mt-1.5 max-w-[54ch] text-[14.5px] leading-relaxed text-muted-foreground text-pretty">
             {description}
           </p>
         )}

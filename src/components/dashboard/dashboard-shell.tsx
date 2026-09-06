@@ -31,7 +31,7 @@ import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { toggleTask } from "@/app/actions/tasks";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
-import { cn, isTypingTarget, sortCompletedLast, sortInboxLog } from "@/lib/utils";
+import { cn, isTypingTarget, sortInboxLog } from "@/lib/utils";
 
 type EditableTask = {
   id: string;
@@ -55,7 +55,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const taskFlags = React.useMemo(
     () => [
       ...data.projects.flatMap((project) =>
-        project.tasks.map((task) => ({ id: task.id, value: task.doneToday }))
+        project.tasks.map((task) => ({ id: task.id, value: task.done }))
       ),
       ...data.inboxTasks.map((task) => ({
         id: task.id,
@@ -164,7 +164,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
   }
 
   return (
-    <div className="page-gutter animate-dh-fade py-[clamp(18px,2.6vw,32px)]">
+    <div className="page-gutter animate-dh-fade py-[clamp(16px,2vw,26px)]">
       {editingTask && (
         <CreateTaskDialog
           projects={data.projects}
@@ -182,7 +182,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
           }}
         />
       )}
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4">
         <PageHeader
           eyebrow={todayLabel}
           title={greeting}
@@ -255,7 +255,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
           <section
             aria-label="Daily pulse"
             className={cn(
-              "grid grid-cols-2 gap-3",
+              "grid grid-cols-2 gap-2.5",
               data.settings.showStreaks ? "dh:grid-cols-4" : "dh:grid-cols-3"
             )}
           >
@@ -293,7 +293,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
         ) : (
         <div
           className={cn(
-            "grid gap-5",
+            "grid gap-4",
             showTodayRail
               ? "dh:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.9fr)] dh:items-stretch"
               : "dh:grid-cols-1"
@@ -304,7 +304,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
               "min-w-0",
               isFreshWorkspace
                 ? "contents"
-                : "order-2 flex flex-col gap-3.5 dh:order-1"
+                : "order-2 flex flex-col gap-3 dh:order-1"
             )}
             aria-label="Open work"
           >
@@ -323,20 +323,40 @@ export function DashboardShell({ data }: DashboardShellProps) {
             ) : (
               filteredProjects.map((project) => {
                 const dl = daysUntil(project.dueDate, today, mode);
-                const visibleTasks = sortCompletedLast(
-                  project.tasks,
-                  (task) => optimisticTasks.get(task.id, task.doneToday)
+                const visibleTasks = sortInboxLog(
+                  project.tasks.map((task) => {
+                    const done = optimisticTasks.get(task.id, task.done);
+                    return {
+                      ...task,
+                      done,
+                      completedAt: done ? (task.completedAt ?? today) : null,
+                    };
+                  })
                 );
-                const openCount = project.tasks.filter(
-                  (task) => !optimisticTasks.get(task.id, task.doneToday)
-                ).length;
+                const openTasks = visibleTasks.filter((task) => !task.done);
+                const loggedTasks = visibleTasks.filter((task) => task.done);
+                const showAllLogs = filterProject?.id === project.id;
+                const visibleLoggedTasks = showAllLogs
+                  ? loggedTasks
+                  : loggedTasks.filter(
+                      (task) =>
+                        task.doneToday ||
+                        optimisticTasks.get(task.id, task.done) !== task.done
+                    );
+                const hiddenLoggedCount = loggedTasks.length - visibleLoggedTasks.length;
+                const loggedGroups = showAllLogs
+                  ? groupLoggedTasks(loggedTasks, today, mode)
+                  : visibleLoggedTasks.length > 0
+                    ? [{ key: "today", label: "Today", tasks: visibleLoggedTasks }]
+                    : [];
+                const openCount = openTasks.length;
                 const openMilestones = project.milestones
                   .filter((m) => !m.done)
                   .slice(0, 3);
 
                 return (
                   <SurfaceCard key={project.id} variant="quiet">
-                    <div className="flex items-start gap-2.5 px-4 pt-3.5 pb-2">
+                    <div className="flex items-start gap-2.5 px-4 pt-3 pb-1.5">
                       <EntityAvatar
                         name={project.name}
                         color={project.color}
@@ -371,7 +391,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                     </div>
 
                     {openMilestones.length > 0 && (
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-1.5">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-1">
                         {openMilestones.map((milestone) => {
                           const md = daysUntil(milestone.dueDate, today, mode);
                           return (
@@ -402,20 +422,16 @@ export function DashboardShell({ data }: DashboardShellProps) {
                       </div>
                     )}
 
-                    <div className="pt-0.5 pb-1.5">
-                      {visibleTasks.map((task) => {
+                    <div className="pt-0.5 pb-1">
+                      {openTasks.map((task) => {
                         const due = getDueMeta(task.dueDate, today, mode);
-                        const done = optimisticTasks.get(
-                          task.id,
-                          task.doneToday
-                        );
                         return (
                           <TaskRow
                             key={task.id}
                             task={{
                               id: task.id,
                               title: task.title,
-                              done,
+                              done: false,
                               dueLabel: due?.label,
                               dueColor: due?.color,
                               estimateLabel: formatEstimate(
@@ -428,19 +444,53 @@ export function DashboardShell({ data }: DashboardShellProps) {
                               ),
                             }}
                             onToggle={() =>
-                              void handleToggle(task.id, done)
+                              void handleToggle(task.id, false)
                             }
                             onEdit={() => setEditingTask(task)}
                           />
                         );
                       })}
+                      {loggedGroups.map((group) => (
+                        <div
+                          key={group.key}
+                          className={openTasks.length > 0 ? "mt-1" : undefined}
+                        >
+                          {showAllLogs ? (
+                            <div className="px-4 pt-2.5 pb-1 text-[11px] font-semibold tracking-[0.08em] text-faint uppercase">
+                              {group.label}
+                            </div>
+                          ) : null}
+                          {group.tasks.map((task) => (
+                            <TaskRow
+                              key={task.id}
+                              task={{
+                                id: task.id,
+                                title: task.title,
+                                done: true,
+                                estimateLabel: formatEstimate(task.estimatedMinutes),
+                                metaLabel: taskMetaLabel(task, true, today, mode),
+                              }}
+                              onToggle={() => void handleToggle(task.id, true)}
+                              onEdit={() => setEditingTask(task)}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                      {!showAllLogs && hiddenLoggedCount > 0 ? (
+                        <Link
+                          href={`/?project=${project.id}`}
+                          className="block px-4 py-2 text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
+                        >
+                          {hiddenLoggedCount} logged →
+                        </Link>
+                      ) : null}
                       <CreateTaskDialog
                         projects={data.projects}
                         defaultProjectId={project.id}
                         trigger={
                           <button
                             type="button"
-                            className="w-full py-2 pr-4 pl-11 text-left text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
+                            className="w-full py-1.5 pr-4 pl-11 text-left text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
                           >
                             + Add task
                           </button>
@@ -466,7 +516,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                 className={cn(
                   isFreshWorkspace && todayInboxTasks.length === 0
                     ? "contents"
-                    : "flex h-full flex-col gap-3.5 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:pr-0.5"
+                    : "flex h-full flex-col gap-3 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:pr-0.5"
                 )}
               >
                 {showHabits && (
@@ -477,7 +527,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                       isFreshWorkspace && "order-1 dh:order-2"
                     )}
                   >
-                    <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-2.5">
+                    <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-2">
                       <h2 className="text-[13px] font-semibold tracking-[-0.015em]">
                         Today&apos;s habits
                       </h2>
@@ -571,8 +621,11 @@ function inboxNote(notes: string | null) {
   return line.length > 88 ? `${line.slice(0, 87)}…` : line;
 }
 
-function inboxMetaLabel(
-  task: DashboardData["inboxTasks"][number],
+function taskMetaLabel(
+  task: Pick<
+    DashboardData["inboxTasks"][number],
+    "createdAt" | "completedAt"
+  >,
   done: boolean,
   today: Date,
   mode: CalendarMode
@@ -586,15 +639,17 @@ function inboxMetaLabel(
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
-function groupLoggedInbox(
-  tasks: DashboardData["inboxTasks"],
+function groupLoggedTasks<
+  T extends Pick<DashboardData["inboxTasks"][number], "completedAt">
+>(
+  tasks: T[],
   today: Date,
   mode: CalendarMode
 ) {
   const groups: Array<{
     key: string;
     label: string;
-    tasks: DashboardData["inboxTasks"];
+    tasks: T[];
   }> = [];
   const index = new Map<string, number>();
 
@@ -652,7 +707,7 @@ function InboxPanel({
   const openTasks = visible.filter((task) => !task.done);
   const loggedTasks = visible.filter((task) => task.done);
   const loggedGroups = expanded
-    ? groupLoggedInbox(loggedTasks, today, mode)
+    ? groupLoggedTasks(loggedTasks, today, mode)
     : loggedTasks.length > 0
       ? [{ key: "today", label: "Today", tasks: loggedTasks }]
       : [];
@@ -669,7 +724,7 @@ function InboxPanel({
           dueLabel: due?.label,
           dueColor: due?.color,
           estimateLabel: formatEstimate(task.estimatedMinutes),
-          metaLabel: inboxMetaLabel(task, done, today, mode),
+          metaLabel: taskMetaLabel(task, done, today, mode),
           note: expanded ? inboxNote(task.notes) : undefined,
         }}
         onToggle={() => onToggle(task.id, done)}

@@ -34,7 +34,7 @@ export function TaskRow({
     <div
       id={`task-${task.id}`}
       className={cn(
-        "group relative flex items-start gap-2.5 scroll-mt-24 px-4 py-2 transition-colors duration-[120ms] hover:bg-canvas-sunk target:bg-signal-wash",
+        "group relative flex items-start gap-2.5 scroll-mt-24 px-4 py-1.5 transition-colors duration-[120ms] hover:bg-canvas-sunk target:bg-signal-wash",
         className
       )}
     >

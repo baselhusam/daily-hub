@@ -76,7 +76,7 @@ export function DailyChecklist({ tasks }: DailyChecklistProps) {
         return (
           <div
             key={task.id}
-            className="group flex items-center gap-2.5 px-4 py-2 transition-colors duration-[120ms] hover:bg-canvas-sunk"
+            className="group flex items-center gap-2.5 px-4 py-1.5 transition-colors duration-[120ms] hover:bg-canvas-sunk"
           >
             <Checkbox
               checked={done}

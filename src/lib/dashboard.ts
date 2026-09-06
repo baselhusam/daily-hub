@@ -54,6 +54,7 @@ export type DashboardTaskItem = {
   createdAt: Date;
   estimatedMinutes: number | null;
   projectId: string | null;
+  done: boolean;
   doneToday: boolean;
 };
 
@@ -163,6 +164,7 @@ function mapTaskItem(
 ): DashboardTaskItem {
   return {
     ...task,
+    done: task.status === "DONE",
     doneToday:
       task.status === "DONE" &&
       (isCompletedToday(task.completedAt, today) ||
@@ -191,12 +193,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       include: {
         milestones: { orderBy: { sortOrder: "asc" } },
         tasks: {
-          where: {
-            OR: [
-              { status: { not: "DONE" } },
-              { completedAt: { gte: today } },
-            ],
-          },
           orderBy: [{ priority: "desc" }, { dueDate: "asc" }, { createdAt: "asc" }],
         },
       },
@@ -283,9 +279,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       status: project.status,
       sortOrder: project.sortOrder,
       milestones: project.milestones,
-      tasks: sortCompletedLast(
-        project.tasks.map((t) => mapTaskItem(t, today, completedTaskIdsToday)),
-        (task) => task.doneToday
+      tasks: sortInboxLog(
+        project.tasks.map((t) => mapTaskItem(t, today, completedTaskIdsToday))
       ),
       openCount: openTasks.length,
       doneCount,

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 import { toggleMilestone } from "@/app/actions/milestones";
 import { PageHeader } from "@/components/ui/page-header";
@@ -158,9 +159,14 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                 <SurfaceCard
                   key={project.id}
                   id={`project-${project.id}`}
-                  className="group scroll-mt-24 p-[18px] transition-[border-color,background-color] duration-[120ms] hover:border-border-strong hover:bg-canvas-sunk target:bg-signal-wash"
+                  className="group relative scroll-mt-24 p-[18px] transition-[border-color,background-color] duration-[120ms] hover:border-border-strong hover:bg-canvas-sunk target:bg-signal-wash"
                 >
-                  <div className="flex flex-col gap-3.5">
+                  <Link
+                    href={`/?project=${project.id}`}
+                    className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                    aria-label={`Show tasks for ${project.name}`}
+                  />
+                  <div className="pointer-events-none relative flex flex-col gap-3.5">
                     <div className="flex items-start gap-3">
                       <EntityAvatar
                         name={project.name}
@@ -182,7 +188,7 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                           </p>
                         )}
                       </div>
-                      <div className="flex shrink-0 gap-0.5">
+                      <div className="pointer-events-auto relative z-20 flex shrink-0 gap-0.5">
                         <ProjectFormDialog
                           project={{
                             id: project.id,
@@ -277,7 +283,7 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                                 onCheckedChange={() =>
                                   void handleToggleMilestone(milestone.id)
                                 }
-                                className="size-[17px]"
+                                className="relative z-20 size-[17px]"
                                 aria-label={`Toggle ${milestone.name}`}
                               />
                               <span
@@ -321,6 +327,9 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                         </span>
                       </div>
                     )}
+                    <span className="text-[12px] font-medium text-signal">
+                      Open task list →
+                    </span>
                   </div>
                 </SurfaceCard>
               );

@@ -42,7 +42,7 @@ export function SnapshotCard({
   return (
     <div
       className={cn(
-        "group flex min-h-[124px] flex-col rounded-[12px] border border-border bg-card px-3.5 py-3 transition-[border-color] duration-[120ms] hover:border-border-strong",
+        "group flex min-h-[112px] flex-col rounded-[12px] border border-border bg-card px-3.5 py-3 transition-[border-color] duration-[120ms] hover:border-border-strong",
         className
       )}
     >
@@ -60,9 +60,9 @@ export function SnapshotCard({
       {bars && bars.length > 0 ? (
         <SparkBars bars={bars} label={label} total={sparkTotal} />
       ) : (
-        <div className="mt-3 h-9" />
+        <div className="mt-2.5 h-8" />
       )}
-      <div className="mt-auto flex items-center gap-1.5 pt-2.5">
+      <div className="mt-auto flex items-center gap-1.5 pt-2">
         {showMark && entityName ? (
           <EntityAvatar
             name={entityName}
@@ -99,7 +99,7 @@ function SparkBars({
 }) {
   return (
     <div
-      className="mt-3 flex h-9 items-end gap-[3px]"
+      className="mt-2.5 flex h-8 items-end gap-[3px]"
       role="img"
       aria-label={`${total} across ${bars.length} days for ${label}`}
     >
