@@ -1,4 +1,5 @@
 import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SparkBar } from "@/lib/streak-utils";
 
@@ -16,6 +17,7 @@ type SnapshotCardProps = {
   iconKey?: string | null;
   entityName?: string;
   entityColor?: string | null;
+  onExpand?: () => void;
   className?: string;
 };
 
@@ -33,6 +35,7 @@ export function SnapshotCard({
   iconKey,
   entityName,
   entityColor,
+  onExpand,
   className,
 }: SnapshotCardProps) {
   const metricColor = valueColor ?? color ?? "var(--foreground)";
@@ -50,9 +53,22 @@ export function SnapshotCard({
         <div className="text-[11px] font-semibold tracking-[0.02em] text-faint">
           {label}
         </div>
-        {unit ? (
-          <span className="text-[11px] text-faint">{unit}</span>
-        ) : null}
+        <div className="flex items-center gap-1">
+          {unit ? (
+            <span className="text-[11px] text-faint">{unit}</span>
+          ) : null}
+          {onExpand ? (
+            <button
+              type="button"
+              onClick={onExpand}
+              aria-label={`Expand ${label} analysis`}
+              title={`Expand ${label} analysis`}
+              className="grid h-5 w-5 place-items-center rounded text-faint opacity-0 transition-[opacity,color,background-color] hover:bg-hover hover:text-foreground focus:opacity-100 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14 group-hover:opacity-100"
+            >
+              <Maximize2 className="h-3 w-3" />
+            </button>
+          ) : null}
+        </div>
       </div>
       <div className="mt-1.5 text-metric" style={{ color: metricColor }}>
         {value}

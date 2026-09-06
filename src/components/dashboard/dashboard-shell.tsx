@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/brand-mark";
 import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { ActivityAnalysisDialog, ActivityTrendCard } from "./activity-trend";
 import { toggleTask } from "@/app/actions/tasks";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
 import { cn, isTypingTarget, sortInboxLog } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const projectFilter = searchParams.get("project");
   const [editingTask, setEditingTask] = React.useState<EditableTask | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [analysisOpen, setAnalysisOpen] = React.useState(false);
   const taskFlags = React.useMemo(
     () => [
       ...data.projects.flatMap((project) =>
@@ -182,6 +184,11 @@ export function DashboardShell({ data }: DashboardShellProps) {
           }}
         />
       )}
+      <ActivityAnalysisDialog
+        activity={data.activity}
+        open={analysisOpen}
+        onOpenChange={setAnalysisOpen}
+      />
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4">
         <PageHeader
           eyebrow={todayLabel}
@@ -254,15 +261,12 @@ export function DashboardShell({ data }: DashboardShellProps) {
         {showHabits && (
           <section
             aria-label="Daily pulse"
-            className={cn(
-              "grid grid-cols-2 gap-2.5",
-              data.settings.showStreaks ? "dh:grid-cols-4" : "dh:grid-cols-3"
-            )}
+            className="grid grid-cols-2 gap-2.5 dh:grid-cols-[minmax(156px,0.8fr)_minmax(156px,0.8fr)_minmax(320px,1.7fr)]"
           >
             {data.snapshots
               .filter(
                 (snapshot) =>
-                  data.settings.showStreaks || snapshot.label !== "Current streak"
+                  snapshot.label === "Open tasks" || snapshot.label === "Due this week"
               )
               .map((snapshot) =>
                 snapshot.label === "Open tasks" ? (
@@ -270,11 +274,20 @@ export function DashboardShell({ data }: DashboardShellProps) {
                     key={snapshot.label}
                     {...snapshot}
                     value={String(optimisticOpenTasks)}
+                    onExpand={() => setAnalysisOpen(true)}
                   />
                 ) : (
-                  <SnapshotCard key={snapshot.label} {...snapshot} />
+                  <SnapshotCard
+                    key={snapshot.label}
+                    {...snapshot}
+                    onExpand={() => setAnalysisOpen(true)}
+                  />
                 )
               )}
+            <ActivityTrendCard
+              activity={data.activity}
+              onExpand={() => setAnalysisOpen(true)}
+            />
           </section>
         )}
 
@@ -589,13 +602,23 @@ export function DashboardShell({ data }: DashboardShellProps) {
                 </div>
               ))}
             </div>
-            <Button
-              asChild
-              variant="outline"
-              className="w-full border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background sm:w-auto"
-            >
-              <Link href="/analytics">Full analytics →</Link>
-            </Button>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAnalysisOpen(true)}
+                className="border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background"
+              >
+                Expand analysis
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="border-background/20 bg-transparent text-background hover:bg-background/10 hover:text-background"
+              >
+                <Link href="/analytics">Full analytics →</Link>
+              </Button>
+            </div>
           </section>
         )}
       </div>

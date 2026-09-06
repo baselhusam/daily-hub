@@ -117,6 +117,16 @@ export type DashboardSnapshot = {
   entityColor?: string | null;
 };
 
+export type DashboardActivityPoint = {
+  date: string;
+  label: string;
+  fullLabel: string;
+  tasks: number;
+  habits: number;
+  total: number;
+  isToday: boolean;
+};
+
 export type DashboardData = {
   settings: {
     displayName: string;
@@ -132,6 +142,7 @@ export type DashboardData = {
   dailyTasks: DashboardDailyTask[];
   inboxTasks: DashboardTask[];
   snapshots: DashboardSnapshot[];
+  activity: DashboardActivityPoint[];
   weekReview: {
     line: string;
     stats: Array<{ value: string; label: string }>;
@@ -183,7 +194,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     inboxTasksRaw,
     todayCompletions,
     weekCompletions,
-    last14Completions,
+    activityCompletions,
     streakInfo,
     allOpenTasks,
   ] = await Promise.all([
@@ -222,7 +233,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       select: { completedOn: true, entityType: true, entityId: true },
     }),
     prisma.completionLog.findMany({
-      where: { completedOn: { gte: subDays(today, 13) } },
+      where: { completedOn: { gte: subDays(today, 89) } },
       select: { completedOn: true, entityType: true, entityId: true },
     }),
     getStreakInfo(),
@@ -246,7 +257,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       .map((c) => c.entityId)
   );
   const completedTaskIdsToday = new Set(
-    last14Completions
+    activityCompletions
       .filter(
         (log) =>
           log.entityType === "TASK" &&
@@ -354,14 +365,14 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const doneSeries = back7.map(
     (key) =>
-      last14Completions.filter(
+      activityCompletions.filter(
         (l) => toDateOnlyString(l.completedOn) === key && l.entityType === "TASK"
       ).length
   );
   const habitSeries = back7.map((key) => {
     const day = new Date(key);
     return dailyTasks.filter((h) => isScheduledOn(h.weekdays, day)).length > 0
-      ? last14Completions.filter(
+      ? activityCompletions.filter(
           (l) =>
             l.entityType === "DAILY_TASK" &&
             toDateOnlyString(l.completedOn) === key
@@ -437,6 +448,29 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
   ];
 
+  const activityByDay = new Map<string, { tasks: number; habits: number }>();
+  for (const log of activityCompletions) {
+    const key = toDateOnlyString(log.completedOn);
+    const current = activityByDay.get(key) ?? { tasks: 0, habits: 0 };
+    if (log.entityType === "TASK") current.tasks += 1;
+    if (log.entityType === "DAILY_TASK") current.habits += 1;
+    activityByDay.set(key, current);
+  }
+  const activity = Array.from({ length: 90 }, (_, index) => {
+    const day = subDays(today, 89 - index);
+    const date = toDateOnlyString(day);
+    const counts = activityByDay.get(date) ?? { tasks: 0, habits: 0 };
+    return {
+      date,
+      label: format(day, "d MMM"),
+      fullLabel: format(day, "EEEE, d MMMM"),
+      tasks: counts.tasks,
+      habits: counts.habits,
+      total: counts.tasks + counts.habits,
+      isToday: date === todayKey,
+    };
+  });
+
   const weekTaskCount = weekCompletions.filter(
     (l) => l.entityType === "TASK"
   ).length;
@@ -478,6 +512,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     ),
     inboxTasks,
     snapshots,
+    activity,
     weekReview: {
       line: weekCompletions.length
         ? `${weekCompletions.length} things done since Monday${bestDay ? `, best on ${bestDay}.` : "."}`
