@@ -8,6 +8,7 @@ import {
   toDateOnlyString,
 } from "@/lib/dates";
 import { projectAccent } from "@/lib/entity-colors";
+import { buildProjectTrends, type ProjectTrends } from "@/lib/project-trends";
 import { withParsedWeekdays } from "@/lib/weekdays-db";
 
 export type AnalyticsOverview = {
@@ -121,9 +122,17 @@ export type AnalyticsData = {
   weekdayNote: string;
   timeOfDay: TimeOfDayAnalytics[];
   timeOfDayNote: string;
+  projectTrends: ProjectTrends;
 };
 
 const ANALYTICS_WINDOW_DAYS = 14;
+/**
+ * The "Project rhythm" chart gets its own, wider window so the client can
+ * slice 14/30/90 out of one payload without refetching. Keep
+ * ANALYTICS_WINDOW_DAYS untouched — every other card on this page depends on
+ * the 14-day figure.
+ */
+const PROJECT_TREND_DAYS = 90;
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -138,6 +147,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const today = getTodayDate();
   const todayKey = toDateOnlyString(today);
   const windowStart = subDays(today, ANALYTICS_WINDOW_DAYS - 1);
+  const trendWindowStart = subDays(today, PROJECT_TREND_DAYS - 1);
   const thisWeekStart = startOfWeek(today);
   const lastWeekStart = subDays(thisWeekStart, 7);
   const lastWeekEnd = subDays(thisWeekStart, 1);
@@ -145,6 +155,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const [
     allCompletions,
     windowCompletions,
+    trendCompletions,
     thisWeekCompletions,
     lastWeekCompletions,
     todayDailyCompletions,
@@ -163,6 +174,14 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         entityType: true,
         entityId: true,
         minutes: true,
+      },
+    }),
+    prisma.completionLog.findMany({
+      where: { completedOn: { gte: trendWindowStart } },
+      select: {
+        completedOn: true,
+        entityType: true,
+        entityId: true,
       },
     }),
     prisma.completionLog.count({
@@ -484,6 +503,21 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const activeProjects = projects.filter((p) => p.status === "ACTIVE").length;
   const rangeLogs = windowCompletions;
 
+  const trendDayRange = eachDayOfInterval({ start: trendWindowStart, end: today });
+  const trendDays = trendDayRange.map((day) => ({
+    date: toDateOnlyString(day),
+    label: format(day, "d MMM"),
+    fullLabel: format(day, "EEEE, d MMMM"),
+    isToday: toDateOnlyString(day) === todayKey,
+  }));
+  const taskProjectById = new Map(tasks.map((t) => [t.id, t.projectId]));
+  const projectTrends = buildProjectTrends({
+    days: trendDays,
+    projects,
+    taskProjectById,
+    logs: trendCompletions,
+  });
+
   return {
     rangeDays: ANALYTICS_WINDOW_DAYS,
     rangeLabel: `Last ${ANALYTICS_WINDOW_DAYS} days`,
@@ -556,5 +590,6 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     weekdayNote: `${dayNames[bestI]} is your strongest day · ${dayNames[worstI]} your weakest`,
     timeOfDay,
     timeOfDayNote: `Peak stretch: ${buckets[peak].name.toLowerCase()}`,
+    projectTrends,
   };
 }

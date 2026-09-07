@@ -7,12 +7,14 @@ import type {
   AnalyticsStatKey,
   CompletionDayPoint,
 } from "@/lib/analytics";
+import type { ProjectTrendSeries } from "@/lib/project-trends";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCardBody } from "@/components/ui/surface-card";
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
+import { ProjectTrendsChart } from "@/components/analytics/project-trends-chart";
 
 type Focus =
   | { kind: "stat"; key: AnalyticsStatKey }
@@ -58,7 +60,17 @@ function formatFocusTime(minutes: number) {
   return `${hours}h ${rest}m`;
 }
 
-function describeFocus(focus: Focus, data: AnalyticsData) {
+function trendTotalForRange(
+  series: ProjectTrendSeries[],
+  id: string,
+  rangeDays: number
+): number | null {
+  const found = series.find((entry) => entry.id === id);
+  if (!found) return null;
+  return found.daily.slice(-rangeDays).reduce((sum, value) => sum + value, 0);
+}
+
+function describeFocus(focus: Focus, data: AnalyticsData, trendRangeDays: number) {
   switch (focus.kind) {
     case "stat":
       return (
@@ -85,7 +97,18 @@ function describeFocus(focus: Focus, data: AnalyticsData) {
       const project =
         data.byProject.find((item) => item.id === focus.id) ??
         data.focusByProject.find((item) => item.id === focus.id);
-      return project ? `${project.name} · pinned` : "Project pinned";
+      const trendTotal = trendTotalForRange(
+        data.projectTrends.series,
+        focus.id,
+        trendRangeDays
+      );
+      const trendPart =
+        trendTotal !== null
+          ? ` · ${trendTotal} in the last ${trendRangeDays}d`
+          : "";
+      return project
+        ? `${project.name} · pinned${trendPart}`
+        : `Project pinned${trendPart}`;
     }
     case "habit": {
       const habit = data.dailyTaskStats.find((item) => item.id === focus.id);
@@ -137,6 +160,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
   const [focus, setFocus] = React.useState<Focus | null>(null);
   const [hover, setHover] = React.useState<Focus | null>(null);
   const [tip, setTip] = React.useState<Tip | null>(null);
+  const [trendRange, setTrendRange] = React.useState<14 | 30 | 90>(14);
   const active = hover ?? focus;
   const series = seriesFromFocus(active);
   const maxDay = Math.max(1, ...data.completionsByDay.map((day) => day.total));
@@ -209,7 +233,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                   className="flex max-w-[360px] items-center gap-2 rounded-lg border border-signal/25 bg-signal-wash px-3 py-2"
                 >
                   <p className="min-w-0 flex-1 text-[12.5px] font-medium text-ink-soft">
-                    {describeFocus(focus, data)}
+                    {describeFocus(focus, data, trendRange)}
                   </p>
                   <Button
                     type="button"
@@ -432,6 +456,20 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 );
               })}
             </div>
+          </SurfaceCardBody>
+        </InteractiveCard>
+
+        <InteractiveCard active={cardIsLit(active, "projects")}>
+          <SurfaceCardBody>
+            <ProjectTrendsChart
+              trends={data.projectTrends}
+              activeProjectId={active?.kind === "project" ? active.id : null}
+              onHoverProject={(id) =>
+                setHover(id ? { kind: "project", id } : null)
+              }
+              onPinProject={(id) => pin({ kind: "project", id })}
+              onRangeChange={setTrendRange}
+            />
           </SurfaceCardBody>
         </InteractiveCard>
 
