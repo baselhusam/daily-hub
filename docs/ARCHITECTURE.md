@@ -165,6 +165,15 @@ Daily tasks only appear on Today when `weekdays` includes today's JS `getDay()` 
 
 Remote `https?://` logo URLs are stored on `Project.logoUrl` / `DailyTask.logoUrl` and rendered as `<img>` only.
 
+### Logo colour extraction
+
+A project's accent colour is derived from its logo **in the browser**: the image is read as a `data:` URL, drawn into a 64×64 canvas, and the pixels are ranked by `src/lib/logo-color.ts`, which drops background/near-neutral pixels, merges perceptually-close shades, and takes the third distinct colour. There is no server-side image decoding and no image dependency (`sharp` and friends are deliberately absent).
+
+Two constraints shape this:
+
+- The CSP allows `img-src 'self' data: https:` but **not** `blob:`, so uploaded files go through `FileReader` rather than `URL.createObjectURL`.
+- A canvas cannot read a cross-origin image, so remote logo URLs are fetched by `src/app/actions/logo-color.ts` and re-emitted same-origin as a `data:` URL. That action is only a CORS proxy — it reuses `detectUploadedImage()` for sniffing and SVG sanitization, caps the body at 2MB, and times out after 5s.
+
 ## Docker services
 
 | Service | Image / build | Port | Role |

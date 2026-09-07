@@ -76,7 +76,7 @@ prisma/
 
 ## Data model (summary)
 
-- **Project** → first-class workstream; has Tasks and Milestones
+- **Project** → first-class workstream; has Tasks and Milestones. `color` + `colorSource` (`"auto" | "manual"`) hold its accent: `auto` means it was derived from the logo and should be re-derived when the logo changes, `manual` means the user picked it and it must never be overwritten. A `null` `color` is resolved to a palette colour at **read** time via `projectAccent()` in `src/lib/entity-colors.ts` — never stored, so "reset to default" keeps working.
 - **Task** → optional `projectId`; inbox = no project
 - **DailyTask** → recurring checklist item with icon; completion state is per-day in `CompletionLog`
 - **CompletionLog** → polymorphic via `entityType` (`TASK` | `DAILY_TASK`) + `entityId` + `completedOn` (date)

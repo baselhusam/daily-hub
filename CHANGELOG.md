@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Projects now carry a colour. Upload or link a logo and DailyHub picks an accent from it, or choose one yourself from the palette; the colour flows through avatars, the sidebar, and every chart.
+- Project rhythm on Analytics: a line per project over 14, 30, or 90 days, daily or cumulative, with a legend of project logos you can click to isolate a project.
+- Projects on Today can be collapsed, and a project whose tasks are all finished folds itself away until there is open work again.
+
+### Changed
+
+- The open-tasks chart is now interactive like the others — hover, click, or arrow-key through it for a dated breakdown.
+- Charts draw themselves in, and their hover markers glide rather than jump.
+
 ## [0.1.11] - 2026-09-06
 
 ### Added
