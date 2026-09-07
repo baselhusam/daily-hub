@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { addDays, format, parseISO, startOfWeek } from "date-fns";
+import { motion, useReducedMotion } from "motion/react";
 import { Flame, Maximize2 } from "lucide-react";
 import type { MomentumDay, MomentumInfo } from "@/lib/momentum";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,12 @@ type MomentumAnalysisDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+const cellHoverSpring = { type: "spring" as const, stiffness: 420, damping: 32 };
+
 export function MomentumCard({ momentum, onExpand }: MomentumCardProps) {
   const visibleDays = momentum.days.slice(-30);
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+  const reducedMotion = useReducedMotion();
   const activeDay =
     activeIndex === null ? momentum.today : visibleDays[activeIndex] ?? momentum.today;
   const activeDayIndex =
@@ -84,21 +88,23 @@ export function MomentumCard({ momentum, onExpand }: MomentumCardProps) {
           >
             {visibleDays.map((day, index) => (
               <div key={day.date} role="listitem">
-                <button
+                <motion.button
                   type="button"
                   aria-label={`${day.fullLabel}: ${daySummary(day)}`}
                   aria-current={day.isToday ? "date" : undefined}
                   onMouseEnter={() => setActiveIndex(index)}
                   onFocus={() => setActiveIndex(index)}
                   onBlur={() => setActiveIndex(null)}
+                  whileHover={reducedMotion ? undefined : { scale: 1.18 }}
+                  transition={cellHoverSpring}
                   className={cn(
-                    "relative h-5 w-full min-w-0 rounded-[3px] border border-transparent transition-[transform,box-shadow,background-color] duration-150 hover:-translate-y-0.5 hover:shadow-raised focus-visible:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/20",
+                    "relative h-5 w-full min-w-0 rounded-[3px] border border-transparent transition-[box-shadow,background-color] duration-150 hover:shadow-raised focus-visible:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/20",
                     day.isToday && "ring-2 ring-signal ring-offset-2 ring-offset-card"
                   )}
                   style={{ backgroundColor: completionColor(day.ratio) }}
                 >
                   <span className="sr-only">{daySummary(day)}</span>
-                </button>
+                </motion.button>
               </div>
             ))}
           </div>
