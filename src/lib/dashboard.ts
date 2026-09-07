@@ -362,13 +362,18 @@ export async function getDashboardData(): Promise<DashboardData> {
     }
   }
 
-  const back7 = Array.from({ length: 7 }, (_, i) =>
-    toDateOnlyString(subDays(today, 6 - i))
-  );
-  const doneSeries = back7.map(
-    (key) =>
+  const back7Meta = Array.from({ length: 7 }, (_, i) => {
+    const day = subDays(today, 6 - i);
+    return {
+      date: toDateOnlyString(day),
+      label: format(day, "d MMM"),
+      fullLabel: format(day, "EEEE, d MMMM"),
+    };
+  });
+  const doneSeries = back7Meta.map(
+    ({ date }) =>
       activityCompletions.filter(
-        (l) => toDateOnlyString(l.completedOn) === key && l.entityType === "TASK"
+        (l) => toDateOnlyString(l.completedOn) === date && l.entityType === "TASK"
       ).length
   );
   const closed7 = doneSeries.reduce((sum, value) => sum + value, 0);
@@ -391,7 +396,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         : "nothing overdue",
       hintColor: overdueTasks.length ? "var(--destructive)" : "var(--faint)",
       foot: closed7 === 1 ? "1 closed" : `${closed7} closed`,
-      bars: mkSparkBars(doneSeries),
+      bars: mkSparkBars(doneSeries, 6, back7Meta),
     },
     {
       label: "Next deadline",

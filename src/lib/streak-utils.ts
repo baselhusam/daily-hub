@@ -109,17 +109,29 @@ export type SparkBar = {
   height: number;
   empty: boolean;
   today: boolean;
+  date?: string;
+  label?: string;
+  fullLabel?: string;
 };
+
+export type SparkBarDay = { date: string; label: string; fullLabel: string };
 
 export function mkSparkBars(
   values: number[],
-  todayIndex = values.length - 1
+  todayIndex = values.length - 1,
+  days?: SparkBarDay[]
 ): SparkBar[] {
   const max = Math.max(1, ...values);
-  return values.map((value, index) => ({
-    value,
-    height: value ? Math.max(36, Math.round((value / max) * 100)) : 18,
-    empty: value === 0,
-    today: index === todayIndex,
-  }));
+  return values.map((value, index) => {
+    const meta = days?.[index];
+    return {
+      value,
+      height: value ? Math.max(36, Math.round((value / max) * 100)) : 18,
+      empty: value === 0,
+      today: index === todayIndex,
+      ...(meta
+        ? { date: meta.date, label: meta.label, fullLabel: meta.fullLabel }
+        : {}),
+    };
+  });
 }
