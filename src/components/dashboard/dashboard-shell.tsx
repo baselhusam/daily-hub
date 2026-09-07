@@ -5,14 +5,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import type { DashboardData } from "@/lib/dashboard";
-import { StatusChip } from "@/components/ui/option-mark";
-import { daysUntil, formatEstimate } from "@/lib/streak-utils";
-import { getDueMeta, getDeadlineColor } from "@/lib/due-meta";
+import { formatEstimate } from "@/lib/streak-utils";
+import { getDueMeta } from "@/lib/due-meta";
 import {
-  calendarDayKey,
-  formatAddedAgo,
-  formatCompletedAgo,
-  formatLogDay,
   formatTodayLabel,
   getGreeting,
   type CalendarMode,
@@ -31,18 +26,16 @@ import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { ActivityAnalysisDialog, ActivityTrendCard } from "./activity-trend";
 import { MomentumAnalysisDialog, MomentumCard } from "./momentum-card";
+import {
+  ProjectCard,
+  groupLoggedTasks,
+  taskMetaLabel,
+  type EditableTask,
+} from "./project-card";
 import { toggleTask } from "@/app/actions/tasks";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
+import { useCollapsedProjects } from "@/lib/use-collapsed-projects";
 import { cn, isTypingTarget, sortInboxLog } from "@/lib/utils";
-
-type EditableTask = {
-  id: string;
-  title: string;
-  notes: string | null;
-  projectId: string | null;
-  dueDate: Date | null;
-  estimatedMinutes: number | null;
-};
 
 type DashboardShellProps = {
   data: DashboardData;
@@ -115,6 +108,23 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const showHabits = !projectFilter || projectFilter === "all";
   const inboxOnly = projectFilter === "inbox";
   const filterProject = data.projects.find((p) => p.id === projectFilter);
+  const collapseInputs = filteredProjects.map((project) => {
+    const openCount = project.tasks.filter(
+      (task) => !optimisticTasks.get(task.id, task.done)
+    ).length;
+    const isFilteredOpen = filterProject?.id === project.id;
+    return {
+      id: project.id,
+      // A project the user has navigated into (via ?project=) is being read
+      // in full, not glanced at — never fold it away underneath them.
+      autoCollapsed: !isFilteredOpen && project.tasks.length > 1 && openCount === 0,
+    };
+  });
+  const {
+    isCollapsed: isProjectCollapsed,
+    toggle: toggleProjectCollapsed,
+    setAll: setAllProjectsCollapsed,
+  } = useCollapsedProjects(collapseInputs);
   const isFreshWorkspace =
     !filterProject &&
     data.projects.length === 0 &&
@@ -331,185 +341,48 @@ export function DashboardShell({ data }: DashboardShellProps) {
                 </EmptyState>
               </SurfaceCard>
             ) : (
-              filteredProjects.map((project) => {
-                const dl = daysUntil(project.dueDate, today, mode);
-                const visibleTasks = sortInboxLog(
-                  project.tasks.map((task) => {
-                    const done = optimisticTasks.get(task.id, task.done);
-                    return {
-                      ...task,
-                      done,
-                      completedAt: done ? (task.completedAt ?? today) : null,
-                    };
-                  })
-                );
-                const openTasks = visibleTasks.filter((task) => !task.done);
-                const loggedTasks = visibleTasks.filter((task) => task.done);
-                const showAllLogs = filterProject?.id === project.id;
-                const visibleLoggedTasks = showAllLogs
-                  ? loggedTasks
-                  : loggedTasks.filter(
-                      (task) =>
-                        task.doneToday ||
-                        optimisticTasks.get(task.id, task.done) !== task.done
-                    );
-                const hiddenLoggedCount = loggedTasks.length - visibleLoggedTasks.length;
-                const loggedGroups = showAllLogs
-                  ? groupLoggedTasks(loggedTasks, today, mode)
-                  : visibleLoggedTasks.length > 0
-                    ? [{ key: "today", label: "Today", tasks: visibleLoggedTasks }]
-                    : [];
-                const openCount = openTasks.length;
-                const openMilestones = project.milestones
-                  .filter((m) => !m.done)
-                  .slice(0, 3);
-
-                return (
-                  <SurfaceCard key={project.id} variant="quiet">
-                    <div className="flex items-start gap-2.5 px-4 pt-3 pb-1.5">
-                      <EntityAvatar
-                        name={project.name}
-                        color={project.color}
-                        logoUrl={project.logoUrl}
-                        iconKey={project.iconKey}
-                        size={22}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="min-w-0 truncate text-[14.5px] font-semibold tracking-[-0.015em]">
-                            {project.name}
-                          </span>
-                          {project.status !== "ACTIVE" ? (
-                            <StatusChip status={project.status} />
-                          ) : null}
-                        </div>
-                        <p className="mt-0.5 text-[12px] text-faint">
-                          {openCount} open
-                          {project.doneCount > 0
-                            ? ` · ${project.doneCount} finished`
-                            : null}
-                        </p>
-                      </div>
-                      {dl !== null && (
-                        <span
-                          className="shrink-0 pt-0.5 text-[12.5px] font-medium tabular-nums"
-                          style={{ color: getDeadlineColor(dl) }}
-                        >
-                          {dl < 0 ? `${Math.abs(dl)}d late` : `${dl}d`}
-                        </span>
-                      )}
-                    </div>
-
-                    {openMilestones.length > 0 && (
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-1">
-                        {openMilestones.map((milestone) => {
-                          const md = daysUntil(milestone.dueDate, today, mode);
-                          return (
-                            <span
-                              key={milestone.id}
-                              className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground"
-                            >
-                              <span
-                                className="h-1 w-1 rounded-full"
-                                style={{
-                                  backgroundColor:
-                                    md !== null && md <= 7
-                                      ? "var(--signal)"
-                                      : "var(--hairline)",
-                                }}
-                              />
-                              {milestone.name}
-                              {md !== null && (
-                                <span className="text-faint tabular-nums">
-                                  {md < 0
-                                    ? `${Math.abs(md)}d late`
-                                    : `${md}d`}
-                                </span>
-                              )}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    <div className="pt-0.5 pb-1">
-                      {openTasks.map((task) => {
-                        const due = getDueMeta(task.dueDate, today, mode);
-                        return (
-                          <TaskRow
-                            key={task.id}
-                            task={{
-                              id: task.id,
-                              title: task.title,
-                              done: false,
-                              dueLabel: due?.label,
-                              dueColor: due?.color,
-                              estimateLabel: formatEstimate(
-                                task.estimatedMinutes
-                              ),
-                              metaLabel: formatAddedAgo(
-                                task.createdAt,
-                                today,
-                                mode
-                              ),
-                            }}
-                            onToggle={() =>
-                              void handleToggle(task.id, false)
-                            }
-                            onEdit={() => setEditingTask(task)}
-                          />
-                        );
-                      })}
-                      {loggedGroups.map((group) => (
-                        <div
-                          key={group.key}
-                          className={openTasks.length > 0 ? "mt-1" : undefined}
-                        >
-                          {showAllLogs ? (
-                            <div className="px-4 pt-2.5 pb-1 text-[11px] font-semibold tracking-[0.08em] text-faint uppercase">
-                              {group.label}
-                            </div>
-                          ) : null}
-                          {group.tasks.map((task) => (
-                            <TaskRow
-                              key={task.id}
-                              task={{
-                                id: task.id,
-                                title: task.title,
-                                done: true,
-                                estimateLabel: formatEstimate(task.estimatedMinutes),
-                                metaLabel: taskMetaLabel(task, true, today, mode),
-                              }}
-                              onToggle={() => void handleToggle(task.id, true)}
-                              onEdit={() => setEditingTask(task)}
-                            />
-                          ))}
-                        </div>
-                      ))}
-                      {!showAllLogs && hiddenLoggedCount > 0 ? (
-                        <Link
-                          href={`/?project=${project.id}`}
-                          className="block px-4 py-2 text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
-                        >
-                          {hiddenLoggedCount} finished →
-                        </Link>
-                      ) : null}
-                      <CreateTaskDialog
-                        projects={data.projects}
-                        defaultProjectId={project.id}
-                        trigger={
-                          <button
-                            type="button"
-                            className="w-full py-1.5 pr-4 pl-11 text-left text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
-                          >
-                            + Add task
-                          </button>
-                        }
-                      />
-                    </div>
-                  </SurfaceCard>
-                );
-              })
+              <>
+                {filteredProjects.length > 1 ? (
+                  <div className="flex items-center justify-end gap-1 px-0.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAllProjectsCollapsed(true)}
+                      className="h-7 px-2 text-[12px] text-faint hover:text-foreground"
+                    >
+                      Collapse all
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAllProjectsCollapsed(false)}
+                      className="h-7 px-2 text-[12px] text-faint hover:text-foreground"
+                    >
+                      Expand all
+                    </Button>
+                  </div>
+                ) : null}
+                {filteredProjects.map((project, projectIndex) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    index={projectIndex}
+                    today={today}
+                    mode={mode}
+                    showAllLogs={filterProject?.id === project.id}
+                    projects={data.projects}
+                    collapsed={isProjectCollapsed(project.id)}
+                    onToggleCollapsed={() => toggleProjectCollapsed(project.id)}
+                    onToggleTask={(taskId, currentlyDone) => {
+                      void handleToggle(taskId, currentlyDone);
+                    }}
+                    onEditTask={setEditingTask}
+                    getDone={(id, fallback) => optimisticTasks.get(id, fallback)}
+                  />
+                ))}
+              </>
             )}
           </div>
 
@@ -640,57 +513,6 @@ function inboxNote(notes: string | null) {
   const line = notes.trim().split("\n")[0]?.trim();
   if (!line) return undefined;
   return line.length > 88 ? `${line.slice(0, 87)}…` : line;
-}
-
-function taskMetaLabel(
-  task: Pick<
-    DashboardData["inboxTasks"][number],
-    "createdAt" | "completedAt"
-  >,
-  done: boolean,
-  today: Date,
-  mode: CalendarMode
-) {
-  const parts = [
-    formatAddedAgo(task.createdAt, today, mode),
-    done
-      ? formatCompletedAgo(task.completedAt ?? today, today, mode)
-      : undefined,
-  ].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : undefined;
-}
-
-function groupLoggedTasks<
-  T extends Pick<DashboardData["inboxTasks"][number], "completedAt">
->(
-  tasks: T[],
-  today: Date,
-  mode: CalendarMode
-) {
-  const groups: Array<{
-    key: string;
-    label: string;
-    tasks: T[];
-  }> = [];
-  const index = new Map<string, number>();
-
-  for (const task of tasks) {
-    const when = task.completedAt ?? today;
-    const key = calendarDayKey(when, mode);
-    const existing = index.get(key);
-    if (existing === undefined) {
-      index.set(key, groups.length);
-      groups.push({
-        key,
-        label: formatLogDay(when, today, mode),
-        tasks: [task],
-      });
-    } else {
-      groups[existing].tasks.push(task);
-    }
-  }
-
-  return groups;
 }
 
 function InboxPanel({
