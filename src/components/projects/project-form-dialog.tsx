@@ -209,6 +209,7 @@ export function ProjectFormDialog({
                   onValueChange={setIconKey}
                   options={iconMenuOptions()}
                   ariaLabel="Project icon"
+                  layout="icon-grid"
                 />
               </label>
               <label className="flex min-w-0 flex-col gap-1.5">

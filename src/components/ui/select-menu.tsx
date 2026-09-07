@@ -22,6 +22,7 @@ type SelectMenuProps = {
   className?: string;
   contentClassName?: string;
   variant?: "field" | "compact" | "plain";
+  layout?: "list" | "icon-grid";
 };
 
 export function SelectMenu({
@@ -35,6 +36,7 @@ export function SelectMenu({
   className,
   contentClassName,
   variant = "field",
+  layout = "list",
 }: SelectMenuProps) {
   const [open, setOpen] = React.useState(false);
   const selected = options.find((option) => option.value === value);
@@ -79,12 +81,21 @@ export function SelectMenu({
         </PopoverTrigger>
         <PopoverContent
           className={cn(
-            "max-h-72 w-[var(--radix-popover-trigger-width)] min-w-[min(12rem,calc(100vw-1.5rem))] overflow-y-auto p-1",
+            layout === "list" &&
+              "max-h-[min(18rem,var(--radix-popover-content-available-height))] w-[var(--radix-popover-trigger-width)] min-w-[min(12rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain p-1",
+            layout === "icon-grid" &&
+              "w-[min(15rem,calc(100vw-1.5rem))] p-2",
             contentClassName
           )}
           role="listbox"
           aria-label={ariaLabel ?? placeholder}
         >
+          <div
+            className={cn(
+              layout === "list" && "space-y-0.5",
+              layout === "icon-grid" && "grid grid-cols-5 gap-1"
+            )}
+          >
           {options.map((option) => {
             const isSelected = option.value === value;
             return (
@@ -93,27 +104,43 @@ export function SelectMenu({
                 type="button"
                 role="option"
                 aria-selected={isSelected}
+                aria-label={option.label}
+                title={option.label}
                 onClick={() => {
                   onValueChange(option.value);
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13.5px] font-medium outline-none transition-colors duration-[120ms]",
-                  isSelected
-                    ? "bg-hover text-foreground"
-                    : "text-foreground hover:bg-hover"
+                  "outline-none transition-[background-color,color,box-shadow,transform] duration-[120ms] focus-visible:ring-[3px] focus-visible:ring-signal/18",
+                  layout === "list" &&
+                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13.5px] font-medium",
+                  layout === "icon-grid" &&
+                    "group relative grid aspect-square place-items-center rounded-[8px] hover:-translate-y-px hover:bg-hover",
+                  isSelected && layout === "list" && "bg-hover text-foreground",
+                  !isSelected && layout === "list" && "text-foreground hover:bg-hover",
+                  isSelected &&
+                    layout === "icon-grid" &&
+                    "bg-signal-wash text-signal shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--signal)_35%,transparent)]"
                 )}
               >
                 {option.leading ? (
                   <span className="shrink-0">{option.leading}</span>
                 ) : null}
-                <span className="min-w-0 flex-1 truncate">{option.label}</span>
-                {isSelected ? (
+                {layout === "list" ? (
+                  <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                ) : null}
+                {isSelected && layout === "list" ? (
                   <Check className="h-3.5 w-3.5 shrink-0 text-signal" />
                 ) : null}
               </button>
             );
           })}
+          </div>
+          {layout === "icon-grid" ? (
+            <p className="mt-2 border-t border-rule-soft px-1 pt-2 text-[11.5px] text-faint">
+              {selected?.label ?? placeholder}
+            </p>
+          ) : null}
         </PopoverContent>
       </Popover>
     </>

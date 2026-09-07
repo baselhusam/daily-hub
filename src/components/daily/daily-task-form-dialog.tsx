@@ -199,6 +199,7 @@ export function DailyTaskFormDialog({
                 onValueChange={setIconKey}
                 options={iconMenuOptions()}
                 ariaLabel="Habit icon"
+                layout="icon-grid"
               />
             </label>
             <label className="flex flex-col gap-1.5">
