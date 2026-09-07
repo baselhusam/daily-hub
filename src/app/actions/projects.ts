@@ -59,6 +59,7 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
     iconKey: formData.get("iconKey") || "folder",
     logoUrl: formData.get("logoUrl") || undefined,
     color: formData.get("color") || undefined,
+    colorSource: formData.get("colorSource") || "auto",
     dueDate: formData.get("dueDate") || undefined,
     status: formData.get("status") || "ACTIVE",
   });
@@ -72,7 +73,8 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
     return { success: false, error: milestonesParsed.error };
   }
 
-  const { name, description, iconKey, logoUrl, color, status } = parsed.data;
+  const { name, description, iconKey, logoUrl, color, colorSource, status } =
+    parsed.data;
 
   try {
     const count = await prisma.project.count();
@@ -84,6 +86,7 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
         iconKey,
         logoUrl: logoUrl || null,
         color: color || null,
+        colorSource,
         dueDate: parseDateInput(parsed.data.dueDate),
         status,
         sortOrder: count,
@@ -117,6 +120,7 @@ export async function updateProject(formData: FormData): Promise<ActionResult> {
     iconKey: formData.get("iconKey") || "folder",
     logoUrl: formData.get("logoUrl") || undefined,
     color: formData.get("color") || undefined,
+    colorSource: formData.get("colorSource") || "auto",
     dueDate: formData.get("dueDate") || undefined,
     status: formData.get("status") || "ACTIVE",
   });
@@ -130,7 +134,8 @@ export async function updateProject(formData: FormData): Promise<ActionResult> {
     return { success: false, error: milestonesParsed.error };
   }
 
-  const { id, name, description, iconKey, logoUrl, color, status } = parsed.data;
+  const { id, name, description, iconKey, logoUrl, color, colorSource, status } =
+    parsed.data;
   const hasMilestoneFields = formData.getAll("milestoneName").length > 0;
 
   try {
@@ -142,6 +147,7 @@ export async function updateProject(formData: FormData): Promise<ActionResult> {
         iconKey,
         logoUrl: logoUrl || null,
         color: color || null,
+        colorSource,
         dueDate: parseDateInput(parsed.data.dueDate),
         status,
       },

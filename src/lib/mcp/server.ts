@@ -224,6 +224,9 @@ export function createDailyHubMcpServer() {
           status: status ?? "ACTIVE",
           iconKey: iconKey ?? "folder",
           color: color ?? null,
+          // An explicitly supplied color is a manual pick; otherwise the
+          // project starts on the auto (logo-extracted / palette) path.
+          colorSource: color ? "manual" : "auto",
           sortOrder,
         },
       });
@@ -247,11 +250,17 @@ export function createDailyHubMcpServer() {
         color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
       },
     },
-    async ({ id, dueDate, ...input }) => {
+    async ({ id, dueDate, color, ...input }) => {
       await ensureDatabaseReady();
       const project = await prisma.project.update({
         where: { id },
-        data: { ...input, ...(dueDate !== undefined ? { dueDate: parseOptionalDate(dueDate) } : {}) },
+        data: {
+          ...input,
+          ...(dueDate !== undefined ? { dueDate: parseOptionalDate(dueDate) } : {}),
+          // Supplying a color is a manual pick; explicitly clearing it (null)
+          // returns the project to the auto (logo-extracted / palette) path.
+          ...(color !== undefined ? { color, colorSource: color ? "manual" : "auto" } : {}),
+        },
       });
       revalidateApp();
       return result(project);

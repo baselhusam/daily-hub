@@ -3,6 +3,11 @@
 import * as React from "react";
 import { ImageIcon, Link2, Upload } from "lucide-react";
 import { DialogInput, FieldLabel } from "@/components/ui/input";
+import { fetchLogoDataUrl } from "@/app/actions/logo-color";
+import {
+  readFileAsDataUrl,
+  readSameOriginUrlAsDataUrl,
+} from "@/lib/logo-color-client";
 import { isRemoteLogoUrl } from "@/lib/logo";
 import { cn } from "@/lib/utils";
 
@@ -10,9 +15,13 @@ type LogoSource = "upload" | "url";
 
 type LogoFieldProps = {
   existingLogoUrl?: string | null;
+  /** Called whenever the resolved logo image changes, as a same-origin data URL (or null). */
+  onLogoResolved?: (dataUrl: string | null) => void;
 };
 
-export function LogoField({ existingLogoUrl }: LogoFieldProps) {
+const REMOTE_URL_DEBOUNCE_MS = 500;
+
+export function LogoField({ existingLogoUrl, onLogoResolved }: LogoFieldProps) {
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [source, setSource] = React.useState<LogoSource>(
     isRemoteLogoUrl(existingLogoUrl) ? "url" : "upload"
@@ -22,33 +31,73 @@ export function LogoField({ existingLogoUrl }: LogoFieldProps) {
   );
   const [previewFailed, setPreviewFailed] = React.useState(false);
   const [fileName, setFileName] = React.useState<string | null>(null);
-  const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+  const [dataUrl, setDataUrl] = React.useState<string | null>(null);
   const [dragOver, setDragOver] = React.useState(false);
 
   const previewSrc = remoteUrl.trim();
   const showLivePreview = source === "url" && /^https?:\/\//i.test(previewSrc);
-  const uploadPreview = objectUrl ?? (!isRemoteLogoUrl(existingLogoUrl) ? existingLogoUrl : null);
+  const uploadPreview = dataUrl ?? (!isRemoteLogoUrl(existingLogoUrl) ? existingLogoUrl : null);
 
   React.useEffect(() => {
     setPreviewFailed(false);
   }, [previewSrc]);
 
+  // A logo saved earlier should still yield a colour when the dialog reopens,
+  // not only when the user picks a new file. Remote logos already resolve
+  // through the effect below, so this only covers stored `/uploads/…` files.
   React.useEffect(() => {
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [objectUrl]);
+    if (source !== "upload") return;
+    if (!existingLogoUrl || isRemoteLogoUrl(existingLogoUrl)) return;
 
-  function assignFile(file: File | undefined) {
+    let cancelled = false;
+    readSameOriginUrlAsDataUrl(existingLogoUrl).then((resolved) => {
+      if (!cancelled && resolved) onLogoResolved?.(resolved);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingLogoUrl, source]);
+
+  // Debounced remote-logo resolution: fetch the URL server-side (CORS proxy)
+  // and report the resulting data URL upward for colour extraction.
+  React.useEffect(() => {
+    if (source !== "url") return;
+    const trimmed = remoteUrl.trim();
+    if (!trimmed || !/^https?:\/\//i.test(trimmed)) {
+      onLogoResolved?.(null);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      const resolved = await fetchLogoDataUrl(trimmed);
+      if (!cancelled) onLogoResolved?.(resolved);
+    }, REMOTE_URL_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteUrl, source]);
+
+  async function assignFile(file: File | undefined) {
     if (!file || !file.type.startsWith("image/")) return;
     const transfer = new DataTransfer();
     transfer.items.add(file);
     if (fileRef.current) fileRef.current.files = transfer.files;
     setFileName(file.name);
-    setObjectUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
+
+    try {
+      const resolved = await readFileAsDataUrl(file);
+      setDataUrl(resolved);
+      onLogoResolved?.(resolved);
+    } catch {
+      setDataUrl(null);
+      onLogoResolved?.(null);
+    }
   }
 
   return (

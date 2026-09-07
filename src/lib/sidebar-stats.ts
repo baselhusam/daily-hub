@@ -6,6 +6,7 @@ import {
   isHabitDueOn,
   toDateOnlyString,
 } from "@/lib/dates";
+import { projectAccent } from "@/lib/entity-colors";
 import {
   buildNotifications,
   getProjectLastTouchMap,
@@ -21,7 +22,7 @@ export type SidebarProject = {
   name: string;
   iconKey: string;
   logoUrl: string | null;
-  color: string | null;
+  color: string;
   openCount: number;
 };
 
@@ -177,6 +178,7 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     dailyConsistencyToday,
     projects: projects.map((project) => ({
       ...project,
+      color: projectAccent(project),
       openCount: countMap.get(project.id) ?? 0,
     })),
     streak: streakInfo.streak,

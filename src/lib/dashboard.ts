@@ -16,6 +16,7 @@ import {
   toDateOnlyString,
 } from "@/lib/dates";
 import { getDueMeta, isCompletedToday } from "@/lib/due-meta";
+import { projectAccent } from "@/lib/entity-colors";
 import { getSettings } from "@/lib/settings";
 import { sortCompletedLast, sortInboxLog } from "@/lib/utils";
 import {
@@ -294,7 +295,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       description: project.description,
       iconKey: project.iconKey,
       logoUrl: project.logoUrl,
-      color: project.color,
+      color: projectAccent(project),
       dueDate: project.dueDate,
       status: project.status,
       sortOrder: project.sortOrder,
@@ -329,7 +330,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     project: string;
     logoUrl: string | null;
     iconKey: string;
-    color: string | null;
+    color: string;
   } | null = null;
   for (const project of projects) {
     for (const milestone of project.milestones) {
@@ -342,7 +343,7 @@ export async function getDashboardData(): Promise<DashboardData> {
           project: project.name,
           logoUrl: project.logoUrl,
           iconKey: project.iconKey,
-          color: project.color,
+          color: projectAccent(project),
         };
       }
     }
@@ -355,7 +356,7 @@ export async function getDashboardData(): Promise<DashboardData> {
           project: project.name,
           logoUrl: project.logoUrl,
           iconKey: project.iconKey,
-          color: project.color,
+          color: projectAccent(project),
         };
       }
     }

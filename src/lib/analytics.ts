@@ -7,6 +7,7 @@ import {
   isScheduledOn,
   toDateOnlyString,
 } from "@/lib/dates";
+import { projectAccent } from "@/lib/entity-colors";
 import { withParsedWeekdays } from "@/lib/weekdays-db";
 
 export type AnalyticsOverview = {
@@ -290,7 +291,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         if (project) {
           bucketKey = project.id;
           name = project.name;
-          color = project.color ?? "var(--foreground)";
+          color = projectAccent(project);
           logoUrl = project.logoUrl;
           iconKey = project.iconKey;
         }
@@ -363,7 +364,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
           : `${pct}% · ${open} open`,
       noteColor: idle >= 7 ? "var(--signal)" : "var(--muted-foreground)",
       barWidth: Math.max(2, pct),
-      color: project.color ?? "var(--foreground)",
+      color: projectAccent(project),
       logoUrl: project.logoUrl,
       iconKey: project.iconKey,
     };

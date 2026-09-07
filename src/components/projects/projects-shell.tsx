@@ -34,6 +34,7 @@ type ProjectRecord = {
   iconKey: string;
   logoUrl: string | null;
   color: string | null;
+  colorSource: string;
   dueDate: Date | null;
   status: "ACTIVE" | "PAUSED" | "DONE";
   milestones: Array<{
@@ -196,6 +197,9 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                             description: project.description,
                             iconKey: project.iconKey,
                             logoUrl: project.logoUrl,
+                            color: project.color,
+                            colorSource:
+                              project.colorSource === "manual" ? "manual" : "auto",
                             dueDate: project.dueDate,
                             status: project.status,
                             milestones: project.milestones,

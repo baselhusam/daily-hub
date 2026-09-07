@@ -32,6 +32,7 @@ export const createProjectSchema = z.object({
   iconKey: z.string().min(1).max(40).default("folder"),
   logoUrl: logoUrlSchema,
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  colorSource: z.enum(["auto", "manual"]).default("auto"),
   dueDate: optionalDateSchema,
   status: z.enum(["ACTIVE", "PAUSED", "DONE"]).default("ACTIVE"),
 });

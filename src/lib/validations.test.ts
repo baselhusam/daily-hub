@@ -19,6 +19,27 @@ describe("validations", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a valid colorSource and defaults to auto", () => {
+    const withManual = createProjectSchema.safeParse({
+      name: "Alpha",
+      colorSource: "manual",
+    });
+    expect(withManual.success).toBe(true);
+    if (withManual.success) expect(withManual.data.colorSource).toBe("manual");
+
+    const withoutSource = createProjectSchema.safeParse({ name: "Alpha" });
+    expect(withoutSource.success).toBe(true);
+    if (withoutSource.success) expect(withoutSource.data.colorSource).toBe("auto");
+  });
+
+  it("rejects an invalid colorSource", () => {
+    const result = createProjectSchema.safeParse({
+      name: "Alpha",
+      colorSource: "computed",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects an invalid logo URL", () => {
     const result = createProjectSchema.safeParse({
       name: "Alpha",

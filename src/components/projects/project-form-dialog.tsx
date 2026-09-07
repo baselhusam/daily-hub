@@ -8,6 +8,7 @@ import {
   type DeleteProjectTarget,
 } from "./delete-project-dialog";
 import { Button } from "@/components/ui/button";
+import { ColorField } from "@/components/ui/color-field";
 import { DatePicker } from "@/components/ui/date-picker";
 import { LogoField } from "@/components/ui/logo-field";
 import {
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/option-mark";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { applyLogoToFormData } from "@/lib/logo";
+import { extractAccentFromDataUrl } from "@/lib/logo-color-client";
 import { parseDateInput, toDateOnlyString } from "@/lib/dates";
 
 type MilestoneForm = {
@@ -39,6 +41,8 @@ export type ProjectFormValues = {
   description: string | null;
   iconKey: string;
   logoUrl: string | null;
+  color: string | null;
+  colorSource: "auto" | "manual";
   dueDate: Date | null;
   status: "ACTIVE" | "PAUSED" | "DONE";
   milestones?: Array<{
@@ -75,9 +79,20 @@ export function ProjectFormDialog({
   const [dueDate, setDueDate] = React.useState(
     project?.dueDate ? toDateOnlyString(project.dueDate) : ""
   );
+  const [color, setColor] = React.useState<string | null>(project?.color ?? null);
+  const [colorSource, setColorSource] = React.useState<"auto" | "manual">(
+    project?.colorSource ?? "auto"
+  );
+  const [autoColor, setAutoColor] = React.useState<string | null>(
+    project?.colorSource === "auto" ? project?.color ?? null : null
+  );
+  const [extracting, setExtracting] = React.useState(false);
   const [pendingDelete, setPendingDelete] =
     React.useState<DeleteProjectTarget | null>(null);
   const isEdit = Boolean(project?.id);
+  const extractionToken = React.useRef(0);
+  const colorSourceRef = React.useRef(colorSource);
+  colorSourceRef.current = colorSource;
 
   React.useEffect(() => {
     if (open) {
@@ -90,8 +105,37 @@ export function ProjectFormDialog({
       setIconKey(project?.iconKey ?? "folder");
       setStatus(project?.status ?? "ACTIVE");
       setDueDate(project?.dueDate ? toDateOnlyString(project.dueDate) : "");
+      setColor(project?.color ?? null);
+      setColorSource(project?.colorSource ?? "auto");
+      setAutoColor(project?.colorSource === "auto" ? project?.color ?? null : null);
+      setExtracting(false);
+      extractionToken.current += 1;
     }
   }, [open, project]);
+
+  // Guarded with a request token so a slow remote-logo fetch can never
+  // clobber a newer pick (e.g. the user swaps the logo again before this
+  // extraction resolves).
+  const handleLogoResolved = React.useCallback(
+    async (dataUrl: string | null) => {
+      const token = ++extractionToken.current;
+
+      if (!dataUrl) {
+        setAutoColor(null);
+        if (colorSourceRef.current === "auto") setColor(null);
+        return;
+      }
+
+      setExtracting(true);
+      const hex = await extractAccentFromDataUrl(dataUrl);
+      if (token !== extractionToken.current) return;
+
+      setAutoColor(hex);
+      if (colorSourceRef.current === "auto") setColor(hex);
+      setExtracting(false);
+    },
+    []
+  );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -228,6 +272,17 @@ export function ProjectFormDialog({
             <LogoField
               key={String(open)}
               existingLogoUrl={project?.logoUrl}
+              onLogoResolved={handleLogoResolved}
+            />
+            <ColorField
+              value={color}
+              source={colorSource}
+              autoColor={autoColor}
+              extracting={extracting}
+              onChange={({ color: nextColor, source: nextSource }) => {
+                setColor(nextColor);
+                setColorSource(nextSource);
+              }}
             />
             <div className="flex flex-col gap-2">
               <div className="flex items-baseline gap-2">
