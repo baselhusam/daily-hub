@@ -8,6 +8,7 @@ import {
   FolderKanban,
   GripVertical,
   LayoutDashboard,
+  PanelLeftOpen,
 } from "lucide-react";
 import * as React from "react";
 import { ChainDots } from "@/components/ui/chain-dots";
@@ -28,12 +29,14 @@ type AppSidebarProps = {
   stats: SidebarStats;
   collapsed?: boolean;
   animate?: boolean;
+  onExpand?: () => void;
 };
 
 export function AppSidebar({
   stats,
   collapsed = false,
   animate = true,
+  onExpand,
 }: AppSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,6 +45,8 @@ export function AppSidebar({
   const projectsRef = React.useRef(stats.projects);
   const [draggedProjectId, setDraggedProjectId] = React.useState<string | null>(null);
   const [dropProjectId, setDropProjectId] = React.useState<string | null>(null);
+  const [showExpandHint, setShowExpandHint] = React.useState(false);
+  const expandHintRef = React.useRef<HTMLSpanElement>(null);
   const draggedProjectIdRef = React.useRef<string | null>(null);
   const dropProjectIdRef = React.useRef<string | null>(null);
   const projectOrderSaveRef = React.useRef<Promise<unknown>>(Promise.resolve());
@@ -145,18 +150,55 @@ export function AppSidebar({
     };
   }, [clearProjectDrag, finishProjectDrag, updateProjectDrop]);
 
+  const isSidebarInteractive = (target: EventTarget | null) =>
+    target instanceof Element && Boolean(target.closest("[data-sidebar-interactive]"));
+
   return (
     <aside
+      onClick={(event) => {
+        if (!collapsed) return;
+
+        if (!isSidebarInteractive(event.target)) {
+          onExpand?.();
+        }
+      }}
+      onPointerMove={(event) => {
+        if (!collapsed || isSidebarInteractive(event.target)) {
+          setShowExpandHint(false);
+          return;
+        }
+
+        const hint = expandHintRef.current;
+        if (hint) {
+          hint.style.transform = `translate3d(${event.clientX + 12}px, ${event.clientY + 12}px, 0)`;
+        }
+        setShowExpandHint(true);
+      }}
+      onPointerLeave={() => setShowExpandHint(false)}
       className={cn(
-        "fixed top-[52px] bottom-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-border bg-paper dh:flex",
+        "group/sidebar fixed top-[52px] bottom-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-border bg-paper dh:flex",
         animate &&
           "transition-[width] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
-        collapsed ? "w-[68px]" : "w-64"
+        collapsed ? "w-[68px] cursor-pointer" : "w-64"
       )}
     >
+      {collapsed && (
+        <span
+          ref={expandHintRef}
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none fixed top-0 left-0 z-[60] inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-card px-2 text-[11px] font-semibold text-muted-foreground shadow-raised transition-opacity duration-100",
+            showExpandHint ? "opacity-100" : "opacity-0"
+          )}
+          style={{ transform: "translate3d(-9999px, -9999px, 0)" }}
+        >
+          <PanelLeftOpen className="h-3.5 w-3.5" />
+          Open
+        </span>
+      )}
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col pb-3",
+          "relative z-10 flex min-h-0 flex-1 flex-col pb-3",
           collapsed ? "gap-3 p-2" : "gap-5 p-3.5"
         )}
       >
@@ -179,6 +221,7 @@ export function AppSidebar({
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-sidebar-interactive
                   title={item.label}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
@@ -217,6 +260,72 @@ export function AppSidebar({
             })}
           </nav>
 
+          {collapsed && (stats.projects.length > 0 || stats.inboxTotalCount > 0) && (
+            <div className="min-h-0 flex-1 overflow-y-auto pt-1">
+              <div className="mx-auto mb-2 h-px w-7 bg-border" />
+              <nav className="flex flex-col items-center gap-1" aria-label="Today filters">
+                <Link
+                  href="/"
+                  data-sidebar-interactive
+                  title="Everything"
+                  aria-label={`Everything, ${stats.openTasks} open tasks`}
+                  aria-current={pathname === "/" && !activeProjectId ? "page" : undefined}
+                  className={cn(
+                    "grid h-9 w-9 place-items-center rounded-md transition-colors duration-[120ms]",
+                    pathname === "/" && !activeProjectId
+                      ? "border border-border bg-card text-foreground shadow-raised"
+                      : "text-ink-soft hover:bg-hover"
+                  )}
+                >
+                  <span className="h-[18px] w-[18px] rounded-md bg-foreground" />
+                </Link>
+                <Link
+                  href="/?project=inbox"
+                  data-sidebar-interactive
+                  title="Inbox"
+                  aria-label={`Inbox, ${stats.inboxCount} open tasks`}
+                  aria-current={pathname === "/" && activeProjectId === "inbox" ? "page" : undefined}
+                  className={cn(
+                    "grid h-9 w-9 place-items-center rounded-md transition-colors duration-[120ms]",
+                    pathname === "/" && activeProjectId === "inbox"
+                      ? "border border-border bg-card shadow-raised"
+                      : "hover:bg-hover"
+                  )}
+                >
+                  <InboxAvatar size={18} />
+                </Link>
+                {projects.map((project) => {
+                  const isActive = pathname === "/" && activeProjectId === project.id;
+
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/?project=${project.id}`}
+                      data-sidebar-interactive
+                      title={project.name}
+                      aria-label={`${project.name}, ${project.openCount} open tasks`}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "grid h-9 w-9 place-items-center rounded-md transition-colors duration-[120ms]",
+                        isActive
+                          ? "border border-border bg-card shadow-raised"
+                          : "hover:bg-hover"
+                      )}
+                    >
+                      <EntityAvatar
+                        name={project.name}
+                        color={project.color}
+                        logoUrl={project.logoUrl}
+                        iconKey={project.iconKey}
+                        size={18}
+                      />
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          )}
+
           {!collapsed && (stats.projects.length > 0 || stats.inboxTotalCount > 0) && (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <div className="mb-1 flex items-center justify-between px-3">
@@ -226,6 +335,7 @@ export function AppSidebar({
                 {activeProjectId && (
                   <Link
                     href="/"
+                    data-sidebar-interactive
                     className="text-[11px] font-semibold text-signal hover:text-signal-hover"
                   >
                     clear
@@ -251,6 +361,7 @@ export function AppSidebar({
                   </Link>
                   <Link
                     href="/?project=inbox"
+                    data-sidebar-interactive
                     className={cn(
                       "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13.5px] font-medium",
                       pathname === "/" && activeProjectId === "inbox"
@@ -282,6 +393,7 @@ export function AppSidebar({
                       <button
                         type="button"
                         data-project-drag-handle
+                        data-sidebar-interactive
                         className="grid h-[18px] w-[18px] shrink-0 touch-none cursor-grab place-items-center rounded text-faint/70 opacity-45 transition-opacity active:cursor-grabbing group-hover/project:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50"
                         aria-label={`Reorder ${project.name}`}
                         title="Drag to reorder"
@@ -310,6 +422,7 @@ export function AppSidebar({
                       </button>
                       <Link
                         href={`/?project=${project.id}`}
+                        data-sidebar-interactive
                         className="flex min-w-0 flex-1 items-center gap-2"
                       >
                         <EntityAvatar

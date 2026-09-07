@@ -26,16 +26,19 @@ function SidebarWithSearchParams({
   stats,
   collapsed,
   animate,
+  onExpand,
 }: {
   stats: SidebarStats;
   collapsed: boolean;
   animate: boolean;
+  onExpand: () => void;
 }) {
   return (
     <AppSidebar
       stats={stats}
       collapsed={collapsed}
       animate={animate}
+      onExpand={onExpand}
     />
   );
 }
@@ -127,6 +130,9 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
           stats={stats}
           collapsed={collapsed}
           animate={sidebarReady}
+          onExpand={() => {
+            if (collapsed) toggleSidebar();
+          }}
         />
       </Suspense>
 

@@ -30,6 +30,7 @@ import { EmptyState } from "@/components/brand-mark";
 import { DailyChecklist } from "./daily-checklist";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { ActivityAnalysisDialog, ActivityTrendCard } from "./activity-trend";
+import { MomentumAnalysisDialog, MomentumCard } from "./momentum-card";
 import { toggleTask } from "@/app/actions/tasks";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
 import { cn, isTypingTarget, sortInboxLog } from "@/lib/utils";
@@ -54,6 +55,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
   const [editingTask, setEditingTask] = React.useState<EditableTask | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [analysisOpen, setAnalysisOpen] = React.useState(false);
+  const [momentumOpen, setMomentumOpen] = React.useState(false);
   const taskFlags = React.useMemo(
     () => [
       ...data.projects.flatMap((project) =>
@@ -189,6 +191,11 @@ export function DashboardShell({ data }: DashboardShellProps) {
         open={analysisOpen}
         onOpenChange={setAnalysisOpen}
       />
+      <MomentumAnalysisDialog
+        momentum={data.momentum}
+        open={momentumOpen}
+        onOpenChange={setMomentumOpen}
+      />
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4">
         <PageHeader
           eyebrow={todayLabel}
@@ -261,29 +268,19 @@ export function DashboardShell({ data }: DashboardShellProps) {
         {showHabits && (
           <section
             aria-label="Daily pulse"
-            className="grid grid-cols-2 gap-2.5 dh:grid-cols-[minmax(156px,0.8fr)_minmax(156px,0.8fr)_minmax(320px,1.7fr)]"
+            className="grid grid-cols-2 gap-2.5 dh:grid-cols-[minmax(156px,0.75fr)_minmax(220px,1.1fr)_minmax(300px,1.5fr)]"
           >
             {data.snapshots
-              .filter(
-                (snapshot) =>
-                  snapshot.label === "Open tasks" || snapshot.label === "Due this week"
-              )
-              .map((snapshot) =>
-                snapshot.label === "Open tasks" ? (
-                  <SnapshotCard
-                    key={snapshot.label}
-                    {...snapshot}
-                    value={String(optimisticOpenTasks)}
-                    onExpand={() => setAnalysisOpen(true)}
-                  />
-                ) : (
-                  <SnapshotCard
-                    key={snapshot.label}
-                    {...snapshot}
-                    onExpand={() => setAnalysisOpen(true)}
-                  />
-                )
-              )}
+              .filter((snapshot) => snapshot.label === "Open tasks")
+              .map((snapshot) => (
+                <SnapshotCard
+                  key={snapshot.label}
+                  {...snapshot}
+                  value={String(optimisticOpenTasks)}
+                  onExpand={() => setAnalysisOpen(true)}
+                />
+              ))}
+            <MomentumCard momentum={data.momentum} onExpand={() => setMomentumOpen(true)} />
             <ActivityTrendCard
               activity={data.activity}
               onExpand={() => setAnalysisOpen(true)}
