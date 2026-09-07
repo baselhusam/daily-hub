@@ -33,6 +33,7 @@ model Project {
   iconKey     String        @default("folder")
   logoUrl     String?
   color       String?
+  colorSource String        @default("auto")
   dueDate     DateTime?
   status      ProjectStatus @default(ACTIVE)
   sortOrder   Int           @default(0)
