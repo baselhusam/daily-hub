@@ -7,13 +7,10 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-let isThemeTransitionRunning = false;
-
 function switchThemeFromEvent(
   event: React.MouseEvent<HTMLButtonElement>,
   nextTheme: "light" | "dark",
-  setTheme: (theme: string) => void,
-  onFinish: () => void
+  setTheme: (theme: string) => void
 ) {
   const apply = () => {
     flushSync(() => {
@@ -27,7 +24,6 @@ function switchThemeFromEvent(
 
   if (reducedMotion || typeof document.startViewTransition !== "function") {
     apply();
-    onFinish();
     return;
   }
 
@@ -40,19 +36,11 @@ function switchThemeFromEvent(
     Math.max(y, window.innerHeight - y)
   );
 
-  let transition: ViewTransition;
-
-  try {
-    transition = document.startViewTransition(apply);
-  } catch {
-    apply();
-    onFinish();
-    return;
-  }
+  const transition = document.startViewTransition(apply);
 
   transition.ready
     .then(() => {
-      const animation = document.documentElement.animate(
+      document.documentElement.animate(
         {
           clipPath: [
             `circle(0px at ${x}px ${y}px)`,
@@ -65,25 +53,21 @@ function switchThemeFromEvent(
           pseudoElement: "::view-transition-new(root)",
         }
       );
-
-      return animation.finished;
     })
     .catch(() => {
       // Transition skipped (tab hidden, reduced motion, or already running).
-    })
-    .finally(() => {
-      onFinish();
     });
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
-  const [isSwitching, setIsSwitching] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
     <Button
@@ -94,22 +78,13 @@ export function ThemeToggle({ className }: { className?: string }) {
         "relative h-8 w-8 overflow-hidden border-border bg-card text-muted-foreground shadow-none hover:text-foreground",
         className
       )}
-      aria-label="Toggle theme"
-      aria-busy={isSwitching || undefined}
-      disabled={!mounted || isSwitching}
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       onClick={(event) => {
-        if (!mounted || isThemeTransitionRunning) return;
-
-        isThemeTransitionRunning = true;
-        setIsSwitching(true);
+        if (!mounted) return;
         switchThemeFromEvent(
           event,
           resolvedTheme === "dark" ? "light" : "dark",
-          setTheme,
-          () => {
-            isThemeTransitionRunning = false;
-            setIsSwitching(false);
-          }
+          setTheme
         );
       }}
     >
