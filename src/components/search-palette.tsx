@@ -298,7 +298,7 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
           key: "see-inbox",
           type: "task",
           title: "See inbox",
-          subtitle: "Open and logged unfiled tasks",
+          subtitle: "Open and finished unfiled tasks",
           href: "/?project=inbox",
           action: "see",
           badge: "Inbox",

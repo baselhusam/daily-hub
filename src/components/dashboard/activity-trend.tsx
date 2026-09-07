@@ -156,6 +156,7 @@ function ActivityLineChart({
   points: DashboardActivityPoint[];
   mini?: boolean;
 }) {
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const max = Math.max(4, ...points.map((point) => point.total));
   const safePoints = points.length > 1 ? points : [...points, ...points];
   const chartPadding = mini
@@ -172,13 +173,62 @@ function ActivityLineChart({
   const totalPath = smoothPath(totalPoints);
   const areaPath = `${totalPath} L ${totalPoints.at(-1)?.x ?? chartWidth} ${baseline} L ${totalPoints[0]?.x ?? 0} ${baseline} Z`;
   const labelIndexes = mini ? [] : labelIndexesFor(safePoints.length, 5);
+  const activePoint = activeIndex === null ? null : safePoints[activeIndex];
+  const activeChartPoint = activeIndex === null ? null : totalPoints[activeIndex];
+
+  function setIndexFromClientX(
+    event: React.PointerEvent<SVGSVGElement>
+  ) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const ratio = (event.clientX - bounds.left) / bounds.width;
+    const index = Math.round(ratio * (safePoints.length - 1));
+    setActiveIndex(Math.max(0, Math.min(safePoints.length - 1, index)));
+  }
+
+  function moveActiveIndex(direction: -1 | 1) {
+    setActiveIndex((current) => {
+      const start = current ?? safePoints.length - 1;
+      return Math.max(0, Math.min(safePoints.length - 1, start + direction));
+    });
+  }
 
   return (
-    <svg
+    <div className={cn("relative", mini ? "h-full min-h-[58px]" : "h-[260px] sm:h-[320px]")}>
+      <svg
       viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-      className={cn("block w-full", mini ? "h-full min-h-[58px]" : "h-[260px] sm:h-[320px]")}
-      role="img"
-      aria-label={`${points.reduce((sum, point) => sum + point.total, 0)} completions across ${points.length} days`}
+      className={cn(
+        "block w-full cursor-crosshair touch-pan-y outline-none",
+        "h-full"
+      )}
+      role="group"
+      tabIndex={0}
+      aria-label={
+        activePoint
+          ? `${activePoint.fullLabel}: ${activePoint.total} completions, ${activePoint.tasks} tasks and ${activePoint.habits} habits.`
+          : `${points.reduce((sum, point) => sum + point.total, 0)} completions across ${points.length} days. Hover or use the arrow keys to inspect a day.`
+      }
+      onPointerMove={setIndexFromClientX}
+      onPointerLeave={() => setActiveIndex(null)}
+      onFocus={() => setActiveIndex(safePoints.length - 1)}
+      onBlur={() => setActiveIndex(null)}
+      onKeyDown={(event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveActiveIndex(-1);
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveActiveIndex(1);
+        }
+        if (event.key === "Home") {
+          event.preventDefault();
+          setActiveIndex(0);
+        }
+        if (event.key === "End") {
+          event.preventDefault();
+          setActiveIndex(safePoints.length - 1);
+        }
+      }}
     >
       <defs>
         <linearGradient id="activity-fill" x1="0" x2="0" y1="0" y2="1">
@@ -199,6 +249,14 @@ function ActivityLineChart({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {activePoint && activeChartPoint ? (
+        <ActivityHoverMarker
+          chartPoint={activeChartPoint}
+          chartPadding={chartPadding}
+          baseline={baseline}
+          mini={mini}
+        />
+      ) : null}
       {labelIndexes.map((index) => {
         const point = totalPoints[index];
         return (
@@ -215,7 +273,89 @@ function ActivityLineChart({
           </text>
         );
       })}
-    </svg>
+      </svg>
+      {activePoint && activeChartPoint ? (
+        <ActivityHoverCard
+          point={activePoint}
+          x={activeChartPoint.x}
+          mini={mini}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ActivityHoverCard({
+  point,
+  x,
+  mini,
+}: {
+  point: DashboardActivityPoint;
+  x: number;
+  mini: boolean;
+}) {
+  const isRightHalf = x > chartWidth / 2;
+
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute z-10 w-[164px] rounded-[8px] border border-border bg-card/95 px-2.5 py-2 text-[10.5px] shadow-float backdrop-blur-sm",
+        mini ? "top-1.5" : "top-3"
+      )}
+      style={{
+        left: `${(x / chartWidth) * 100}%`,
+        transform: `translateX(${isRightHalf ? "calc(-100% - 8px)" : "8px"})`,
+      }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate font-medium text-foreground">
+          {mini ? point.label : point.fullLabel}
+        </span>
+        <span className="shrink-0 font-mono font-semibold tabular-nums text-signal">
+          {point.total} finished
+        </span>
+      </div>
+      <div className="mt-1 flex items-center gap-1.5 text-faint">
+        <span className="h-1 w-1 rounded-full bg-signal" />
+        <span>{point.tasks} tasks</span>
+        <span className="text-rule">·</span>
+        <span>{point.habits} habits</span>
+      </div>
+    </div>
+  );
+}
+
+function ActivityHoverMarker({
+  chartPoint,
+  chartPadding,
+  baseline,
+  mini,
+}: {
+  chartPoint: { x: number; y: number };
+  chartPadding: { top: number; right: number; bottom: number; left: number };
+  baseline: number;
+  mini: boolean;
+}) {
+  return (
+    <g pointerEvents="none">
+      <line
+        x1={chartPoint.x}
+        x2={chartPoint.x}
+        y1={chartPadding.top}
+        y2={baseline}
+        stroke="var(--signal)"
+        strokeOpacity="0.35"
+        strokeDasharray="3 4"
+      />
+      <circle
+        cx={chartPoint.x}
+        cy={chartPoint.y}
+        r={mini ? 4.5 : 5.5}
+        fill="var(--card)"
+        stroke="var(--signal)"
+        strokeWidth="2.5"
+      />
+    </g>
   );
 }
 

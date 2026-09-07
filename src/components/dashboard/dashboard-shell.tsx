@@ -389,7 +389,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                         <p className="mt-0.5 text-[12px] text-faint">
                           {openCount} open
                           {project.doneCount > 0
-                            ? ` · ${project.doneCount} logged`
+                            ? ` · ${project.doneCount} finished`
                             : null}
                         </p>
                       </div>
@@ -494,7 +494,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                           href={`/?project=${project.id}`}
                           className="block px-4 py-2 text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
                         >
-                          {hiddenLoggedCount} logged →
+                          {hiddenLoggedCount} finished →
                         </Link>
                       ) : null}
                       <CreateTaskDialog
@@ -536,7 +536,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                   <SurfaceCard
                     variant="quiet"
                     className={cn(
-                      "flex min-h-0 flex-col",
+                      "flex min-h-0 shrink-0 flex-col",
                       isFreshWorkspace && "order-1 dh:order-2"
                     )}
                   >
@@ -572,6 +572,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                     onEdit={setEditingTask}
                     today={today}
                     mode={mode}
+                    className="shrink-0"
                   />
                 )}
               </div>
@@ -629,12 +630,12 @@ export function DashboardShell({ data }: DashboardShellProps) {
 function inboxSummary(openCount: number, loggedCount: number) {
   if (openCount === 0 && loggedCount === 0) return "Inbox is clear.";
   if (openCount === 0) {
-    return `${loggedCount} logged.`;
+    return `${loggedCount} finished.`;
   }
   if (loggedCount === 0) {
     return `${openCount} in inbox.`;
   }
-  return `${openCount} open · ${loggedCount} logged.`;
+  return `${openCount} open · ${loggedCount} finished.`;
 }
 
 function inboxNote(notes: string | null) {
@@ -706,6 +707,7 @@ function InboxPanel({
   today,
   mode,
   expanded = false,
+  className,
 }: {
   tasks: DashboardData["inboxTasks"];
   openCount: number;
@@ -717,6 +719,7 @@ function InboxPanel({
   today: Date;
   mode: CalendarMode;
   expanded?: boolean;
+  className?: string;
 }) {
   const visible = sortInboxLog(
     tasks.map((task) => ({
@@ -757,7 +760,7 @@ function InboxPanel({
   }
 
   return (
-    <SurfaceCard variant="quiet">
+    <SurfaceCard variant="quiet" className={className}>
       <div className="flex items-baseline justify-between gap-3 px-4 pt-3 pb-2">
         <div className="min-w-0">
           <h2 className="text-[13px] font-semibold tracking-[-0.015em]">
@@ -771,10 +774,10 @@ function InboxPanel({
           <span className="text-[12px] text-faint tabular-nums">
             {expanded
               ? openCount > 0 && loggedCount > 0
-                ? `${openCount} open · ${loggedCount} logged`
+                ? `${openCount} open · ${loggedCount} finished`
                 : openCount > 0
                   ? openCount
-                  : `${loggedCount} logged`
+                  : `${loggedCount} finished`
               : openCount > 0
                 ? openCount
                 : null}
@@ -805,7 +808,7 @@ function InboxPanel({
               href="/?project=inbox"
               className="block px-4 py-2 text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
             >
-              {olderLoggedCount} logged →
+              {olderLoggedCount} finished →
             </Link>
           ) : null}
         </div>
