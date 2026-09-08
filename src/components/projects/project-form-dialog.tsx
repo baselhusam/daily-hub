@@ -87,6 +87,8 @@ export function ProjectFormDialog({
     project?.colorSource === "auto" ? project?.color ?? null : null
   );
   const [extracting, setExtracting] = React.useState(false);
+  // Kept so the colour field can offer picking a pixel straight off the logo.
+  const [logoDataUrl, setLogoDataUrl] = React.useState<string | null>(null);
   const [pendingDelete, setPendingDelete] =
     React.useState<DeleteProjectTarget | null>(null);
   const isEdit = Boolean(project?.id);
@@ -109,6 +111,7 @@ export function ProjectFormDialog({
       setColorSource(project?.colorSource ?? "auto");
       setAutoColor(project?.colorSource === "auto" ? project?.color ?? null : null);
       setExtracting(false);
+      setLogoDataUrl(null);
       extractionToken.current += 1;
     }
   }, [open, project]);
@@ -121,6 +124,7 @@ export function ProjectFormDialog({
       const token = ++extractionToken.current;
 
       if (!dataUrl) {
+        setLogoDataUrl(null);
         setAutoColor(null);
         if (colorSourceRef.current === "auto") setColor(null);
         return;
@@ -130,6 +134,7 @@ export function ProjectFormDialog({
       const hex = await extractAccentFromDataUrl(dataUrl);
       if (token !== extractionToken.current) return;
 
+      setLogoDataUrl(dataUrl);
       setAutoColor(hex);
       if (colorSourceRef.current === "auto") setColor(hex);
       setExtracting(false);
@@ -279,6 +284,7 @@ export function ProjectFormDialog({
               source={colorSource}
               autoColor={autoColor}
               extracting={extracting}
+              logoDataUrl={logoDataUrl}
               onChange={({ color: nextColor, source: nextSource }) => {
                 setColor(nextColor);
                 setColorSource(nextSource);

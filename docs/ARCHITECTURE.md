@@ -167,7 +167,9 @@ Remote `https?://` logo URLs are stored on `Project.logoUrl` / `DailyTask.logoUr
 
 ### Logo colour extraction
 
-A project's accent colour is derived from its logo **in the browser**: the image is read as a `data:` URL, drawn into a 64×64 canvas, and the pixels are ranked by `src/lib/logo-color.ts`, which drops background/near-neutral pixels, merges perceptually-close shades, and takes the third distinct colour. There is no server-side image decoding and no image dependency (`sharp` and friends are deliberately absent).
+A project's accent colour is derived from its logo **in the browser**: the image is read as a `data:` URL, drawn into a 64×64 canvas, and the pixels are ranked by `src/lib/logo-color.ts`, which drops background/near-neutral pixels, merges perceptually-close shades, and takes the cluster that scores highest as the logo's mark (vivid, mid-toned, and present in quantity). There is no server-side image decoding and no image dependency (`sharp` and friends are deliberately absent).
+
+The derived colour is only a starting point. `src/components/ui/color-field.tsx` always offers a manual override — the palette, the OS colour picker, a typed hex, or `LogoPixelPicker`, which re-draws the same `data:` URL onto a board and lets the user click the exact pixel they want (with a nearest-neighbour loupe, arrow-key nudging, and transparent pixels rejected). A manual pick sets `colorSource = "manual"`, which stops later logo changes from overwriting it; "Reset to auto" hands the colour back to extraction.
 
 Two constraints shape this:
 

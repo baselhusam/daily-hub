@@ -4,6 +4,8 @@ import {
   fallbackColorFor,
   normalizeAccent,
   pickLogoAccentColor,
+  pixelAt,
+  readableInkOn,
   rankLogoColors,
   rgbToHsl,
   toHex,
@@ -196,5 +198,49 @@ describe("fallbackColorFor", () => {
       ["alpha", "beta", "gamma", "delta", "epsilon"].map(fallbackColorFor)
     );
     expect(colors.size).toBeGreaterThan(1);
+  });
+});
+
+describe("pixelAt", () => {
+  // A 2x2 image: blue, orange / green, fully transparent.
+  const image = px([
+    [BLUE.r, BLUE.g, BLUE.b, 255, 1],
+    [ORANGE.r, ORANGE.g, ORANGE.b, 255, 1],
+    [GREEN.r, GREEN.g, GREEN.b, 255, 1],
+    [0, 0, 0, 0, 1],
+  ]);
+
+  it("addresses pixels row by row", () => {
+    expect(pixelAt(image, 2, 0, 0)?.hex).toBe(toHex(BLUE));
+    expect(pixelAt(image, 2, 1, 0)?.hex).toBe(toHex(ORANGE));
+    expect(pixelAt(image, 2, 0, 1)?.hex).toBe(toHex(GREEN));
+  });
+
+  it("reports alpha so transparent pixels can be rejected rather than read as black", () => {
+    expect(pixelAt(image, 2, 1, 1)?.alpha).toBe(0);
+    expect(pixelAt(image, 2, 0, 0)?.alpha).toBe(255);
+  });
+
+  it("floors fractional coordinates onto the containing pixel", () => {
+    expect(pixelAt(image, 2, 1.9, 0.4)?.hex).toBe(toHex(ORANGE));
+  });
+
+  it("returns null outside the image", () => {
+    expect(pixelAt(image, 2, -1, 0)).toBeNull();
+    expect(pixelAt(image, 2, 2, 0)).toBeNull();
+    expect(pixelAt(image, 2, 0, 2)).toBeNull();
+  });
+});
+
+describe("readableInkOn", () => {
+  it("puts dark ink on light colors and light ink on dark ones", () => {
+    expect(readableInkOn("#FFFFFF")).toBe("#111111");
+    expect(readableInkOn("#F5E9A8")).toBe("#111111");
+    expect(readableInkOn("#000000")).toBe("#FFFFFF");
+    expect(readableInkOn("#2383E2")).toBe("#FFFFFF");
+  });
+
+  it("accepts hex with or without the leading hash", () => {
+    expect(readableInkOn("2383E2")).toBe(readableInkOn("#2383E2"));
   });
 });

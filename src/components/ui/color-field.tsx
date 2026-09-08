@@ -1,9 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Check, Pipette, RotateCcw, Sparkles } from "lucide-react";
+import { Check, Crosshair, Pipette, RotateCcw, Sparkles } from "lucide-react";
 import { FieldLabel } from "@/components/ui/input";
-import { FALLBACK_PALETTE } from "@/lib/logo-color";
+import { LogoPixelPicker } from "@/components/ui/logo-pixel-picker";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { FALLBACK_PALETTE, readableInkOn } from "@/lib/logo-color";
 import { cn } from "@/lib/utils";
 
 const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
@@ -23,6 +29,8 @@ type ColorFieldProps = {
   onChange: (next: ColorFieldValue) => void;
   /** Shows a subtle pulse while an extraction is in flight. */
   extracting?: boolean;
+  /** The resolved logo as a data URL — enables picking a color off the logo itself. */
+  logoDataUrl?: string | null;
 };
 
 export function ColorField({
@@ -31,15 +39,22 @@ export function ColorField({
   autoColor,
   onChange,
   extracting,
+  logoDataUrl,
 }: ColorFieldProps) {
   const [hexDraft, setHexDraft] = React.useState(value ?? "");
+  const [pickerOpen, setPickerOpen] = React.useState(false);
 
   React.useEffect(() => {
     setHexDraft(value ?? "");
   }, [value]);
 
+  React.useEffect(() => {
+    if (!logoDataUrl) setPickerOpen(false);
+  }, [logoDataUrl]);
+
   const selected = value && HEX_PATTERN.test(value) ? value.toUpperCase() : null;
   const isPreset = selected !== null && (FALLBACK_PALETTE as readonly string[]).includes(selected);
+  const customSelected = selected !== null && !isPreset;
 
   function pick(color: string) {
     onChange({ color: color.toUpperCase(), source: "manual" });
@@ -69,16 +84,40 @@ export function ColorField({
             </span>
           )}
         </div>
-        {source === "manual" && (
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 py-0.5 text-[11.5px] font-medium text-faint transition-colors duration-[120ms] hover:text-signal"
-            onClick={() => onChange({ color: autoColor, source: "auto" })}
-          >
-            <RotateCcw className="size-2.5" />
-            Reset to auto
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {logoDataUrl && (
+            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 py-0.5 text-[11.5px] font-medium text-faint transition-colors duration-[120ms] hover:text-signal"
+                >
+                  <Crosshair className="size-2.5" />
+                  Pick from logo
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-auto p-2.5">
+                <LogoPixelPicker
+                  dataUrl={logoDataUrl}
+                  onPick={(hex) => {
+                    pick(hex);
+                    setPickerOpen(false);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+          {source === "manual" && (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 py-0.5 text-[11.5px] font-medium text-faint transition-colors duration-[120ms] hover:text-signal"
+              onClick={() => onChange({ color: autoColor, source: "auto" })}
+            >
+              <RotateCcw className="size-2.5" />
+              Reset to auto
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
@@ -100,21 +139,26 @@ export function ColorField({
           );
         })}
 
+        {/*
+          The pipette stays visible even when this slot already holds the current
+          colour — a logo-derived accent must never look like the end of the road.
+          Selection reads as a ring here instead of a check, so the affordance survives.
+        */}
         <label
           className={cn(
             "relative grid size-[22px] shrink-0 cursor-pointer place-items-center rounded-full border outline-none transition-transform duration-[120ms] focus-within:ring-[3px] focus-within:ring-signal/14 hover:scale-[1.08]",
-            selected && !isPreset
-              ? "border-black/10"
+            customSelected
+              ? "border-black/10 ring-2 ring-signal ring-offset-2 ring-offset-background"
               : "border-dashed border-border-strong bg-paper text-faint"
           )}
-          style={selected && !isPreset ? { backgroundColor: selected } : undefined}
-          title="Custom color"
+          style={
+            customSelected
+              ? { backgroundColor: selected, color: readableInkOn(selected) }
+              : undefined
+          }
+          title={customSelected ? `Custom color ${selected}` : "Custom color"}
         >
-          {selected && !isPreset ? (
-            <Check className="size-3 stroke-[3.2] text-white drop-shadow-[0_0_1px_rgba(0,0,0,0.45)]" />
-          ) : (
-            <Pipette className="size-3" />
-          )}
+          <Pipette className="size-3" />
           <input
             type="color"
             aria-label="Pick a custom color"

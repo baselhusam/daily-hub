@@ -136,7 +136,46 @@ export function pickLogoAccentColor(pixels: Uint8ClampedArray): string | null {
   return normalizeAccent(toHex(best.color));
 }
 
-function hexToRgb(hex: string): Rgb {
+/**
+ * The colour of a single pixel in an RGBA buffer, addressed in image space.
+ * Returns null outside the image; `alpha` is passed through so callers can
+ * treat a transparent pixel as "no colour here" rather than as black.
+ */
+export function pixelAt(
+  pixels: Uint8ClampedArray,
+  width: number,
+  x: number,
+  y: number
+): { hex: string; alpha: number } | null {
+  const px = Math.floor(x);
+  const py = Math.floor(y);
+  if (px < 0 || py < 0 || px >= width) return null;
+
+  const index = (py * width + px) * 4;
+  if (index < 0 || index + 3 >= pixels.length) return null;
+
+  return {
+    hex: toHex({ r: pixels[index], g: pixels[index + 1], b: pixels[index + 2] }),
+    alpha: pixels[index + 3],
+  };
+}
+
+/**
+ * Black or white, whichever stays legible drawn on top of `hex` — used for the
+ * glyphs we overlay on a colour swatch, which can be anything the user picks.
+ */
+export function readableInkOn(hex: string): string {
+  const { r, g, b } = hexToRgb(hex);
+  const channel = (v: number) => {
+    const n = v / 255;
+    return n <= 0.03928 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4);
+  };
+  const luminance =
+    0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  return luminance > 0.45 ? "#111111" : "#FFFFFF";
+}
+
+export function hexToRgb(hex: string): Rgb {
   const normalized = hex.replace("#", "");
   return {
     r: parseInt(normalized.slice(0, 2), 16),
