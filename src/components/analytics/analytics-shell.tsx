@@ -558,7 +558,8 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                         <ProgressBar
                           value={lit ? Math.max(bucket.barWidth, 8) : bucket.barWidth}
                           color={bucket.color}
-                          height="md"
+                          height="rail"
+                          emphasis={lit ? "full" : "tint"}
                           animated
                         />
                       </button>
@@ -642,7 +643,8 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       <ProgressBar
                         value={project.barWidth}
                         color={project.color}
-                        height="md"
+                        height="rail"
+                        emphasis={lit ? "full" : "tint"}
                         animated
                       />
                     </button>

@@ -97,6 +97,11 @@
   --border-strong: #d3d2cf;
   --track: #ededec;
   --hairline: #c7c6c2;
+  /* A resting project-coloured bar (ProgressBar's "tint" emphasis) is mixed
+     toward this neutral, so a stack of them carries one weight whatever each
+     hue's own lightness is. Full colour is reserved for the row under focus. */
+  --bar-tint-mix: #cdccc8;
+  --bar-tint: 44%;
   --chart-ink: #37352f;
   --chart-muted: #c7c6c2;
   --chart-hit: #2383e2;
@@ -147,6 +152,10 @@
   --border-strong: rgb(255 255 255 / 16%);
   --track: rgb(255 255 255 / 10%);
   --hairline: rgb(255 255 255 / 28%);
+  /* Dark mixes toward a mid grey and holds a little more hue, so a tinted
+     bar still clears the sunk canvas. */
+  --bar-tint-mix: #57554f;
+  --bar-tint: 58%;
   --chart-ink: #eceae4;
   --chart-muted: rgb(255 255 255 / 28%);
   --chart-hit: #6baee9;
