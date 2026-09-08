@@ -4,12 +4,14 @@ import * as React from "react";
 import { useMotionValueEvent, useReducedMotion, useSpring } from "motion/react";
 import { useTheme } from "next-themes";
 import {
+  INBOX_SERIES_ID,
   type ProjectTrends,
   type ProjectTrendSeries,
 } from "@/lib/project-trends";
 import { labelIndexesFor, smoothPath, type ChartPoint } from "@/lib/chart-path";
 import { plotColor, type ChartThemeMode } from "@/lib/chart-colors";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
+import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { EmptyState } from "@/components/brand-mark";
 import { useHydrated } from "@/lib/hydration";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,19 @@ const CURVE_TENSION = 0.62;
 const HIT_RADIUS = 22;
 /** Opacity of the lines that aren't under the pointer. */
 const RECEDED_OPACITY = 0.26;
+/**
+ * Every line carries a wash of its own colour, the way the Today card's single
+ * line does. With seven of them the wash has to stay under the threshold where
+ * overlapping fills turn into mud, so the gradient below is faint by default
+ * and the whole layer is scaled by these three multipliers instead: everything
+ * equal at rest, and one line's wash brought up while the rest all but vanish.
+ */
+const AREA_REST = 0.36;
+const AREA_FOCUS = 1;
+const AREA_DIM = 0.09;
+/** Width of a legend sparkline, in its own viewBox units. */
+const SPARK_WIDTH = 38;
+const SPARK_HEIGHT = 14;
 
 type Range = (typeof RANGE_OPTIONS)[number];
 type Mode = (typeof MODE_OPTIONS)[number];
@@ -156,6 +171,9 @@ export function ProjectTrendsChart({
 }: ProjectTrendsChartProps) {
   const reducedMotion = Boolean(useReducedMotion());
   const themeMode = useChartTheme();
+  // Gradient ids are document-global; React's id keeps two charts on one page
+  // from filling each other's areas. Colons are stripped for url(#…) safety.
+  const gradientPrefix = React.useId().replace(/:/g, "");
   const [range, setRangeState] = React.useState<Range>(14);
   const [mode, setMode] = React.useState<Mode>("daily");
 
@@ -250,11 +268,18 @@ export function ProjectTrendsChart({
       visible.map((entry) => {
         const values = mode === "daily" ? entry.dailySlice : entry.cumulativeSlice;
         const points = values.map((value, index) => toPoint(value, index));
+        const path = smoothPath(points, CURVE_TENSION);
         return {
           series: entry.series,
           values,
           points,
-          path: smoothPath(points, CURVE_TENSION),
+          path,
+          // Closing the line down to the baseline gives the wash something to
+          // fill. A single-point window has no line, so it has no wash either.
+          area:
+            path === ""
+              ? ""
+              : `${path} L ${points[points.length - 1].x} ${baseline} L ${points[0].x} ${baseline} Z`,
         };
       }),
     [visible, mode, toPoint]
@@ -278,6 +303,19 @@ export function ProjectTrendsChart({
    * plot would fade for a highlight that never appears.
    */
   const focusId = focusPath ? requestedFocusId : null;
+
+  /**
+   * The washes are translucent and they overlap, so the focused one is drawn
+   * last — otherwise the line you are reading gets tinted by whichever
+   * projects happen to sit later in the list.
+   */
+  const areaOrder = React.useMemo(() => {
+    if (focusId === null) return seriesPaths;
+    return [
+      ...seriesPaths.filter((entry) => entry.series.id !== focusId),
+      ...seriesPaths.filter((entry) => entry.series.id === focusId),
+    ];
+  }, [seriesPaths, focusId]);
 
   function readPointer(event: React.PointerEvent<SVGSVGElement>) {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -439,6 +477,25 @@ export function ProjectTrendsChart({
                 }
               }}
             >
+              <defs>
+                {/* Scaled to each area's own bounding box, so the wash hangs
+                    off the line rather than pooling at the baseline. */}
+                {seriesPaths.map(({ series }) => (
+                  <linearGradient
+                    key={series.id}
+                    id={`${gradientPrefix}-wash-${series.id}`}
+                    x1="0"
+                    x2="0"
+                    y1="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor={colorOf(series.id)} stopOpacity="0.34" />
+                    <stop offset="78%" stopColor={colorOf(series.id)} stopOpacity="0.02" />
+                    <stop offset="100%" stopColor={colorOf(series.id)} stopOpacity="0" />
+                  </linearGradient>
+                ))}
+              </defs>
+
               {/* Solid hairlines: a dashed grid reads as a threshold it isn't. */}
               {Array.from({ length: scale.ticks }, (_, tick) => {
                 const value = scale.step * (tick + 1);
@@ -472,6 +529,28 @@ export function ProjectTrendsChart({
                 y2={baseline}
                 stroke="var(--border)"
               />
+
+              {/* The wash sits under every line, not just the focused one, so
+                  the plot still reads as one picture when nothing is hovered. */}
+              <g pointerEvents="none">
+                {areaOrder.map(({ series, area }) =>
+                  area === "" ? null : (
+                    <path
+                      key={series.id}
+                      d={area}
+                      fill={`url(#${gradientPrefix}-wash-${series.id})`}
+                      fillOpacity={
+                        focusId === null
+                          ? AREA_REST
+                          : focusId === series.id
+                            ? AREA_FOCUS
+                            : AREA_DIM
+                      }
+                      className="transition-[fill-opacity] duration-200"
+                    />
+                  )
+                )}
+              </g>
 
               {/* Every visible project is one line of equal weight. Hovering
                   recedes the rest rather than promoting one permanently. */}
@@ -557,7 +636,7 @@ export function ProjectTrendsChart({
             ) : null}
           </div>
 
-          <div className="flex shrink-0 flex-col gap-1.5 border-t border-rule-soft pt-3 md:w-[188px] md:border-t-0 md:border-l md:pt-0 md:pl-4">
+          <div className="flex shrink-0 flex-col gap-1.5 border-t border-rule-soft pt-3 md:w-[214px] md:border-t-0 md:border-l md:pt-0 md:pl-4">
             <div className="flex items-baseline justify-between gap-2 px-1">
               <span className="text-[11px] font-semibold tracking-[0.02em] text-faint">
                 Projects
@@ -571,10 +650,11 @@ export function ProjectTrendsChart({
               </button>
             </div>
             <div className="-mr-1 max-h-[168px] overflow-y-auto overscroll-contain pr-1 sm:max-h-[236px]">
-              {trends.series.map((series) => (
+              {windowed.map(({ series, dailySlice }) => (
                 <LegendEntry
                   key={series.id}
                   series={series}
+                  daily={dailySlice}
                   color={colorOf(series.id)}
                   hidden={hiddenIds.has(series.id)}
                   emphasized={requestedFocusId === series.id}
@@ -590,8 +670,56 @@ export function ProjectTrendsChart({
   );
 }
 
+/**
+ * The shape of one project's window, normalised to its own busiest day. It is
+ * there to be read as a silhouette next to the name, not measured — the count
+ * on the right carries the magnitude.
+ */
+function LegendSparkline({
+  daily,
+  color,
+  hidden,
+}: {
+  daily: number[];
+  color: string;
+  hidden: boolean;
+}) {
+  const path = React.useMemo(() => {
+    if (daily.length < 2) return "";
+    const max = Math.max(1, ...daily);
+    const points = daily.map((value, index) => ({
+      x: (index / (daily.length - 1)) * SPARK_WIDTH,
+      y: SPARK_HEIGHT - 1 - (value / max) * (SPARK_HEIGHT - 2),
+    }));
+    return smoothPath(points, CURVE_TENSION);
+  }, [daily]);
+
+  if (path === "") return null;
+
+  return (
+    <svg
+      viewBox={`0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`}
+      width={SPARK_WIDTH}
+      height={SPARK_HEIGHT}
+      className="shrink-0 overflow-visible"
+      aria-hidden
+    >
+      <path
+        d={path}
+        fill="none"
+        stroke={hidden ? "var(--track)" : color}
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="transition-[stroke] duration-150"
+      />
+    </svg>
+  );
+}
+
 function LegendEntry({
   series,
+  daily,
   color,
   hidden,
   emphasized,
@@ -599,6 +727,7 @@ function LegendEntry({
   onClick,
 }: {
   series: ProjectTrendSeries;
+  daily: number[];
   color: string;
   hidden: boolean;
   emphasized: boolean;
@@ -621,12 +750,27 @@ function LegendEntry({
       onBlur={() => onHover(null)}
       onClick={onClick}
     >
-      {/* A line, not a dot — it's the mark the legend is naming. Hidden rows
-          keep a hollow rule so the row height never shifts on toggle. */}
+      {/* The project's own mark, the same one its card and page carry — logo,
+          then icon, then tinted initials. A hidden row keeps the mark in place
+          and drains it, so the row height never shifts on toggle. */}
       <span
-        className="h-[3px] w-3.5 shrink-0 rounded-full"
-        style={{ backgroundColor: hidden ? "var(--track)" : color }}
-      />
+        className={cn(
+          "flex shrink-0 transition-[opacity,filter] duration-[120ms]",
+          hidden && "opacity-40 grayscale"
+        )}
+      >
+        {series.id === INBOX_SERIES_ID ? (
+          <InboxAvatar size={20} />
+        ) : (
+          <EntityAvatar
+            name={series.name}
+            color={series.color}
+            logoUrl={series.logoUrl}
+            iconKey={series.iconKey}
+            size={20}
+          />
+        )}
+      </span>
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-[12px]",
@@ -635,7 +779,8 @@ function LegendEntry({
       >
         {series.name}
       </span>
-      <span className="shrink-0 text-[11px] tabular-nums text-faint">
+      <LegendSparkline daily={daily} color={color} hidden={hidden} />
+      <span className="min-w-[18px] shrink-0 text-right text-[11px] tabular-nums text-faint">
         {series.total}
       </span>
     </button>
