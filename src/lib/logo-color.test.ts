@@ -15,6 +15,9 @@ const BLUE: Rgb = { r: 40, g: 90, b: 210 };
 const BLUE_NEAR: Rgb = { r: 60, g: 110, b: 200 }; // ~4° hue apart from BLUE, well under the 22° merge threshold
 const ORANGE: Rgb = { r: 220, g: 120, b: 30 };
 const GREEN: Rgb = { r: 40, g: 160, b: 90 };
+const PALE_BLUE: Rgb = { r: 183, g: 214, b: 246 }; // the halo anti-aliasing leaves around a blue mark
+const NAVY: Rgb = { r: 29, g: 37, b: 50 }; // dark enough to read as backdrop, chromatic enough to survive the neutral filter
+const MERGED_BLUE: Rgb = { r: 48, g: 98, b: 206 }; // BLUE and BLUE_NEAR averaged by pixel count
 
 /** Expands `[r, g, b, a, count]` rows into a flat RGBA pixel buffer. */
 function px(rows: Array<[number, number, number, number, number]>): Uint8ClampedArray {
@@ -82,7 +85,7 @@ describe("rankLogoColors", () => {
 });
 
 describe("pickLogoAccentColor", () => {
-  it("picks the 3rd distinct color, skipping background and the main mark", () => {
+  it("picks the dominant mark, not a minor accent beside it", () => {
     const pixels = px([
       [WHITE.r, WHITE.g, WHITE.b, 255, 60],
       [BLUE.r, BLUE.g, BLUE.b, 255, 25],
@@ -90,20 +93,28 @@ describe("pickLogoAccentColor", () => {
       [GREEN.r, GREEN.g, GREEN.b, 255, 5],
     ]);
 
+    expect(pickLogoAccentColor(pixels)).toBe(normalizeAccent(toHex(BLUE)));
+  });
+
+  it("prefers the mark over the pale halo anti-aliasing leaves around it", () => {
+    const pixels = px([
+      [BLUE.r, BLUE.g, BLUE.b, 255, 88],
+      [PALE_BLUE.r, PALE_BLUE.g, PALE_BLUE.b, 255, 12],
+    ]);
+
+    expect(pickLogoAccentColor(pixels)).toBe(normalizeAccent(toHex(BLUE)));
+  });
+
+  it("prefers the mark over a dark backdrop that outnumbers it", () => {
+    const pixels = px([
+      [NAVY.r, NAVY.g, NAVY.b, 255, 88],
+      [GREEN.r, GREEN.g, GREEN.b, 255, 12],
+    ]);
+
     expect(pickLogoAccentColor(pixels)).toBe(normalizeAccent(toHex(GREEN)));
   });
 
-  it("picks the 2nd color when only two chromatic colors exist", () => {
-    const pixels = px([
-      [WHITE.r, WHITE.g, WHITE.b, 255, 60],
-      [BLUE.r, BLUE.g, BLUE.b, 255, 25],
-      [ORANGE.r, ORANGE.g, ORANGE.b, 255, 15],
-    ]);
-
-    expect(pickLogoAccentColor(pixels)).toBe(normalizeAccent(toHex(ORANGE)));
-  });
-
-  it("picks green, not the second blue, once near-identical blues are merged", () => {
+  it("picks the blue, not the orange, once near-identical blues are merged", () => {
     const pixels = px([
       [BLUE.r, BLUE.g, BLUE.b, 255, 25],
       [ORANGE.r, ORANGE.g, ORANGE.b, 255, 20],
@@ -111,7 +122,9 @@ describe("pickLogoAccentColor", () => {
       [GREEN.r, GREEN.g, GREEN.b, 255, 10],
     ]);
 
-    expect(pickLogoAccentColor(pixels)).toBe(normalizeAccent(toHex(GREEN)));
+    // Split across two buckets neither blue would outweigh the orange; merged
+    // they hold 59% of the mark and win.
+    expect(pickLogoAccentColor(pixels)).toBe(normalizeAccent(toHex(MERGED_BLUE)));
   });
 
   it("returns null for an all-transparent image", () => {

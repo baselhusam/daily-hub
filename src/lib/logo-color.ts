@@ -99,12 +99,41 @@ export function rankLogoColors(
   return clusterBuckets(neutral);
 }
 
-/** The project accent: the 3rd distinct color, normalized for UI use. */
+/**
+ * How much a cluster reads as the logo's actual mark: vivid, mid-toned, and
+ * present in real quantity. Rank alone is not enough in either direction — a
+ * dark navy backdrop clears the neutral filter and can hold 88% of the pixels,
+ * while the pale halo around an anti-aliased mark is saturated enough to
+ * outrank the mark it surrounds.
+ */
+function markScore(color: Rgb, share: number): number {
+  const { s, l } = rgbToHsl(color);
+  // Peaks at l = 0.5, which pushes away both the near-black backdrop and the
+  // washed-out fringe — they sit at opposite ends of the lightness range.
+  const tone = Math.max(0, 1 - Math.abs(l - 0.5) / 0.5);
+  // Sub-linear, so a dominant but dull region cannot simply outvote the mark,
+  // and a 1%-of-pixels fringe cannot win on vividness alone either.
+  return s * tone * Math.pow(share, 0.35);
+}
+
+/** The project accent: the color that reads as the logo's mark, normalized for UI use. */
 export function pickLogoAccentColor(pixels: Uint8ClampedArray): string | null {
   const ranked = rankLogoColors(pixels);
   if (ranked.length === 0) return null;
-  const index = Math.min(2, ranked.length - 1);
-  return normalizeAccent(toHex(ranked[index].color));
+
+  const total = ranked.reduce((sum, entry) => sum + entry.weight, 0);
+
+  let best = ranked[0];
+  let bestScore = -1;
+  for (const entry of ranked) {
+    const score = markScore(entry.color, entry.weight / total);
+    if (score > bestScore) {
+      bestScore = score;
+      best = entry;
+    }
+  }
+
+  return normalizeAccent(toHex(best.color));
 }
 
 function hexToRgb(hex: string): Rgb {
