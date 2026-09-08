@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { pixelAt, readableInkOn } from "@/lib/logo-color";
+import { loadImage } from "@/lib/logo-color-client";
 import { cn } from "@/lib/utils";
 
 /** CSS size of the picking board. The logo is contained inside it, centred. */
@@ -73,11 +74,9 @@ export function LogoPixelPicker({ dataUrl, onPick }: LogoPixelPickerProps) {
 
     (async () => {
       try {
-        const img = new Image();
-        img.src = dataUrl;
-        await img.decode();
+        const img = await loadImage(dataUrl);
         if (cancelled) return;
-        if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+        if (!img || img.naturalWidth === 0 || img.naturalHeight === 0) {
           setFailed(true);
           return;
         }

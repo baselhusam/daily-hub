@@ -29,13 +29,35 @@ export async function readSameOriginUrlAsDataUrl(url: string): Promise<string | 
   }
 }
 
+const IMAGE_LOAD_TIMEOUT_MS = 10_000;
+
+/**
+ * `img.decode()` looks like the right call here, but it never settles while a
+ * page is hidden — Chromium defers decoding for anything it cannot paint — so
+ * a tab left in the background would hang the one-time colour backfill
+ * forever. The `load` event fires either way, and `drawImage` decodes on
+ * demand. The timeout keeps one pathological image from stalling a pass.
+ */
+export function loadImage(dataUrl: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+
+    const timer = window.setTimeout(() => resolve(null), IMAGE_LOAD_TIMEOUT_MS);
+    const settle = (value: HTMLImageElement | null) => {
+      window.clearTimeout(timer);
+      resolve(value);
+    };
+
+    img.onload = () => settle(img);
+    img.onerror = () => settle(null);
+    img.src = dataUrl;
+  });
+}
+
 export async function extractAccentFromDataUrl(dataUrl: string): Promise<string | null> {
   try {
-    const img = new Image();
-    img.src = dataUrl;
-    await img.decode();
-
-    if (img.naturalWidth === 0) return null;
+    const img = await loadImage(dataUrl);
+    if (!img || img.naturalWidth === 0) return null;
 
     const size = 64;
     const canvas = document.createElement("canvas");
