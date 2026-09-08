@@ -174,7 +174,17 @@ The derived colour is only a starting point. `src/components/ui/color-field.tsx`
 Two constraints shape this:
 
 - The CSP allows `img-src 'self' data: https:` but **not** `blob:`, so uploaded files go through `FileReader` rather than `URL.createObjectURL`.
+- Images are awaited through the `load` event, never `img.decode()`. `decode()` never settles while a page is hidden — Chromium defers decoding for anything it cannot paint — which would hang the backfill in a background tab and the pixel picker's loupe in a tab the user switched away from.
 - A canvas cannot read a cross-origin image, so remote logo URLs are fetched by `src/app/actions/logo-color.ts` and re-emitted same-origin as a `data:` URL. That action is only a CORS proxy — it reuses `detectUploadedImage()` for sniffing and SVG sanitization, caps the body at 2MB, and times out after 5s.
+
+#### Backfilling databases that pre-date colours
+
+Because extraction needs a canvas, a migration cannot fill colours in for projects that already exist — so a one-time pass runs in the browser instead. `getPendingLogoColors()` lists projects with a logo, no colour, and `colorSource = "auto"`; `LogoColorBackfill` (mounted in the app layout) walks them on idle through the same extraction path the project dialog uses and posts the results back in one call. `Settings.logoColorsBackfilledAt` is then stamped — even when nothing could be extracted, so a logo that yields no colour is not re-decoded on every page load forever.
+
+Two details in `src/lib/logo-color-backfill.ts` matter more than they look:
+
+- The write is raw SQL. `Project.updatedAt` carries `@updatedAt`, and projects are ordered by it on the dashboard, so writing through Prisma would restamp every backfilled row and silently reshuffle Today on the first launch after an upgrade.
+- The `color IS NULL AND colorSource = 'auto'` guard lives in the statement, not just in the query that picked the candidates, so a colour the user chose cannot be overwritten by a stale client.
 
 ## Docker services
 

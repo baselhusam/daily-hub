@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updating an existing DailyHub now fills in project colours by itself: the first time you open the app after the update, every project that has a logo but no colour gets one derived from that logo, quietly and once. Colours set by hand before this release are recognised as deliberate and are never overwritten, and the order of projects on Today is left untouched.
 - The open-tasks chart is now interactive like the others — hover, click, or arrow-key through it for a dated breakdown.
 - Charts draw themselves in, and their hover markers glide rather than jump.
 

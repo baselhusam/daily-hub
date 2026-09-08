@@ -62,6 +62,10 @@ model Settings {
   workspaceName String  @default("Personal HQ")
   showStreaks   Boolean @default(true)
   nudgeDays     Int     @default(7)
+
+  /// Stamped once the one-time logo-colour backfill has run, so upgrading an
+  /// existing database derives project colours from their logos exactly once.
+  logoColorsBackfilledAt DateTime?
 }
 
 model Task {

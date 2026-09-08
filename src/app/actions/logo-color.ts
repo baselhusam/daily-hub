@@ -1,5 +1,12 @@
 "use server";
 
+import {
+  buildLogoColorUpdate,
+  sanitizeLogoColorResults,
+  type LogoColorResult,
+} from "@/lib/logo-color-backfill";
+import { prisma } from "@/lib/prisma";
+import { revalidateApp } from "@/lib/revalidate";
 import { detectUploadedImage, type UploadedImageKind } from "@/lib/uploaded-image";
 
 const MAX_REMOTE_LOGO_BYTES = 2 * 1024 * 1024;
@@ -67,4 +74,32 @@ export async function fetchLogoDataUrl(url: string): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Stores the colours the browser extracted for projects that had none, and
+ * closes the one-time backfill.
+ *
+ * The stamp is written even when nothing could be extracted — a logo that
+ * yields no usable colour must not be re-fetched and re-decoded on every page
+ * load for the rest of the install's life.
+ */
+export async function completeLogoColorBackfill(
+  results: LogoColorResult[]
+): Promise<void> {
+  const colors = sanitizeLogoColorResults(results);
+
+  if (colors.length > 0) {
+    await prisma.$transaction(
+      colors.map((result) => prisma.$executeRaw(buildLogoColorUpdate(result)))
+    );
+  }
+
+  await prisma.settings.upsert({
+    where: { id: "default" },
+    update: { logoColorsBackfilledAt: new Date() },
+    create: { id: "default", logoColorsBackfilledAt: new Date() },
+  });
+
+  revalidateApp();
 }
