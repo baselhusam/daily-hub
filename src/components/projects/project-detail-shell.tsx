@@ -544,17 +544,17 @@ function ProjectHero({
               </b>{" "}
               still open · {stats.doneCount} done
             </span>
-            <span
-              className="text-[12px] font-semibold tabular-nums"
-              style={{ color: project.color }}
-            >
+            <span className="text-[12px] font-semibold tabular-nums text-muted-foreground">
               {stats.completionPct}%
             </span>
           </div>
+          {/* Same rail + tint as the projects grid and Analytics — the accent
+              identifies the project without a full-bleed band of colour. */}
           <ProgressBar
             value={stats.completionPct}
             color={project.color}
-            height="md"
+            height="rail"
+            emphasis="tint"
           />
         </div>
       </div>

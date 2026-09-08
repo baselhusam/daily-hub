@@ -241,17 +241,18 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                           </b>{" "}
                           still open · {project.doneCount} done
                         </span>
-                        <span
-                          className="text-[12px] font-semibold tabular-nums"
-                          style={{ color: project.color ?? "var(--foreground)" }}
-                        >
+                        <span className="text-[12px] font-semibold tabular-nums text-muted-foreground">
                           {project.completionPct}%
                         </span>
                       </div>
+                      {/* Rail + tint, matching Analytics: a grid of cards each
+                          painting a full-strength 8px bar read as a rainbow.
+                          The accent still identifies the row, quietly. */}
                       <ProgressBar
                         value={project.completionPct}
                         color={project.color ?? "var(--foreground)"}
-                        height="md"
+                        height="rail"
+                        emphasis="tint"
                       />
                     </div>
 
