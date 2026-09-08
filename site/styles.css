@@ -17,7 +17,7 @@
   --raised: 0 1px 2px rgb(15 15 15 / 5%);
   --float: 0 24px 60px -20px rgb(15 15 15 / 24%);
   --font: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  --display: "Doto", ui-monospace, monospace;
+  --display: var(--font);
   --mono: "Geist Mono", ui-monospace, monospace;
   --px: 0.62;
   --py: 0.32;
@@ -684,8 +684,8 @@ main,
   margin: 0 0 14px;
   font-family: var(--display);
   font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  letter-spacing: -0.035em;
   line-height: 1.12;
 }
 

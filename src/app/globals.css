@@ -48,7 +48,7 @@
   --color-done-wash: var(--done-wash);
   --color-scrim: var(--scrim);
   --font-sans: var(--font-instrument-sans);
-  --font-display: var(--font-doto);
+  --font-display: var(--font-instrument-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -286,19 +286,22 @@
 }
 
 @layer utilities {
+  /* No separate display face: the body font at 600 with tight tracking. A page
+     title is told apart by size, which is all a headline needs here — and it
+     is one fewer webfont on first paint. */
   .text-display {
-    font-family: var(--font-doto), ui-monospace, monospace;
+    font-family: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(1.5rem, 3.2vw, 2rem);
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    font-weight: 600;
+    letter-spacing: -0.035em;
     line-height: 1.2;
   }
 
   .text-display-lg {
-    font-family: var(--font-doto), ui-monospace, monospace;
+    font-family: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(1.875rem, 4.4vw, 2.625rem);
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    font-weight: 600;
+    letter-spacing: -0.035em;
     line-height: 1.12;
   }
 
