@@ -138,31 +138,16 @@ function seriesFromFocus(active: Focus | null): "all" | "tasks" | "habits" {
   return "all";
 }
 
-function cardIsLit(
-  active: Focus | null,
-  card: "activity" | "focus" | "projects" | "habits" | "weekdays" | "tod"
-) {
-  if (!active) return false;
-  if (active.kind === "day" || active.kind === "series") return card === "activity";
-  if (active.kind === "weekday") return card === "weekdays" || card === "activity";
-  if (active.kind === "project") return card === "focus" || card === "projects";
-  if (active.kind === "habit") return card === "habits" || card === "activity";
-  if (active.kind === "tod") return card === "tod";
-  if (active.kind === "stat") {
-    if (active.key === "focus") return card === "focus";
-    if (active.key === "habits") return card === "activity" || card === "habits";
-    return card === "activity";
-  }
-  return false;
-}
-
 export function AnalyticsShell({ data }: { data: AnalyticsData }) {
   const [focus, setFocus] = React.useState<Focus | null>(null);
   const [hover, setHover] = React.useState<Focus | null>(null);
   const [tip, setTip] = React.useState<Tip | null>(null);
   const [trendRange, setTrendRange] = React.useState<14 | 30 | 90>(14);
   const active = hover ?? focus;
-  const series = seriesFromFocus(active);
+  // Pinned, not hovered — the same rule dayMuted() follows below. Merely
+  // hovering the Tasks/Habits legend used to drop the other stack to 18%
+  // opacity, which read as the chart losing data under the cursor.
+  const series = seriesFromFocus(focus);
   const maxDay = Math.max(1, ...data.completionsByDay.map((day) => day.total));
 
   const activeDay =
@@ -171,9 +156,15 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
       : null;
   const activeWeekdayId =
     active?.kind === "weekday" ? active.id : (activeDay?.weekday ?? null);
+  const pinnedDay =
+    focus?.kind === "day"
+      ? data.completionsByDay.find((day) => day.date === focus.date)
+      : null;
+  const pinnedWeekdayId =
+    focus?.kind === "weekday" ? focus.id : (pinnedDay?.weekday ?? null);
   const selectedHabit =
-    active?.kind === "habit"
-      ? data.dailyTaskStats.find((habit) => habit.id === active.id)
+    focus?.kind === "habit"
+      ? data.dailyTaskStats.find((habit) => habit.id === focus.id)
       : null;
   const habitHitDates = new Set(
     selectedHabit?.dots
@@ -208,11 +199,16 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
     return () => window.removeEventListener("scroll", onScroll, true);
   }, []);
 
+  /**
+   * Dimming the rest of a card is a consequence of *pinning* something, never
+   * of the pointer passing over it. Hover used to drop every other bar to 30%,
+   * so simply moving across the page made it flicker between states.
+   */
   function dayMuted(day: CompletionDayPoint) {
-    if (!active) return false;
-    if (active.kind === "day") return day.date !== active.date;
-    if (active.kind === "weekday") return day.weekday !== active.id;
-    if (active.kind === "habit") return !habitHitDates.has(day.date);
+    if (!focus) return false;
+    if (focus.kind === "day") return day.date !== focus.date;
+    if (focus.kind === "weekday") return day.weekday !== focus.id;
+    if (focus.kind === "habit") return !habitHitDates.has(day.date);
     return false;
   }
 
@@ -252,7 +248,6 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,140px),1fr))] gap-3">
           {data.bigStats.map((stat, index) => {
             const selected = sameFocus(focus, { kind: "stat", key: stat.key });
-            const lit = sameFocus(active, { kind: "stat", key: stat.key });
             return (
               <motion.button
                 key={stat.key}
@@ -262,11 +257,13 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: index * 0.04 }}
                 className={cn(
-                  "rounded-[12px] border bg-card px-4 py-[15px] text-left transition-[border-color,box-shadow,background-color] duration-[120ms]",
+                  "rounded-[12px] border px-4 py-[15px] text-left transition-[border-color,background-color] duration-[120ms]",
                   interact,
-                  lit
-                    ? "border-signal shadow-[0_0_0_3px_var(--signal-wash)]"
-                    : "border-border hover:border-border-strong hover:shadow-float"
+                  // Selected reads as a settled surface, not a glow; hover only
+                  // firms the border, so nothing on the page appears to pulse.
+                  selected
+                    ? "border-border-strong bg-canvas-sunk"
+                    : "border-border bg-card hover:border-border-strong"
                 )}
                 onMouseEnter={(event) => {
                   setHover({ kind: "stat", key: stat.key });
@@ -300,7 +297,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
           })}
         </div>
 
-        <InteractiveCard active={cardIsLit(active, "activity")}>
+        <AnalyticsCard>
           <SurfaceCardBody>
             <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
               <div>
@@ -357,7 +354,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     className={cn(
                       "group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1 rounded-md px-0.5 transition-opacity duration-200",
                       interact,
-                      muted ? "opacity-30" : "opacity-100"
+                      muted ? "opacity-45" : "opacity-100"
                     )}
                     onMouseEnter={(event) => {
                       setHover({ kind: "day", date: day.date });
@@ -405,9 +402,6 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                           backgroundColor: day.isToday
                             ? "var(--chart-hit-soft)"
                             : "var(--chart-muted)",
-                          boxShadow: lit
-                            ? "0 0 0 2px color-mix(in srgb, var(--signal) 35%, transparent)"
-                            : undefined,
                         }}
                       />
                       <motion.div
@@ -457,9 +451,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               })}
             </div>
           </SurfaceCardBody>
-        </InteractiveCard>
+        </AnalyticsCard>
 
-        <InteractiveCard active={cardIsLit(active, "projects")}>
+        <AnalyticsCard>
           <SurfaceCardBody>
             <ProjectTrendsChart
               trends={data.projectTrends}
@@ -467,14 +461,13 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               onHoverProject={(id) =>
                 setHover(id ? { kind: "project", id } : null)
               }
-              onPinProject={(id) => pin({ kind: "project", id })}
               onRangeChange={setTrendRange}
             />
           </SurfaceCardBody>
-        </InteractiveCard>
+        </AnalyticsCard>
 
         <div className="grid grid-cols-1 gap-3.5 min-[720px]:grid-cols-2">
-          <InteractiveCard active={cardIsLit(active, "focus")}>
+          <AnalyticsCard>
             <SurfaceCardBody>
               <h2 className="text-section">Where the time went</h2>
               <p className="mb-4 text-[12.5px] text-faint">
@@ -496,7 +489,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       id: bucket.id,
                     });
                     const muted =
-                      active?.kind === "project" && active.id !== bucket.id;
+                      focus?.kind === "project" && focus.id !== bucket.id;
                     return (
                       <button
                         key={bucket.id}
@@ -506,7 +499,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                           "-mx-1.5 rounded-lg px-1.5 py-2 text-left transition-[background-color,opacity] duration-150",
                           interact,
                           lit ? "bg-canvas-sunk" : "hover:bg-canvas-sunk",
-                          muted && "opacity-35"
+                          muted && "opacity-45"
                         )}
                         onMouseEnter={(event) => {
                           setHover({ kind: "project", id: bucket.id });
@@ -568,9 +561,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 )}
               </div>
             </SurfaceCardBody>
-          </InteractiveCard>
+          </AnalyticsCard>
 
-          <InteractiveCard active={cardIsLit(active, "projects")}>
+          <AnalyticsCard>
             <SurfaceCardBody>
               <h2 className="text-section">Project progress</h2>
               <p className="mb-4 text-[12.5px] text-faint">
@@ -590,7 +583,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     id: project.id,
                   });
                   const muted =
-                    active?.kind === "project" && active.id !== project.id;
+                    focus?.kind === "project" && focus.id !== project.id;
                   return (
                     <button
                       key={project.id}
@@ -600,7 +593,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                         "-mx-1.5 rounded-lg px-1.5 py-2 text-left transition-[background-color,opacity] duration-150",
                         interact,
                         lit ? "bg-canvas-sunk" : "hover:bg-canvas-sunk",
-                        muted && "opacity-35"
+                        muted && "opacity-45"
                       )}
                       onMouseEnter={(event) => {
                         setHover({ kind: "project", id: project.id });
@@ -653,10 +646,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 )}
               </div>
             </SurfaceCardBody>
-          </InteractiveCard>
+          </AnalyticsCard>
         </div>
 
-        <InteractiveCard active={cardIsLit(active, "habits")}>
+        <AnalyticsCard>
           <SurfaceCardBody>
             <h2 className="text-section">Habit consistency</h2>
             <p className="mb-4 text-[12.5px] text-faint">
@@ -672,14 +665,14 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                   id: habit.id,
                 });
                 const lit = sameFocus(active, { kind: "habit", id: habit.id });
-                const muted = active?.kind === "habit" && active.id !== habit.id;
+                const muted = focus?.kind === "habit" && focus.id !== habit.id;
                 return (
                   <div
                     key={habit.id}
                     className={cn(
                       "-mx-1.5 flex flex-wrap items-center gap-3.5 rounded-lg px-1.5 py-2 transition-[background-color,opacity] duration-150",
                       lit ? "bg-canvas-sunk" : "hover:bg-canvas-sunk",
-                      muted && "opacity-35"
+                      muted && "opacity-45"
                     )}
                   >
                     <button
@@ -783,10 +776,10 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
               )}
             </div>
           </SurfaceCardBody>
-        </InteractiveCard>
+        </AnalyticsCard>
 
         <div className="grid grid-cols-1 gap-3.5 min-[720px]:grid-cols-2">
-          <InteractiveCard active={cardIsLit(active, "weekdays")}>
+          <AnalyticsCard>
             <SurfaceCardBody>
               <h2 className="text-section">Best and worst days</h2>
               <p className="mb-4 text-[12.5px] text-faint">
@@ -800,7 +793,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                   });
                   const lit = activeWeekdayId === weekday.id;
                   const muted =
-                    activeWeekdayId !== null && activeWeekdayId !== weekday.id;
+                    pinnedWeekdayId !== null && pinnedWeekdayId !== weekday.id;
                   const note = weekday.isBest
                     ? "your strongest day"
                     : weekday.isWeakest
@@ -814,7 +807,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                       className={cn(
                         "flex h-full flex-1 flex-col items-center justify-end gap-1.5 transition-opacity duration-200",
                         interact,
-                        muted && "opacity-30"
+                        muted && "opacity-45"
                       )}
                       onMouseEnter={(event) => {
                         setHover({ kind: "weekday", id: weekday.id });
@@ -881,9 +874,9 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 })}
               </div>
             </SurfaceCardBody>
-          </InteractiveCard>
+          </AnalyticsCard>
 
-          <InteractiveCard active={cardIsLit(active, "tod")}>
+          <AnalyticsCard>
             <SurfaceCardBody>
               <h2 className="text-section">When you actually work</h2>
               <p className="mb-4 text-[12.5px] text-faint">
@@ -900,7 +893,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     name: band.name,
                   });
                   const muted =
-                    active?.kind === "tod" && active.name !== band.name;
+                    focus?.kind === "tod" && focus.name !== band.name;
                   return (
                     <button
                       key={band.name}
@@ -910,7 +903,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                         "-mx-1.5 flex items-center gap-3 rounded-lg px-1.5 py-2 text-left transition-[background-color,opacity] duration-150",
                         interact,
                         lit ? "bg-canvas-sunk" : "hover:bg-canvas-sunk",
-                        muted && "opacity-35"
+                        muted && "opacity-45"
                       )}
                       onMouseEnter={(event) => {
                         setHover({ kind: "tod", name: band.name });
@@ -969,7 +962,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                 })}
               </div>
             </SurfaceCardBody>
-          </InteractiveCard>
+          </AnalyticsCard>
         </div>
       </div>
 
@@ -978,24 +971,17 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
   );
 }
 
-function InteractiveCard({
-  children,
-  active,
-}: {
-  children: React.ReactNode;
-  active?: boolean;
-}) {
+/**
+ * A plain analytics surface. It used to light its whole border whenever a
+ * related row was hovered anywhere on the page, so pointing at one project
+ * lit two cards at once and the page appeared to select things by itself.
+ * Cross-highlighting now happens on the rows that actually hold the data.
+ */
+function AnalyticsCard({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
-      className={cn(
-        "overflow-visible rounded-[12px] border bg-card transition-[border-color,box-shadow,background-color] duration-[120ms]",
-        active
-          ? "border-signal shadow-[0_0_0_3px_var(--signal-wash)]"
-          : "border-border hover:border-border-strong hover:shadow-float"
-      )}
-    >
+    <div className="overflow-visible rounded-[12px] border border-border bg-card">
       {children}
-    </motion.div>
+    </div>
   );
 }
 
