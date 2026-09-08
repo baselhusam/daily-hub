@@ -1,6 +1,12 @@
 export type ChartPoint = { x: number; y: number };
 
-export function smoothPath(points: ChartPoint[]) {
+/**
+ * `tension` shortens the control arms. At 1 a lone spike in otherwise-empty
+ * data inflates into a wide bell, which reads as four days of work that never
+ * happened; sparse count series want something tighter. Defaults to 1 so
+ * existing callers are unaffected.
+ */
+export function smoothPath(points: ChartPoint[], tension = 1) {
   if (points.length < 2) return "";
   if (points.length === 2) {
     return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
@@ -37,14 +43,14 @@ export function smoothPath(points: ChartPoint[]) {
   for (let index = 0; index < points.length - 1; index += 1) {
     const current = points[index];
     const next = points[index + 1];
-    const width = next.x - current.x;
+    const arm = ((next.x - current.x) * tension) / 3;
     const controlOne = {
-      x: current.x + width / 3,
-      y: current.y + (tangents[index] * width) / 3,
+      x: current.x + arm,
+      y: current.y + tangents[index] * arm,
     };
     const controlTwo = {
-      x: next.x - width / 3,
-      y: next.y - (tangents[index + 1] * width) / 3,
+      x: next.x - arm,
+      y: next.y - tangents[index + 1] * arm,
     };
     path += ` C ${controlOne.x} ${controlOne.y}, ${controlTwo.x} ${controlTwo.y}, ${next.x} ${next.y}`;
   }

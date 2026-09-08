@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useSpring } from "motion/react";
+import { useTheme } from "next-themes";
 import {
   INBOX_SERIES_ID,
   type ProjectTrends,
   type ProjectTrendSeries,
 } from "@/lib/project-trends";
 import { labelIndexesFor, smoothPath, type ChartPoint } from "@/lib/chart-path";
+import { plotColor, recedeColor, type ChartThemeMode } from "@/lib/chart-colors";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { EmptyState } from "@/components/brand-mark";
@@ -17,14 +19,25 @@ import { cn } from "@/lib/utils";
 const HIDDEN_STORAGE_KEY = "dailyhub:project-trends-hidden";
 const DEFAULT_VISIBLE_COUNT = 8;
 const chartWidth = 760;
-const chartHeight = 260;
-const padding = { top: 16, right: 12, bottom: 26, left: 30 };
+const chartHeight = 250;
+const padding = { top: 20, right: 14, bottom: 28, left: 30 };
 const innerWidth = chartWidth - padding.left - padding.right;
 const innerHeight = chartHeight - padding.top - padding.bottom;
 const baseline = chartHeight - padding.bottom;
 const rescaleSpring = { stiffness: 420, damping: 32 };
 const RANGE_OPTIONS = [14, 30, 90] as const;
 const MODE_OPTIONS = ["daily", "cumulative"] as const;
+
+/**
+ * Completions are whole events on scattered days. At full tension a lone
+ * completion inflates into a wide bell that implies days of work either side
+ * of it, so the curve is deliberately tighter here than on the Today card.
+ */
+const CURVE_TENSION = 0.62;
+/** How far a context line is pushed toward the card surface. */
+const RECEDE = 0.62;
+/** Vertical reach, in viewBox units, for grabbing a line with the pointer. */
+const HIT_RADIUS = 22;
 
 type Range = (typeof RANGE_OPTIONS)[number];
 type Mode = (typeof MODE_OPTIONS)[number];
@@ -70,6 +83,17 @@ function useAnimatedMax(target: number, reducedMotion: boolean): number {
 }
 
 /**
+ * Which surface the chart is drawn on. Server render and first client render
+ * both assume light; the real value lands after mount, matching the app's
+ * hydration discipline (see src/lib/hydration.ts).
+ */
+function useChartTheme(): ChartThemeMode {
+  const hydrated = useHydrated();
+  const { resolvedTheme } = useTheme();
+  return hydrated && resolvedTheme === "dark" ? "dark" : "light";
+}
+
+/**
  * Legend visibility, persisted in localStorage. The server render and the
  * first client render both use `defaultHidden` — the stored override is
  * applied in an effect after mount, matching the app's hydration discipline
@@ -110,6 +134,22 @@ function useHiddenSeries(allIds: string[], defaultHidden: Set<string>) {
   return [hidden, setHidden] as const;
 }
 
+/**
+ * A tick step of 1/2/5/10… keeps every gridline on a whole number and lands
+ * the top of the scale just above the data instead of well clear of it.
+ */
+function niceScale(rawMax: number): { max: number; step: number; ticks: number } {
+  const target = Math.max(4, rawMax);
+  for (let power = 0; power < 5; power += 1) {
+    for (const multiple of [1, 2, 5]) {
+      const step = multiple * 10 ** power;
+      const ticks = Math.ceil(target / step);
+      if (ticks >= 3 && ticks <= 5) return { max: step * ticks, step, ticks };
+    }
+  }
+  return { max: target, step: target / 4, ticks: 4 };
+}
+
 export function ProjectTrendsChart({
   trends,
   activeProjectId,
@@ -118,6 +158,7 @@ export function ProjectTrendsChart({
   onRangeChange,
 }: ProjectTrendsChartProps) {
   const reducedMotion = Boolean(useReducedMotion());
+  const themeMode = useChartTheme();
   const [range, setRangeState] = React.useState<Range>(14);
   const [mode, setMode] = React.useState<Mode>("daily");
 
@@ -130,6 +171,8 @@ export function ProjectTrendsChart({
   );
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [legendHoverId, setLegendHoverId] = React.useState<string | null>(null);
+  const [lineHoverId, setLineHoverId] = React.useState<string | null>(null);
+  const [heroId, setHeroId] = React.useState<string | null>(null);
 
   const allIds = React.useMemo(() => trends.series.map((s) => s.id), [trends.series]);
   const defaultHidden = React.useMemo(() => {
@@ -166,7 +209,23 @@ export function ProjectTrendsChart({
     [windowed, hiddenIds]
   );
 
-  const emphasisId = legendHoverId ?? activeProjectId;
+  /** Plot colours: same hue as the stored accent, made legible on this surface. */
+  const colorById = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const { series } of windowed) map.set(series.id, plotColor(series.color, themeMode));
+    return map;
+  }, [windowed, themeMode]);
+  const colorOf = React.useCallback(
+    (id: string) => colorById.get(id) ?? "var(--foreground)",
+    [colorById]
+  );
+
+  // `trends.series` arrives sorted by total desc, so the first visible entry is
+  // the busiest project — a sensible thing to lead with until one is picked.
+  const hero = React.useMemo(
+    () => visible.find((entry) => entry.series.id === heroId) ?? visible[0] ?? null,
+    [visible, heroId]
+  );
 
   const targetMax = React.useMemo(() => {
     if (visible.length === 0) return 4;
@@ -178,7 +237,8 @@ export function ProjectTrendsChart({
     return Math.max(4, max);
   }, [visible, mode]);
 
-  const displayMax = useAnimatedMax(targetMax, reducedMotion);
+  const scale = React.useMemo(() => niceScale(targetMax), [targetMax]);
+  const displayMax = useAnimatedMax(scale.max, reducedMotion);
 
   const len = activeDays.length;
   const toPoint = React.useCallback(
@@ -194,19 +254,62 @@ export function ProjectTrendsChart({
       visible.map((entry) => {
         const values = mode === "daily" ? entry.dailySlice : entry.cumulativeSlice;
         const points = values.map((value, index) => toPoint(value, index));
-        return { series: entry.series, values, points, path: smoothPath(points) };
+        return {
+          series: entry.series,
+          values,
+          points,
+          path: smoothPath(points, CURVE_TENSION),
+        };
       }),
     [visible, mode, toPoint]
   );
 
+  const heroPath = seriesPaths.find((entry) => entry.series.id === hero?.series.id) ?? null;
   const labelIndexes = React.useMemo(() => labelIndexesFor(len, 5), [len]);
 
-  function setIndexFromClientX(event: React.PointerEvent<SVGSVGElement>) {
+  /**
+   * The last day is still accumulating, so every line dips toward it. Veiling
+   * it stops a partial day from reading as a collapse in activity.
+   */
+  const todayIndex = activeDays.length - 1;
+  const lastDayIsToday = activeDays[todayIndex]?.isToday ?? false;
+
+  /** The line the pointer is nearest, or null when it isn't near one. */
+  const focusId = legendHoverId ?? lineHoverId ?? activeProjectId;
+
+  function readPointer(event: React.PointerEvent<SVGSVGElement>) {
     const bounds = event.currentTarget.getBoundingClientRect();
-    if (bounds.width === 0) return;
+    if (bounds.width === 0 || bounds.height === 0) return;
+
     const ratio = (event.clientX - bounds.left) / bounds.width;
-    const index = Math.round(ratio * (len - 1));
-    setActiveIndex(Math.max(0, Math.min(len - 1, index)));
+    const index = Math.max(0, Math.min(len - 1, Math.round(ratio * (len - 1))));
+    setActiveIndex(index);
+
+    // Series sitting at zero are skipped: on a sparse chart the crowd along
+    // the baseline would otherwise claim every hover down there.
+    const pointerY = ((event.clientY - bounds.top) / bounds.height) * chartHeight;
+    let nearestId: string | null = null;
+    let nearestDistance = HIT_RADIUS;
+    for (const entry of seriesPaths) {
+      if ((entry.values[index] ?? 0) <= 0) continue;
+      const distance = Math.abs(entry.points[index].y - pointerY);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestId = entry.series.id;
+      }
+    }
+    if (nearestId !== lineHoverId) {
+      setLineHoverId(nearestId);
+      onHoverProject(nearestId);
+    }
+  }
+
+  function clearPointer() {
+    setActiveIndex(null);
+    if (lineHoverId !== null) {
+      setLineHoverId(null);
+      onHoverProject(null);
+    }
   }
 
   function moveActiveIndex(direction: -1 | 1) {
@@ -214,6 +317,19 @@ export function ProjectTrendsChart({
       const start = current ?? len - 1;
       return Math.max(0, Math.min(len - 1, start + direction));
     });
+  }
+
+  /** Keyboard equivalent of clicking a line — pointer-only focus would strand it. */
+  function moveHero(direction: -1 | 1) {
+    if (visible.length === 0) return;
+    const currentIndex = visible.findIndex((entry) => entry.series.id === hero?.series.id);
+    const nextIndex = (currentIndex + direction + visible.length) % visible.length;
+    promote(visible[nextIndex].series.id);
+  }
+
+  function promote(id: string) {
+    setHeroId(id);
+    onPinProject(id);
   }
 
   function toggleVisibility(id: string) {
@@ -245,11 +361,12 @@ export function ProjectTrendsChart({
       .map(({ series, values }) => ({
         label: series.name,
         value: String(values[activeIndex] ?? 0),
-        color: series.color,
+        color: colorOf(series.id),
         raw: values[activeIndex] ?? 0,
       }))
+      .filter((row) => row.raw > 0)
       .sort((a, b) => b.raw - a.raw);
-  }, [seriesPaths, activeIndex]);
+  }, [seriesPaths, activeIndex, colorOf]);
 
   const activeChartX = activeIndex !== null && len > 0
     ? padding.left + (len <= 1 ? 0 : (activeIndex / (len - 1)) * innerWidth)
@@ -263,7 +380,7 @@ export function ProjectTrendsChart({
   const svgAriaLabel =
     activeDay && activeIndex !== null
       ? `${activeDay.fullLabel}: ${topThreeSummary || "no completions"}`
-      : `${visible.length} project${visible.length === 1 ? "" : "s"} tracked over ${range} days. Hover or use the arrow keys to inspect a day.`;
+      : `${hero ? `${hero.series.name} in focus. ` : ""}${visible.length} project${visible.length === 1 ? "" : "s"} tracked over ${range} days. Left and right arrows inspect a day, up and down change the project in focus.`;
 
   return (
     <div>
@@ -271,8 +388,18 @@ export function ProjectTrendsChart({
         <div>
           <h2 className="text-section">Project rhythm</h2>
           <p className="mt-1 text-[12.5px] text-faint">
-            {visible.length} project{visible.length === 1 ? "" : "s"} ·{" "}
-            {mode === "daily" ? "completions per day" : "running total"}
+            {hero ? (
+              <>
+                <span style={{ color: colorOf(hero.series.id) }}>●</span>{" "}
+                {hero.series.name} in focus ·{" "}
+                {visible.length - 1} other{visible.length === 2 ? "" : "s"} for context
+              </>
+            ) : (
+              <>
+                {visible.length} project{visible.length === 1 ? "" : "s"} ·{" "}
+                {mode === "daily" ? "completions per day" : "running total"}
+              </>
+            )}
           </p>
         </div>
         {!isAllSilent ? (
@@ -305,14 +432,20 @@ export function ProjectTrendsChart({
           <div className="relative">
             <svg
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-              className="block h-[220px] w-full cursor-crosshair touch-pan-y outline-none sm:h-[260px]"
+              className={cn(
+                "block h-[220px] w-full touch-pan-y outline-none sm:h-[260px]",
+                lineHoverId && lineHoverId !== hero?.series.id ? "cursor-pointer" : "cursor-crosshair"
+              )}
               role="group"
               tabIndex={0}
               aria-label={svgAriaLabel}
-              onPointerMove={setIndexFromClientX}
-              onPointerLeave={() => setActiveIndex(null)}
+              onPointerMove={readPointer}
+              onPointerLeave={clearPointer}
+              onClick={() => {
+                if (lineHoverId && lineHoverId !== hero?.series.id) promote(lineHoverId);
+              }}
               onFocus={() => setActiveIndex(len - 1)}
-              onBlur={() => setActiveIndex(null)}
+              onBlur={clearPointer}
               onKeyDown={(event) => {
                 if (event.key === "ArrowLeft") {
                   event.preventDefault();
@@ -320,6 +453,12 @@ export function ProjectTrendsChart({
                 } else if (event.key === "ArrowRight") {
                   event.preventDefault();
                   moveActiveIndex(1);
+                } else if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  moveHero(-1);
+                } else if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  moveHero(1);
                 } else if (event.key === "Home") {
                   event.preventDefault();
                   setActiveIndex(0);
@@ -329,71 +468,127 @@ export function ProjectTrendsChart({
                 }
               }}
             >
-              {[0.25, 0.5, 0.75].map((fraction) => {
-                const y = padding.top + innerHeight * (1 - fraction);
-                return (
-                  <line
-                    key={fraction}
-                    x1={padding.left}
-                    x2={chartWidth - padding.right}
-                    y1={y}
-                    y2={y}
-                    stroke="var(--rule-soft)"
-                    strokeDasharray="2 5"
-                  />
-                );
-              })}
-              {[0.25, 0.5, 0.75].map((fraction) => {
-                const y = padding.top + innerHeight * (1 - fraction);
-                return (
-                  <text
-                    key={`tick-${fraction}`}
-                    x={chartWidth - padding.right}
-                    y={y - 3}
-                    textAnchor="end"
-                    fill="var(--faint)"
-                    fontSize="10.5"
-                    fontFamily="var(--font-geist-mono)"
-                  >
-                    {Math.round(displayMax * fraction)}
-                  </text>
-                );
-              })}
+              <defs>
+                {heroPath ? (
+                  <linearGradient id="project-hero-fill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor={colorOf(heroPath.series.id)} stopOpacity="0.26" />
+                    <stop offset="100%" stopColor={colorOf(heroPath.series.id)} stopOpacity="0.02" />
+                  </linearGradient>
+                ) : null}
+                <pattern
+                  id="project-today-veil"
+                  width="5"
+                  height="5"
+                  patternUnits="userSpaceOnUse"
+                  patternTransform="rotate(45)"
+                >
+                  <rect width="5" height="5" fill="var(--card)" fillOpacity="0.72" />
+                  <line x1="0" y1="0" x2="0" y2="5" stroke="var(--faint)" strokeOpacity="0.22" strokeWidth="1" />
+                </pattern>
+              </defs>
 
-              {seriesPaths.map(({ series, path }, index) => {
-                const lit = emphasisId === series.id;
-                const muted = emphasisId !== null && emphasisId !== series.id;
-                const areaPath = `${path} L ${padding.left + innerWidth} ${baseline} L ${padding.left} ${baseline} Z`;
+              {/* Solid hairlines: a dashed grid reads as a threshold it isn't. */}
+              {Array.from({ length: scale.ticks }, (_, tick) => {
+                const value = scale.step * (tick + 1);
+                const y = padding.top + innerHeight - (value / displayMax) * innerHeight;
                 return (
-                  <React.Fragment key={series.id}>
-                    {lit ? (
-                      <path
-                        d={areaPath}
-                        fill={`color-mix(in srgb, ${series.color} 14%, transparent)`}
-                        stroke="none"
-                      />
-                    ) : null}
-                    <motion.path
-                      d={path}
-                      fill="none"
-                      stroke={series.color}
-                      strokeWidth={lit ? 2.75 : 2.25}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      initial={reducedMotion ? false : { pathLength: 0 }}
-                      animate={{ pathLength: 1, opacity: muted ? 0.18 : lit ? 1 : 0.9 }}
-                      transition={
-                        reducedMotion
-                          ? { duration: 0 }
-                          : {
-                              pathLength: { duration: 0.6, delay: index * 0.05, ease: [0.2, 0.8, 0.3, 1] },
-                              opacity: { duration: 0.18 },
-                            }
-                      }
+                  <React.Fragment key={value}>
+                    <line
+                      x1={padding.left}
+                      x2={chartWidth - padding.right}
+                      y1={y}
+                      y2={y}
+                      stroke="var(--rule-soft)"
                     />
+                    <text
+                      x={padding.left - 8}
+                      y={y + 3.5}
+                      textAnchor="end"
+                      fill="var(--faint)"
+                      fontSize="10.5"
+                      fontFamily="var(--font-geist-mono)"
+                    >
+                      {Math.round(value)}
+                    </text>
                   </React.Fragment>
                 );
               })}
+              <line
+                x1={padding.left}
+                x2={chartWidth - padding.right}
+                y1={baseline}
+                y2={baseline}
+                stroke="var(--border)"
+              />
+
+              {/* Context lines keep their own hue, pushed back toward the card. */}
+              {seriesPaths.map(({ series, path }) => {
+                if (series.id === heroPath?.series.id) return null;
+                const lit = focusId === series.id;
+                const dimmed = focusId !== null && !lit;
+                return (
+                  <path
+                    key={series.id}
+                    d={path}
+                    fill="none"
+                    stroke={lit ? colorOf(series.id) : recedeColor(colorOf(series.id), themeMode, RECEDE)}
+                    strokeWidth={lit ? 2.5 : 1.5}
+                    strokeOpacity={dimmed ? 0.45 : 1}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="transition-[stroke,stroke-width,stroke-opacity] duration-150"
+                  />
+                );
+              })}
+
+              {heroPath ? (
+                <>
+                  <motion.path
+                    d={`${heroPath.path} L ${padding.left + innerWidth} ${baseline} L ${padding.left} ${baseline} Z`}
+                    fill="url(#project-hero-fill)"
+                    animate={{ opacity: focusId && focusId !== heroPath.series.id ? 0.28 : 1 }}
+                    transition={{ duration: reducedMotion ? 0 : 0.18 }}
+                  />
+                  <motion.path
+                    d={heroPath.path}
+                    fill="none"
+                    stroke={colorOf(heroPath.series.id)}
+                    strokeWidth={focusId === heroPath.series.id ? 3.25 : 2.75}
+                    strokeOpacity={focusId && focusId !== heroPath.series.id ? 0.35 : 1}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    initial={reducedMotion ? false : { pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={
+                      reducedMotion
+                        ? { duration: 0 }
+                        : { duration: 0.6, ease: [0.2, 0.8, 0.3, 1] }
+                    }
+                  />
+                </>
+              ) : null}
+
+              {/* The focused context line is redrawn above the hero's fill —
+                  lit but buried under a wash reads as still-not-selected. */}
+              {focusId && focusId !== heroPath?.series.id
+                ? seriesPaths
+                    .filter((entry) => entry.series.id === focusId)
+                    .map(({ series, path }) => (
+                      <path
+                        key={`focus-${series.id}`}
+                        d={path}
+                        fill="none"
+                        stroke={colorOf(series.id)}
+                        strokeWidth={2.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    ))
+                : null}
+
+              {lastDayIsToday && len > 1 ? (
+                <TodayVeil x={padding.left + ((len - 2) / (len - 1)) * innerWidth} />
+              ) : null}
 
               {activeChartX !== null ? (
                 <g pointerEvents="none">
@@ -404,23 +599,46 @@ export function ProjectTrendsChart({
                     y2={baseline}
                     stroke="var(--foreground)"
                     strokeOpacity="0.18"
-                    strokeDasharray="3 4"
                   />
-                  {seriesPaths.map(({ series, points }) => {
-                    const point = activeIndex !== null ? points[activeIndex] : null;
-                    if (!point) return null;
-                    return (
-                      <circle
-                        key={series.id}
-                        cx={point.x}
-                        cy={point.y}
-                        r={4}
-                        fill="var(--card)"
-                        stroke={series.color}
-                        strokeWidth="2.25"
-                      />
-                    );
-                  })}
+                  {heroPath && activeIndex !== null ? (
+                    <circle
+                      cx={heroPath.points[activeIndex].x}
+                      cy={heroPath.points[activeIndex].y}
+                      r={4.5}
+                      fill="var(--card)"
+                      stroke={colorOf(heroPath.series.id)}
+                      strokeWidth="2.5"
+                    />
+                  ) : null}
+                  {focusId && focusId !== heroPath?.series.id && activeIndex !== null
+                    ? seriesPaths
+                        .filter((entry) => entry.series.id === focusId)
+                        .map(({ series, points, values }) => (
+                          <React.Fragment key={`marker-${series.id}`}>
+                            <circle
+                              cx={points[activeIndex].x}
+                              cy={points[activeIndex].y}
+                              r={4}
+                              fill="var(--card)"
+                              stroke={colorOf(series.id)}
+                              strokeWidth="2.5"
+                            />
+                            <text
+                              x={Math.max(
+                                padding.left + 38,
+                                Math.min(chartWidth - padding.right - 38, points[activeIndex].x)
+                              )}
+                              y={points[activeIndex].y - 11}
+                              textAnchor="middle"
+                              fill="var(--foreground)"
+                              fontSize="10.5"
+                              fontFamily="var(--font-geist-mono)"
+                            >
+                              {series.name} · {values[activeIndex] ?? 0}
+                            </text>
+                          </React.Fragment>
+                        ))
+                    : null}
                 </g>
               ) : null}
 
@@ -460,9 +678,11 @@ export function ProjectTrendsChart({
               <LegendEntry
                 key={series.id}
                 series={series}
+                color={colorOf(series.id)}
                 hidden={hiddenIds.has(series.id)}
-                emphasized={emphasisId === series.id}
-                muted={emphasisId !== null && emphasisId !== series.id}
+                isHero={hero?.series.id === series.id}
+                emphasized={focusId === series.id}
+                muted={focusId !== null && focusId !== series.id}
                 onHover={hoverLegend}
                 onClick={(altKey) => (altKey ? soloSeries(series.id) : toggleVisibility(series.id))}
               />
@@ -474,16 +694,47 @@ export function ProjectTrendsChart({
   );
 }
 
+function TodayVeil({ x }: { x: number }) {
+  return (
+    <g pointerEvents="none">
+      <rect
+        x={x}
+        y={padding.top}
+        width={chartWidth - padding.right - x}
+        height={innerHeight}
+        fill="url(#project-today-veil)"
+      />
+      <line x1={x} x2={x} y1={padding.top - 6} y2={baseline} stroke="var(--border-strong)" />
+      {/* Right-anchored: the strip is one day wide, so a left-anchored label
+          would run off the plot. */}
+      <text
+        x={chartWidth - padding.right}
+        y={padding.top - 9}
+        textAnchor="end"
+        fill="var(--faint)"
+        fontSize="10.5"
+        fontFamily="var(--font-geist-mono)"
+      >
+        today, so far
+      </text>
+    </g>
+  );
+}
+
 function LegendEntry({
   series,
+  color,
   hidden,
+  isHero,
   emphasized,
   muted,
   onHover,
   onClick,
 }: {
   series: ProjectTrendSeries;
+  color: string;
   hidden: boolean;
+  isHero: boolean;
   emphasized: boolean;
   muted: boolean;
   onHover: (id: string | null) => void;
@@ -493,7 +744,7 @@ function LegendEntry({
     <button
       type="button"
       aria-pressed={!hidden}
-      aria-label={`${series.name}: ${series.total} completions. ${hidden ? "Hidden" : "Shown"} — click to toggle, option-click to solo.`}
+      aria-label={`${series.name}: ${series.total} completions.${isHero ? " In focus." : ""} ${hidden ? "Hidden" : "Shown"} — click to toggle, option-click to solo.`}
       className={cn(
         "flex max-w-[220px] items-center gap-1.5 rounded-md px-1 py-1 text-left transition-[opacity,background-color] duration-150",
         interact,
@@ -515,14 +766,18 @@ function LegendEntry({
       />
       <span className="flex min-w-0 flex-col items-start leading-tight">
         <span
-          className="max-w-[150px] truncate text-[12.5px] font-medium"
+          className={cn("max-w-[150px] truncate text-[12.5px]", isHero && !hidden ? "font-semibold" : "font-medium")}
           style={{ color: hidden ? "var(--faint)" : "var(--foreground)" }}
         >
           {series.name}
         </span>
         <span
-          className="mt-[3px] h-[2px] w-6 rounded-full transition-colors"
-          style={{ backgroundColor: hidden ? "var(--track)" : series.color }}
+          className="mt-[3px] rounded-full transition-[background-color,height]"
+          style={{
+            backgroundColor: hidden ? "var(--track)" : color,
+            height: isHero && !hidden ? 3 : 2,
+            width: 24,
+          }}
         />
       </span>
       <span className="shrink-0 text-[11.5px] tabular-nums text-faint">{series.total}</span>
