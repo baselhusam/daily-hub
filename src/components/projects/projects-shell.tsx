@@ -163,9 +163,9 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                   className="group relative scroll-mt-24 p-[18px] transition-[border-color,background-color] duration-[120ms] hover:border-border-strong hover:bg-canvas-sunk target:bg-signal-wash"
                 >
                   <Link
-                    href={`/?project=${project.id}`}
+                    href={`/projects/${project.id}`}
                     className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                    aria-label={`Show tasks for ${project.name}`}
+                    aria-label={`Open ${project.name}`}
                   />
                   <div className="pointer-events-none relative flex flex-col gap-3.5">
                     <div className="flex items-start gap-3">
@@ -332,7 +332,7 @@ export function ProjectsShell({ projects, todayISO }: ProjectsShellProps) {
                       </div>
                     )}
                     <span className="text-[12px] font-medium text-signal">
-                      Open task list →
+                      Open project →
                     </span>
                   </div>
                 </SurfaceCard>

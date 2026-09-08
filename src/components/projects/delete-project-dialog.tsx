@@ -28,6 +28,12 @@ type DeleteProjectDialogProps = {
   project: DeleteProjectTarget | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Fired once the delete lands. The Projects list needs nothing — revalidation
+   * drops the card — but a caller sitting *on* the deleted project (its detail
+   * page) has to leave before the route 404s.
+   */
+  onDeleted?: () => void;
 };
 
 function consequenceLine(project: DeleteProjectTarget) {
@@ -50,6 +56,7 @@ export function DeleteProjectDialog({
   project,
   open,
   onOpenChange,
+  onDeleted,
 }: DeleteProjectDialogProps) {
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -75,6 +82,7 @@ export function DeleteProjectDialog({
         return;
       }
       onOpenChange(false);
+      onDeleted?.();
     } catch {
       setError("Could not delete this project.");
       setPending(false);
