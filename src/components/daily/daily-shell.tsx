@@ -109,7 +109,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
               <div
                 id={`habit-${task.id}`}
                 key={task.id}
-                className="group grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-3.5 scroll-mt-24 border-b border-rule-soft px-[18px] py-4 transition-colors duration-[120ms] last:border-0 hover:bg-canvas-sunk target:bg-signal-wash sm:grid-cols-[36px_minmax(180px,1fr)_auto_minmax(132px,auto)_auto]"
+                className="group grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-3.5 scroll-mt-24 border-b border-rule-soft px-[18px] py-4 transition-colors duration-[120ms] last:border-0 hover:bg-canvas-sunk target:bg-signal-wash lg:grid-cols-[36px_minmax(180px,1fr)_auto_minmax(132px,auto)_auto]"
               >
                 <EntityAvatar
                   name={task.title}
@@ -129,9 +129,9 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                 </div>
                 <DayPills
                   activeDays={task.weekdays}
-                  className="col-span-3 sm:col-span-1"
+                  className="col-span-3 lg:col-span-1"
                 />
-                <div className="col-span-2 flex items-center gap-3.5 border-t border-rule-soft pt-3 sm:col-span-1 sm:border-0 sm:pt-0">
+                <div className="col-span-2 flex items-center gap-3.5 border-t border-rule-soft pt-3 lg:col-span-1 lg:border-0 lg:pt-0">
                   <ChainDots
                     dots={task.dots}
                     size="md"
@@ -165,7 +165,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-hairline sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                        className="h-8 w-8 text-hairline lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
                       >
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Edit habit</span>
@@ -175,7 +175,7 @@ export function DailyShell({ dailyTasks }: DailyShellProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-hairline hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                    className="h-8 w-8 text-hairline hover:text-destructive lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
                     onClick={() =>
                       setPendingDelete({
                         id: task.id,

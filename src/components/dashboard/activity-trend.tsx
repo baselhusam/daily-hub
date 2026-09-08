@@ -58,7 +58,7 @@ export function ActivityTrendCard({ activity, onExpand }: ActivityTrendProps) {
   return (
     <StatCardShell
       aria-labelledby="activity-trend-heading"
-      className="col-span-2 dh:col-span-1"
+      className="col-span-2 lg:col-span-1"
     >
       <StatCardHeader
         labelId="activity-trend-heading"

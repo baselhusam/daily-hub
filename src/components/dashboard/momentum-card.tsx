@@ -69,7 +69,7 @@ export function MomentumCard({ momentum, onExpand }: MomentumCardProps) {
   return (
     <StatCardShell
       aria-labelledby="momentum-heading"
-      className="col-span-2 overflow-visible dh:col-span-1"
+      className="col-span-2 overflow-visible lg:col-span-1"
     >
       <StatCardHeader
         labelId="momentum-heading"

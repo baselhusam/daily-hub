@@ -278,7 +278,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
         {showHabits && (
           <section
             aria-label="Daily pulse"
-            className="grid grid-cols-2 gap-2.5 dh:grid-cols-[minmax(156px,0.75fr)_minmax(220px,1.1fr)_minmax(300px,1.5fr)]"
+            className="grid grid-cols-2 gap-2.5 lg:grid-cols-[minmax(156px,0.75fr)_minmax(220px,1.1fr)_minmax(300px,1.5fr)]"
           >
             {data.snapshots
               .filter((snapshot) => snapshot.label === "Open tasks")
@@ -290,7 +290,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
                   onExpand={() => setAnalysisOpen(true)}
                   // Full width until the three-column layout kicks in, so the
                   // stacked mobile view has no half-empty row beside it.
-                  className="col-span-2 dh:col-span-1"
+                  className="col-span-2 lg:col-span-1"
                 />
               ))}
             <MomentumCard momentum={data.momentum} onExpand={() => setMomentumOpen(true)} />
