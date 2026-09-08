@@ -3,10 +3,13 @@
 import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
-import { Maximize2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { SparkBar } from "@/lib/streak-utils";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
+import {
+  StatCardHeader,
+  StatCardMetric,
+  StatCardShell,
+} from "@/components/ui/stat-card";
 
 type SnapshotCardProps = {
   label: string;
@@ -48,36 +51,14 @@ export function SnapshotCard({
   const sparkTotal = bars?.reduce((sum, bar) => sum + bar.value, 0) ?? 0;
 
   return (
-    <div
-      className={cn(
-        "group flex min-h-[112px] flex-col rounded-[12px] border border-border bg-card px-3.5 py-3 transition-[border-color] duration-[120ms] hover:border-border-strong",
-        className
-      )}
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="text-[11px] font-semibold tracking-[0.02em] text-faint">
-          {label}
-        </div>
-        <div className="flex items-center gap-1">
-          {unit ? (
-            <span className="text-[11px] text-faint">{unit}</span>
-          ) : null}
-          {onExpand ? (
-            <button
-              type="button"
-              onClick={onExpand}
-              aria-label={`Expand ${label} analysis`}
-              title={`Expand ${label} analysis`}
-              className="grid h-5 w-5 place-items-center rounded text-faint opacity-0 transition-[opacity,color,background-color] hover:bg-hover hover:text-foreground focus:opacity-100 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14 group-hover:opacity-100"
-            >
-              <Maximize2 className="h-3 w-3" />
-            </button>
-          ) : null}
-        </div>
-      </div>
-      <div className="mt-1.5 text-metric" style={{ color: metricColor }}>
-        {value}
-      </div>
+    <StatCardShell className={className}>
+      <StatCardHeader
+        label={label}
+        meta={unit || undefined}
+        onExpand={onExpand}
+        expandLabel={`${label} history`}
+      />
+      <StatCardMetric className="mt-2" value={value} color={metricColor} />
       {bars && bars.length > 0 ? (
         <InteractiveSparkBars
           bars={bars}
@@ -86,7 +67,7 @@ export function SnapshotCard({
           onExpand={onExpand}
         />
       ) : (
-        <div className="mt-2.5 h-8" />
+        <div className="mt-2.5 min-h-11 flex-1" />
       )}
       <div className="mt-auto flex items-center gap-1.5 pt-2">
         {showMark && entityName ? (
@@ -110,7 +91,7 @@ export function SnapshotCard({
           </span>
         ) : null}
       </div>
-    </div>
+    </StatCardShell>
   );
 }
 
@@ -139,9 +120,9 @@ function InteractiveSparkBars({
   }
 
   return (
-    <div className="relative mt-2.5">
+    <div className="relative mt-2.5 flex min-h-11 flex-1 flex-col justify-end">
       <div
-        className="flex h-8 items-end gap-[3px] outline-none"
+        className="flex h-full items-end gap-[3px] outline-none"
         role="group"
         tabIndex={0}
         aria-label={
@@ -173,13 +154,12 @@ function InteractiveSparkBars({
       >
         {bars.map((bar, index) => {
           const isActive = activeIndex === index;
-          const dimmed = activeIndex !== null && !isActive;
           const baseColor = bar.empty
             ? "var(--hairline)"
             : bar.today
               ? "var(--signal)"
-              : "var(--foreground)";
-          const baseOpacity = bar.empty ? 0.55 : bar.today ? 1 : 0.82;
+              : "var(--chart-ink)";
+          const baseOpacity = bar.empty ? 0.5 : bar.today ? 1 : 0.7;
           const title = bar.fullLabel ?? bar.label;
 
           return (
@@ -188,13 +168,12 @@ function InteractiveSparkBars({
               type="button"
               tabIndex={-1}
               aria-label={title ? `${title}: ${bar.value} closed` : undefined}
-              className="min-h-[3px] flex-1 rounded-[2px] transition-[background-color,opacity,box-shadow] duration-[120ms] focus-visible:outline-none"
+              className="min-h-[3px] flex-1 rounded-[2px] transition-[background-color,opacity] duration-[120ms] focus-visible:outline-none"
               style={{
                 height: `${bar.height}%`,
                 originY: 1,
                 backgroundColor: isActive ? "var(--signal)" : baseColor,
-                opacity: isActive ? 1 : dimmed ? 0.45 : baseOpacity,
-                boxShadow: isActive ? "0 0 0 2px var(--signal-wash)" : "none",
+                opacity: isActive ? 1 : baseOpacity,
               }}
               initial={reducedMotion ? false : { scaleY: 0 }}
               animate={{ scaleY: 1 }}

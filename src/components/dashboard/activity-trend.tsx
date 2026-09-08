@@ -2,11 +2,18 @@
 
 import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Maximize2, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import type { DashboardActivityPoint } from "@/lib/dashboard";
 import { cn } from "@/lib/utils";
 import { labelIndexesFor, smoothPath } from "@/lib/chart-path";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
+import { MetricTile } from "@/components/ui/metric-tile";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import {
+  StatCardHeader,
+  StatCardMetric,
+  StatCardShell,
+} from "@/components/ui/stat-card";
 import {
   Dialog,
   DialogBody,
@@ -17,6 +24,12 @@ import {
 } from "@/components/ui/dialog";
 
 const dotSpring = { type: "spring" as const, stiffness: 420, damping: 32 };
+
+const RANGE_OPTIONS = [
+  { value: 7, label: "7 days" },
+  { value: 30, label: "30 days" },
+  { value: 90, label: "90 days" },
+] as const;
 
 type ActivityTrendProps = {
   activity: DashboardActivityPoint[];
@@ -37,39 +50,39 @@ const padding = { top: 20, right: 12, bottom: 31, left: 14 };
 export function ActivityTrendCard({ activity, onExpand }: ActivityTrendProps) {
   const recent = activity.slice(-7);
   const recentTotal = recent.reduce((sum, point) => sum + point.total, 0);
+  const busiest = recent.reduce<DashboardActivityPoint | null>(
+    (best, point) => (best === null || point.total > best.total ? point : best),
+    null
+  );
 
   return (
-    <section
+    <StatCardShell
       aria-labelledby="activity-trend-heading"
-      className="col-span-2 flex min-h-[112px] overflow-hidden rounded-[12px] border border-border bg-card text-foreground shadow-raised dh:col-span-1"
+      className="col-span-2 dh:col-span-1"
     >
-      <div className="flex min-w-0 flex-1 flex-col px-3.5 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-1.5 text-[11px] font-semibold tracking-[0.02em] text-faint">
-            <TrendingUp className="h-3.5 w-3.5 shrink-0 text-signal" />
-            <h2 id="activity-trend-heading" className="truncate">Daily rhythm</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onExpand}
-            className="group grid h-5 w-5 shrink-0 place-items-center rounded text-faint transition-[color,background-color] hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14"
-            aria-label="Expand activity trend to choose a longer timeframe"
-            title="Expand activity trend"
-          >
-            <Maximize2 className="h-3 w-3 transition-transform duration-150 group-hover:scale-110" />
-          </button>
-        </div>
-        <div className="mt-1 flex min-h-0 flex-1 items-end gap-3">
-          <div className="shrink-0 pb-0.5">
-            <div className="text-metric leading-none tabular-nums">{recentTotal}</div>
-            <p className="mt-1 text-[11px] text-faint">this week</p>
-          </div>
-          <div className="min-w-0 flex-1 self-stretch">
-            <ActivityLineChart points={recent} mini />
-          </div>
+      <StatCardHeader
+        labelId="activity-trend-heading"
+        icon={<TrendingUp className="h-3.5 w-3.5" />}
+        label="Daily rhythm"
+        meta="last 7 days"
+        onExpand={onExpand}
+        expandLabel="completion rhythm"
+      />
+      <div className="mt-2 flex min-h-0 flex-1 items-start gap-3">
+        <StatCardMetric value={recentTotal} caption="this week" />
+        {/* The chart hangs from the metric's baseline and fills the rest of the
+            card, so the number lines up with its neighbours instead of being
+            pushed to the floor by a bottom-aligned row. */}
+        <div className="-mb-1 min-w-0 flex-1 self-stretch">
+          <ActivityLineChart points={recent} mini />
         </div>
       </div>
-    </section>
+      <p className="mt-1 truncate text-[11px] text-faint">
+        {busiest && busiest.total > 0
+          ? `Best day ${busiest.label} · ${busiest.total} finished`
+          : "Nothing logged yet this week"}
+      </p>
+    </StatCardShell>
   );
 }
 
@@ -90,6 +103,10 @@ export function ActivityAnalysisDialog({
   const tasks = points.reduce((sum, point) => sum + point.tasks, 0);
   const habits = points.reduce((sum, point) => sum + point.habits, 0);
   const activeDays = points.filter((point) => point.total > 0).length;
+  const peak = points.reduce(
+    (best, point) => (point.total > best.total ? point : best),
+    points[0] ?? { total: 0, label: "—" }
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -105,52 +122,42 @@ export function ActivityAnalysisDialog({
             <p className="text-[13px] text-faint">
               Your selected timeframe includes tasks, inbox items, and habits.
             </p>
-            <div className="inline-flex rounded-lg border border-border bg-canvas-sunk p-1" aria-label="Activity timeframe">
-              {([7, 30, 90] as const).map((days) => (
-                <button
-                  key={days}
-                  type="button"
-                  aria-pressed={range === days}
-                  onClick={() => setRange(days)}
-                  className={cn(
-                    "h-7 rounded-md px-2.5 text-[11.5px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/14",
-                    range === days
-                      ? "bg-card text-foreground shadow-raised"
-                      : "text-faint hover:text-foreground"
-                  )}
-                >
-                  {days} days
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              aria-label="Activity timeframe"
+              options={RANGE_OPTIONS}
+              value={range}
+              onChange={setRange}
+            />
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border bg-canvas-sunk px-1.5 pt-3 shadow-inner sm:px-3">
-            <ActivityLineChart points={points} />
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-rule-soft px-3 py-3 text-[11.5px] text-faint sm:px-1">
-              <span className="inline-flex items-center gap-1.5"><i className="h-1.5 w-1.5 rounded-full bg-signal" />Combined completions</span>
-              <span>Tasks, inbox items, and habits.</span>
+          <div className="overflow-hidden rounded-xl border border-border bg-canvas-sunk shadow-inner">
+            <div className="px-1.5 pt-3 sm:px-3">
+              <ActivityLineChart points={points} />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-rule-soft px-3 py-2.5 text-[11.5px] text-faint sm:px-4">
+              <span className="inline-flex items-center gap-1.5">
+                <i className="h-1.5 w-1.5 rounded-full bg-signal" />
+                Combined completions
+              </span>
+              <span className="tabular-nums">
+                Peak {peak.total} on {peak.label}
+              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            <Metric label="Completed" value={total} />
-            <Metric label="Tasks & inbox" value={tasks} />
-            <Metric label="Habits" value={habits} />
-            <Metric label="Active days" value={`${activeDays}/${range}`} />
+            <MetricTile label="Completed" value={total} hint="tasks, inbox, and habits" />
+            <MetricTile label="Tasks & inbox" value={tasks} />
+            <MetricTile label="Habits" value={habits} />
+            <MetricTile
+              label="Active days"
+              value={`${activeDays}/${range}`}
+              hint={`${Math.round((activeDays / Math.max(1, range)) * 100)}% of days`}
+            />
           </div>
         </DialogBody>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-lg border border-border bg-canvas-sunk px-3 py-2.5">
-      <p className="text-[10.5px] font-semibold tracking-[0.04em] text-faint uppercase">{label}</p>
-      <p className="mt-1 text-[18px] font-semibold tracking-[-0.02em] tabular-nums">{value}</p>
-    </div>
   );
 }
 

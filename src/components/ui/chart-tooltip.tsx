@@ -24,6 +24,12 @@ type ChartTooltipProps = {
    * Project rhythm) where a single joined line would overflow.
    */
   layout?: "headline" | "list";
+  /**
+   * "top" floats the card inside the plot area (line charts, where the data
+   * sits low). "bottom" hangs it under the plot — used by dense tile strips,
+   * where an overlaid card would cover the very tiles being scanned.
+   */
+  placement?: "top" | "bottom";
 };
 
 const MAX_LIST_ROWS = 6;
@@ -39,8 +45,11 @@ export function ChartTooltip({
   rows,
   compact = false,
   layout = "headline",
+  placement = "top",
 }: ChartTooltipProps) {
   const isRightHalf = x > chartWidth / 2;
+  const placementClass =
+    placement === "bottom" ? "top-full mt-2" : compact ? "top-1.5" : "top-3";
 
   const containerStyle: React.CSSProperties = {
     left: `${(x / chartWidth) * 100}%`,
@@ -55,7 +64,7 @@ export function ChartTooltip({
       <div
         className={cn(
           "pointer-events-none absolute z-10 w-[190px] rounded-[8px] border border-border bg-card/95 px-2.5 py-2 text-[10.5px] shadow-float backdrop-blur-sm",
-          compact ? "top-1.5" : "top-3"
+          placementClass
         )}
         style={containerStyle}
       >
@@ -89,7 +98,7 @@ export function ChartTooltip({
     <div
       className={cn(
         "pointer-events-none absolute z-10 w-[164px] rounded-[8px] border border-border bg-card/95 px-2.5 py-2 text-[10.5px] shadow-float backdrop-blur-sm",
-        compact ? "top-1.5" : "top-3"
+        placementClass
       )}
       style={containerStyle}
     >

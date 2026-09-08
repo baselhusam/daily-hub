@@ -288,6 +288,9 @@ export function DashboardShell({ data }: DashboardShellProps) {
                   {...snapshot}
                   value={String(optimisticOpenTasks)}
                   onExpand={() => setAnalysisOpen(true)}
+                  // Full width until the three-column layout kicks in, so the
+                  // stacked mobile view has no half-empty row beside it.
+                  className="col-span-2 dh:col-span-1"
                 />
               ))}
             <MomentumCard momentum={data.momentum} onExpand={() => setMomentumOpen(true)} />
