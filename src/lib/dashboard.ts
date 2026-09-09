@@ -31,10 +31,16 @@ import {
 } from "@/lib/streak";
 import type { ProjectStatus, TaskStatus } from "@/lib/status";
 import { withParsedWeekdays } from "@/lib/weekdays-db";
-import { sortProjectsByRecentActivity } from "@/lib/project-sort";
+import {
+  sortProjectsByManualOrder,
+  sortProjectsByRecentActivity,
+} from "@/lib/project-sort";
 import { calculateMomentumInfo, type MomentumInfo } from "@/lib/momentum";
 
-export { sortProjectsByRecentActivity } from "@/lib/project-sort";
+export {
+  sortProjectsByManualOrder,
+  sortProjectsByRecentActivity,
+} from "@/lib/project-sort";
 
 export type DashboardMilestone = {
   id: string;
@@ -200,8 +206,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     momentumTasks,
     momentumCompletions,
   ] = await Promise.all([
+    // Done projects stay in the list — sortProjectsByRecentActivity drops them
+    // to the bottom rather than hiding the work that was finished.
     prisma.project.findMany({
-      where: { status: { not: "DONE" } },
       orderBy: [{ updatedAt: "desc" }, { sortOrder: "asc" }],
       include: {
         milestones: { orderBy: { sortOrder: "asc" } },
@@ -333,6 +340,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     color: string;
   } | null = null;
   for (const project of projects) {
+    // A finished project no longer sets the next deadline.
+    if (project.status === "DONE") continue;
     for (const milestone of project.milestones) {
       if (milestone.done || !milestone.dueDate) continue;
       const n = daysUntil(milestone.dueDate, today);
@@ -527,7 +536,7 @@ export async function getProjectsPageData() {
 
   return {
     todayISO: today.toISOString(),
-    projects: projects.map((project) => {
+    projects: projects.sort(sortProjectsByManualOrder).map((project) => {
       const open = project.tasks.filter((t) => t.status !== "DONE").length;
       const done = project.tasks.filter((t) => t.status === "DONE").length;
       const total = open + done;
@@ -540,7 +549,8 @@ export async function getProjectsPageData() {
         openCount: open,
         doneCount: done,
         completionPct: pct,
-        stalled: open > 0 && idle >= nudgeDays,
+        stalled:
+          project.status !== "DONE" && open > 0 && idle >= nudgeDays,
         idleDays: idle,
       };
     }),

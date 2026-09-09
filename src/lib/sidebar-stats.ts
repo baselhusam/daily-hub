@@ -7,6 +7,8 @@ import {
   toDateOnlyString,
 } from "@/lib/dates";
 import { projectAccent } from "@/lib/entity-colors";
+import { sortProjectsByManualOrder } from "@/lib/project-sort";
+import type { ProjectStatus } from "@/lib/status";
 import {
   buildNotifications,
   getProjectLastTouchMap,
@@ -24,6 +26,7 @@ export type SidebarProject = {
   logoUrl: string | null;
   color: string;
   openCount: number;
+  status: ProjectStatus;
 };
 
 export type SidebarStats = {
@@ -88,8 +91,9 @@ export async function getSidebarStats(): Promise<SidebarStats> {
       },
       select: { entityId: true, completedOn: true },
     }),
+    // Done projects stay listed, sorted to the bottom by
+    // sortProjectsByManualOrder below.
     prisma.project.findMany({
-      where: { status: { not: "DONE" } },
       orderBy: { sortOrder: "asc" },
       select: {
         id: true,
@@ -97,6 +101,8 @@ export async function getSidebarStats(): Promise<SidebarStats> {
         iconKey: true,
         logoUrl: true,
         color: true,
+        status: true,
+        sortOrder: true,
       },
     }),
     prisma.task.groupBy({
@@ -146,6 +152,8 @@ export async function getSidebarStats(): Promise<SidebarStats> {
             100
         );
 
+  const liveProjects = projects.filter((project) => project.status !== "DONE");
+
   const streakInfo = await getStreakInfo(dailyTasks);
 
   const remainingHabits = dueToday.filter(
@@ -158,8 +166,9 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     remainingHabits,
     nudgeDays: settings.nudgeDays,
     stalled: getStalledProjects(
-      projects.map((project) => ({
+      liveProjects.map((project) => ({
         ...project,
+        color: projectAccent(project),
         openCount: countMap.get(project.id) ?? 0,
       })),
       lastTouch,
@@ -172,15 +181,22 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     openTasks,
     inboxCount,
     inboxTotalCount,
-    projectCount: projects.length,
+    projectCount: liveProjects.length,
     habitCount,
     completionsThisWeek,
     dailyConsistencyToday,
-    projects: projects.map((project) => ({
-      ...project,
-      color: projectAccent(project),
-      openCount: countMap.get(project.id) ?? 0,
-    })),
+    projects: projects
+      .slice()
+      .sort(sortProjectsByManualOrder)
+      .map((project) => ({
+        id: project.id,
+        name: project.name,
+        iconKey: project.iconKey,
+        logoUrl: project.logoUrl,
+        status: project.status,
+        color: projectAccent(project),
+        openCount: countMap.get(project.id) ?? 0,
+      })),
     streak: streakInfo.streak,
     streakDots: streakInfo.dots,
     showStreaks: settings.showStreaks,

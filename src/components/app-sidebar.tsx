@@ -32,6 +32,10 @@ type AppSidebarProps = {
   onExpand?: () => void;
 };
 
+function isDoneProject(project: { status: string }) {
+  return project.status === "DONE";
+}
+
 export function AppSidebar({
   stats,
   collapsed = false,
@@ -73,6 +77,10 @@ export function AppSidebar({
         (project) => project.id === destinationId
       );
       if (sourceIndex === -1 || destinationIndex === -1) return;
+      // Done projects always sit below live ones, so a move across that line
+      // would only snap back on the next load.
+      if (isDoneProject(current[sourceIndex]) !== isDoneProject(current[destinationIndex]))
+        return;
 
       const next = [...current];
       const [moved] = next.splice(sourceIndex, 1);
@@ -115,8 +123,17 @@ export function AppSidebar({
       .elementFromPoint(clientX, clientY)
       ?.closest<HTMLElement>("[data-project-row]");
     const nextDropProjectId = row?.dataset.projectId ?? null;
+    const source = projectsRef.current.find((project) => project.id === sourceId);
+    const destination = projectsRef.current.find(
+      (project) => project.id === nextDropProjectId
+    );
     const validDropProjectId =
-      nextDropProjectId === sourceId ? null : nextDropProjectId;
+      nextDropProjectId === sourceId ||
+      !source ||
+      !destination ||
+      isDoneProject(source) !== isDoneProject(destination)
+        ? null
+        : nextDropProjectId;
 
     if (dropProjectIdRef.current !== validDropProjectId) {
       dropProjectIdRef.current = validDropProjectId;
@@ -296,20 +313,26 @@ export function AppSidebar({
                 </Link>
                 {projects.map((project) => {
                   const isActive = pathname === "/" && activeProjectId === project.id;
+                  const isDone = project.status === "DONE";
 
                   return (
                     <Link
                       key={project.id}
                       href={`/?project=${project.id}`}
                       data-sidebar-interactive
-                      title={project.name}
-                      aria-label={`${project.name}, ${project.openCount} open tasks`}
+                      title={isDone ? `${project.name} — Done` : project.name}
+                      aria-label={
+                        isDone
+                          ? `${project.name}, done`
+                          : `${project.name}, ${project.openCount} open tasks`
+                      }
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "grid h-9 w-9 place-items-center rounded-md transition-colors duration-[120ms]",
                         isActive
                           ? "border border-border bg-card shadow-raised"
-                          : "hover:bg-hover"
+                          : "hover:bg-hover",
+                        isDone && !isActive && "opacity-60 hover:opacity-100"
                       )}
                     >
                       <EntityAvatar
@@ -385,6 +408,8 @@ export function AppSidebar({
                         pathname === "/" && activeProjectId === project.id
                           ? "bg-hover"
                           : "hover:bg-hover",
+                        project.status === "DONE" &&
+                          "opacity-60 hover:opacity-100 focus-within:opacity-100",
                         draggedProjectId === project.id && "select-none opacity-45",
                         dropProjectId === project.id &&
                           "bg-signal/10 shadow-[inset_0_2px_0_var(--color-signal)]"
@@ -433,9 +458,15 @@ export function AppSidebar({
                           size={18}
                         />
                         <span className="flex-1 truncate">{project.name}</span>
-                        <span className="text-[11px] text-faint tabular-nums">
-                          {project.openCount}
-                        </span>
+                        {project.status === "DONE" ? (
+                          <span className="shrink-0 rounded border border-border px-1.5 py-px text-[10px] font-semibold tracking-[0.02em] text-faint">
+                            Done
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-faint tabular-nums">
+                            {project.openCount}
+                          </span>
+                        )}
                       </Link>
                     </div>
                   ))}

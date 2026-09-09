@@ -117,7 +117,10 @@ export function DashboardShell({ data }: DashboardShellProps) {
       id: project.id,
       // A project the user has navigated into (via ?project=) is being read
       // in full, not glanced at — never fold it away underneath them.
-      autoCollapsed: !isFilteredOpen && project.tasks.length > 1 && openCount === 0,
+      autoCollapsed:
+        !isFilteredOpen &&
+        (project.status === "DONE" ||
+          (project.tasks.length > 1 && openCount === 0)),
     };
   });
   const {
