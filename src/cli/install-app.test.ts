@@ -12,6 +12,18 @@ function scratch(): string {
   return dir;
 }
 
+// installApp refuses to run anywhere but macOS, so a test that does not say which
+// platform it means passes on a Mac and fails on CI. Every case states its own.
+async function onPlatform<T>(platform: string, body: () => Promise<T>): Promise<T> {
+  const original = process.platform;
+  Object.defineProperty(process, "platform", { value: platform, configurable: true });
+  try {
+    return await body();
+  } finally {
+    Object.defineProperty(process, "platform", { value: original, configurable: true });
+  }
+}
+
 afterEach(() => {
   while (temporaries.length > 0) {
     rmSync(temporaries.pop()!, { recursive: true, force: true });
@@ -28,30 +40,30 @@ describe("defaultAppDir", () => {
 
 describe("installApp", () => {
   it("reports which asset is missing rather than writing a broken bundle", async () => {
-    const packageRoot = scratch();
-    const assets = macosAssetDir(packageRoot);
-    mkdirSync(assets, { recursive: true });
-    writeFileSync(join(assets, "launcher.sh"), "#!/bin/bash\n");
-    // Info.plist and icon-1024.png deliberately absent.
+    await onPlatform("darwin", async () => {
+      const packageRoot = scratch();
+      const assets = macosAssetDir(packageRoot);
+      mkdirSync(assets, { recursive: true });
+      writeFileSync(join(assets, "launcher.sh"), "#!/bin/bash\n");
+      // Info.plist and icon-1024.png deliberately absent.
 
-    const appDir = scratch();
-    await expect(
-      installApp({ packageRoot, version: "9.9.9", appMode: false, appDir }, noopRun),
-    ).rejects.toThrow(/Info\.plist/);
+      await expect(
+        installApp(
+          { packageRoot, version: "9.9.9", appMode: false, appDir: scratch() },
+          noopRun,
+        ),
+      ).rejects.toThrow(/Info\.plist/);
+    });
   });
 
   it("refuses to run anywhere but macOS", async () => {
-    const original = process.platform;
-    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
-    try {
+    await onPlatform("linux", async () => {
       await expect(
         installApp(
           { packageRoot: scratch(), version: "9.9.9", appMode: false, appDir: scratch() },
           noopRun,
         ),
       ).rejects.toThrow(/only runs on macOS/);
-    } finally {
-      Object.defineProperty(process, "platform", { value: original, configurable: true });
-    }
+    });
   });
 });
