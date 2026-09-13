@@ -60,3 +60,11 @@ next-env.d.ts
 
 # presentation build artifacts
 /presentation-build/
+
+# video production masters and intermediates
+/branding/announcing_video/*.mp4
+/branding/announcing_video/*.wav
+/branding/announcing_video/sfx/
+/branding/announcing_video/voiceover-transcript.json
+# ...except the cut that ships, which is already tracked
+!/branding/announcing_video/Daily Hub Launch Film - Professional Master.mp4
