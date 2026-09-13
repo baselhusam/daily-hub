@@ -125,9 +125,47 @@ Image: [`ghcr.io/baselhusam/daily-hub`](https://github.com/baselhusam/daily-hub/
 Publishing is automatic on GitHub Releases. npm uses trusted publishing (OIDC) — no `NPM_TOKEN`. GHCR uses `GITHUB_TOKEN` (`packages: write`) — no Docker Hub credentials.
 
 1. Update [`CHANGELOG.md`](CHANGELOG.md) under **Unreleased** (or add the new version section).
-2. Bump `"version"` in `package.json` (and commit).
+2. Bump `"version"` in `package.json` **and `package-lock.json`** (it carries the version twice), and commit.
 3. Push to `main`.
-4. Create a GitHub Release tagged `vX.Y.Z` matching that version (for example `v0.1.5`). Paste the matching `CHANGELOG` section into the release body.
+4. Create a GitHub Release titled `DailyHub vX.Y.Z`, tagged `vX.Y.Z` matching that version.
+
+### Release notes
+
+The release body is **not** the `CHANGELOG` section pasted in — the changelog is an
+exhaustive reference, the release note is a ranked summary. Write it separately, in
+this shape (see [v0.1.10](https://github.com/baselhusam/daily-hub/releases/tag/v0.1.10)):
+
+```markdown
+## ✨ Highlights
+
+- **Bold lead** — one or two sentences on what it does for the user.
+
+## 🛠️ Improvements & fixes
+
+- Short, plain bullets. No bold leads.
+
+## ⬆️ Upgrade notes
+
+- Only when a release migrates the schema or touches existing data.
+
+## ✅ Verification
+
+- Production build, typecheck, and all N tests pass.
+
+Thanks for using DailyHub! 🗓️
+```
+
+- Aim for **3–6 highlights**, ordered by what a user notices first. Everything else
+  drops to Improvements & fixes.
+- Keep bullets to a sentence or two. Detail belongs in `CHANGELOG.md`.
+- Don't list a fix for a feature that ships in the same release — the bug was never
+  in a published version. Fold it into the feature's own bullet.
+- **Upgrade notes are required** whenever the release adds a migration or runs a
+  backfill. Name what runs, say what it will not touch, and say what the user must
+  do by hand (usually nothing). [v0.1.5](https://github.com/baselhusam/daily-hub/releases/tag/v0.1.5)
+  is the precedent for a breaking one.
+- Only claim what was actually run in **Verification** — drop the production build
+  from the line if the build was skipped.
 
 The [Publish](.github/workflows/publish.yml) workflow then:
 
