@@ -117,6 +117,37 @@ DAILYHUB_DATA_DIR="./.data"
 
 Docker uses `DATABASE_URL=file:/app/data/data.db` and `DAILYHUB_DATA_DIR=/app/data`.
 
+## macOS app
+
+`./scripts/build-macos-app.sh` produces `dist/DailyHub.app` — a Dock icon and a
+Spotlight entry for the app, not a packaged build. The bundle holds a shell
+launcher, an icon, and nothing else: it starts the normal CLI in the background
+and opens the UI in the browser. Pass `--app-mode` for a chromeless Chrome window
+instead of a tab.
+
+```
+scripts/macos/launcher.sh    # what runs on double-click
+scripts/macos/Info.plist     # version substituted at build time
+scripts/macos/icon.svg       # 1024x1024 source, rasterised by headless Chrome
+```
+
+Two things the launcher has to get right, both easy to regress:
+
+- **A `.app` opened from Finder inherits `PATH=/usr/bin:/bin:/usr/sbin:/sbin`.**
+  Homebrew, nvm, Volta and `~/.local/bin` are all invisible, so the launcher
+  resolves `node` itself before it can run anything.
+- **`npx` resolves against the current working directory** and will happily serve
+  a stale cached build — from a checkout of this repo it can run a CLI old enough
+  to have no `start` command. The launcher `cd`s somewhere neutral and pins
+  `@latest`. Don't drop either.
+
+It is a launcher, not an app: no window of its own, no bundled runtime, and
+closing the browser leaves the server running (`daily-hub stop` ends it). A real
+Electron build would need the Prisma query engine pre-bundled per architecture and
+signed individually under the hardened runtime, since the runtime
+`prisma generate` fallback in `src/cli/prisma-support.ts` cannot work inside a
+signed bundle.
+
 ## Publishing
 
 Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/daily-hub)  

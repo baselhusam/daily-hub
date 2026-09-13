@@ -68,3 +68,6 @@ next-env.d.ts
 /branding/announcing_video/voiceover-transcript.json
 # ...except the cut that ships, which is already tracked
 !/branding/announcing_video/Daily Hub Launch Film - Professional Master.mp4
+
+# macOS app bundle built by scripts/build-macos-app.sh
+/dist/
