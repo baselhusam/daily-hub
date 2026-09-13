@@ -18,6 +18,7 @@ import {
   ensureQueryEngine,
   resolvePrismaCli,
 } from "./prisma-support";
+import { defaultAppDir, installApp } from "./install-app";
 
 declare const __dirname: string;
 
@@ -34,7 +35,9 @@ type CliOptions = {
   mcpEnabled: boolean;
   detach: boolean;
   detachedChild: boolean;
-  command: "start" | "seed" | "status" | "stop" | "logs" | "mcp" | "update";
+  appMode: boolean;
+  appDir?: string;
+  command: "start" | "seed" | "status" | "stop" | "logs" | "mcp" | "update" | "install-app";
 };
 
 type BackgroundState = {
@@ -58,13 +61,14 @@ function parseArgs(argv: string[]): CliOptions {
     mcpEnabled: true,
     detach: false,
     detachedChild: false,
+    appMode: false,
     command: "start",
   };
 
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
 
-    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs" || arg === "mcp" || arg === "update") {
+    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs" || arg === "mcp" || arg === "update" || arg === "install-app") {
       options.command = arg;
       continue;
     }
@@ -97,6 +101,21 @@ function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--seed") {
       options.seed = true;
+      continue;
+    }
+
+    if (arg === "--app-mode") {
+      options.appMode = true;
+      continue;
+    }
+
+    if (arg === "--app-dir") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error("Expected a path after --app-dir.");
+      }
+      options.appDir = resolve(value);
+      index++;
       continue;
     }
 
@@ -181,6 +200,8 @@ Options:
   --detach            Start in the background and return after it is ready
   --seed              Seed sample data on first start
   --update            Run the latest published DailyHub version
+  --app-mode          install-app: open a chromeless window, not a browser tab
+  --app-dir <path>    install-app: where to write DailyHub.app
 
 Commands:
   start               Start DailyHub (default)
@@ -190,6 +211,7 @@ Commands:
   logs                Print the most recent detached-instance log output
   mcp                 Print MCP connection details for a running instance
   update              Run the latest published DailyHub version
+  install-app         Install DailyHub.app into ~/Applications (macOS)
   -h, --help          Show this help message
 `);
 }
@@ -339,13 +361,14 @@ function runCommand(
   command: string,
   args: string[],
   env: NodeJS.ProcessEnv,
-  cwd = packageRoot
+  cwd = packageRoot,
+  stdio: "inherit" | "ignore" = "inherit"
 ): Promise<void> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
       cwd,
       env,
-      stdio: "inherit",
+      stdio,
       shell: process.platform === "win32",
     });
 
@@ -644,6 +667,24 @@ async function main() {
 
   if (options.command === "update") {
     await runLatest(rawArgs);
+    return;
+  }
+
+  if (options.command === "install-app") {
+    const destination = await installApp(
+      {
+        packageRoot,
+        version: packageVersion(),
+        appMode: options.appMode,
+        appDir: options.appDir,
+      },
+      (command, args, env, cwd) => runCommand(command, args, env, cwd, "ignore"),
+    );
+    console.log(`Installed ${destination}`);
+    console.log("Open it from Spotlight or Launchpad, or keep it in the Dock.");
+    if (options.appDir === undefined) {
+      console.log(`Move it to /Applications if you would rather it live there than in ${defaultAppDir()}.`);
+    }
     return;
   }
 

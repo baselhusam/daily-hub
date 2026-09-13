@@ -119,16 +119,28 @@ Docker uses `DATABASE_URL=file:/app/data/data.db` and `DAILYHUB_DATA_DIR=/app/da
 
 ## macOS app
 
-`./scripts/build-macos-app.sh` produces `dist/DailyHub.app` — a Dock icon and a
-Spotlight entry for the app, not a packaged build. The bundle holds a shell
+`daily-hub install-app` writes `DailyHub.app` into `~/Applications` — a Dock icon
+and a Spotlight entry for the app, not a packaged build. The bundle holds a shell
 launcher, an icon, and nothing else: it starts the normal CLI in the background
 and opens the UI in the browser. Pass `--app-mode` for a chromeless Chrome window
-instead of a tab.
+instead of a tab, `--app-dir` to install somewhere else.
+
+There are two builders, and they differ in what they need:
+
+- **`daily-hub install-app`** (`src/cli/install-app.ts`) is the one users get. It
+  assembles the bundle from `scripts/macos/icon-1024.png` using `sips` and
+  `iconutil`, so it needs nothing but macOS and never reaches the network.
+- **`./scripts/build-macos-app.sh`** is the development-side builder. It
+  re-rasterises `icon.svg` with headless Chrome, rewrites `icon-1024.png`, and
+  outputs to `dist/`. Run it when the icon changes; commit the PNG it produces.
+
+`scripts/macos` is listed in `package.json` `files`, so all four assets ship.
 
 ```
 scripts/macos/launcher.sh    # what runs on double-click
 scripts/macos/Info.plist     # version substituted at build time
-scripts/macos/icon.svg       # 1024x1024 source, rasterised by headless Chrome
+scripts/macos/icon.svg       # 1024x1024 source, edited by hand
+scripts/macos/icon-1024.png  # rasterised from it; this is what ships
 ```
 
 Two things the launcher has to get right, both easy to regress:

@@ -3,6 +3,10 @@
 # Builds dist/DailyHub.app — a launcher that starts the DailyHub server in the
 # background and opens the app, so DailyHub has a Dock icon and a Spotlight entry.
 #
+# This is the development-side builder: it re-rasterises the icon from icon.svg,
+# which needs Chrome. Users get the same bundle from `daily-hub install-app`,
+# which assembles it from the committed PNG and needs nothing but macOS.
+#
 # It is not a packaged app: there is no bundled runtime and no window of its own.
 # See CLAUDE.md for what a real Electron build would involve.
 #
@@ -70,6 +74,11 @@ fi
   "file://$SHOT_DIR/icon.html" >/dev/null 2>&1
 
 [ -f "$SHOT_DIR/icon.png" ] || { echo "Chrome produced no icon.png" >&2; exit 1; }
+
+# Keep the committed raster in step with the SVG. `daily-hub install-app` builds
+# the same bundle from this PNG on a user's machine, where there is no Chrome to
+# rasterise with, so this is the file that actually ships.
+cp "$SHOT_DIR/icon.png" "$SRC/icon-1024.png"
 
 for spec in "16 icon_16x16" "32 icon_16x16@2x" "32 icon_32x32" "64 icon_32x32@2x" \
             "128 icon_128x128" "256 icon_128x128@2x" "256 icon_256x256" \

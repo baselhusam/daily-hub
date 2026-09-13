@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `daily-hub install-app` puts DailyHub in `~/Applications`, so it has a Dock icon, a Spotlight entry, and a double-click that opens it. The app starts the server in the background and opens the browser; `daily-hub status` and `daily-hub stop` work on it exactly as before. Pass `--app-mode` for a window without browser chrome.
+- DailyHub can be installed as a web app — Add to Dock in Safari, or the install button in Chrome — which gives it its own window and its own icon in the Dock.
+
 ## [0.1.12] - 2026-09-13
 
 ### Added

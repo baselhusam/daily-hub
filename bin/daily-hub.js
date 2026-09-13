@@ -146,17 +146,17 @@ var require_chunk_3UEKS5W6 = __commonJS({
     module2.exports = __toCommonJS(chunk_3UEKS5W6_exports);
     var import_chunk_2ESYSVXG = require_chunk_2ESYSVXG();
     var import_node_buffer = require("node:buffer");
-    var import_node_path3 = __toESM2(require("node:path"));
+    var import_node_path4 = __toESM2(require("node:path"));
     var import_node_child_process2 = __toESM2(require("node:child_process"));
     var import_node_process = __toESM2(require("node:process"));
     var import_node_process2 = __toESM2(require("node:process"));
     var import_node_path22 = __toESM2(require("node:path"));
     var import_node_url2 = require("node:url");
     var import_node_process3 = __toESM2(require("node:process"));
-    var import_node_os2 = require("node:os");
+    var import_node_os3 = require("node:os");
     var import_node_os22 = require("node:os");
-    var import_node_os3 = __toESM2(require("node:os"));
-    var import_node_fs3 = require("node:fs");
+    var import_node_os32 = __toESM2(require("node:os"));
+    var import_node_fs4 = require("node:fs");
     var import_node_child_process22 = require("node:child_process");
     var import_node_fs22 = require("node:fs");
     var import_promises2 = require("node:timers/promises");
@@ -1107,7 +1107,7 @@ var require_chunk_3UEKS5W6 = __commonJS({
           }
           return data;
         };
-        var writeFileSync3 = (path3, data, options) => {
+        var writeFileSync4 = (path3, data, options) => {
           try {
             fs.writeFileSync(path3, data, options);
           } catch (err) {
@@ -1120,13 +1120,13 @@ var require_chunk_3UEKS5W6 = __commonJS({
           }
         };
         var writeAtomicSync = (path3, data, options) => {
-          writeFileSync3(path3 + newExt, data, options);
+          writeFileSync4(path3 + newExt, data, options);
           fs.renameSync(path3 + newExt, path3);
         };
         var writeSync = (path3, data, options) => {
           const opts = options || {};
           const processedData = serializeToJsonMaybe(data, opts.jsonIndent);
-          let writeStrategy = writeFileSync3;
+          let writeStrategy = writeFileSync4;
           if (opts.atomic) {
             writeStrategy = writeAtomicSync;
           }
@@ -2904,7 +2904,7 @@ var require_chunk_3UEKS5W6 = __commonJS({
           const methodSignature = `${methodName}(path)`;
           validate.argument(methodSignature, "path", path3, ["string"]);
         };
-        var existsSync3 = (path3) => {
+        var existsSync4 = (path3) => {
           try {
             const stat = fs.statSync(path3);
             if (stat.isDirectory()) {
@@ -2940,7 +2940,7 @@ var require_chunk_3UEKS5W6 = __commonJS({
           });
         };
         exports3.validateInput = validateInput;
-        exports3.sync = existsSync3;
+        exports3.sync = existsSync4;
         exports3.async = existsAsync;
       }
     });
@@ -14100,7 +14100,7 @@ ${fromBody}`;
       };
     };
     var findSignalByNumber = (number, signals2) => {
-      const signal = signals2.find(({ name }) => import_node_os2.constants.signals[name] === number);
+      const signal = signals2.find(({ name }) => import_node_os3.constants.signals[name] === number);
       if (signal !== void 0) {
         return signal;
       }
@@ -14477,7 +14477,7 @@ ${error.message}` : execaMessage;
       }
     };
     var shouldForceKill = (signal, { forceKillAfterTimeout }, killResult) => isSigterm(signal) && forceKillAfterTimeout !== false && killResult;
-    var isSigterm = (signal) => signal === import_node_os3.default.constants.signals.SIGTERM || typeof signal === "string" && signal.toUpperCase() === "SIGTERM";
+    var isSigterm = (signal) => signal === import_node_os32.default.constants.signals.SIGTERM || typeof signal === "string" && signal.toUpperCase() === "SIGTERM";
     var getForceKillAfterTimeout = ({ forceKillAfterTimeout = true }) => {
       if (forceKillAfterTimeout === true) {
         return DEFAULT_FORCE_KILL_TIMEOUT;
@@ -14537,7 +14537,7 @@ ${error.message}` : execaMessage;
     var isExecaChildProcess = (target) => target instanceof import_node_child_process22.ChildProcess && typeof target.then === "function";
     var pipeToTarget = (spawned, streamName, target) => {
       if (typeof target === "string") {
-        spawned[streamName].pipe((0, import_node_fs3.createWriteStream)(target));
+        spawned[streamName].pipe((0, import_node_fs4.createWriteStream)(target));
         return spawned;
       }
       if (isWritableStream(target)) {
@@ -14966,7 +14966,7 @@ ${error.message}` : execaMessage;
       };
       options.env = getEnv(options);
       options.stdio = normalizeStdio(options);
-      if (import_node_process.default.platform === "win32" && import_node_path3.default.basename(file, ".exe") === "cmd") {
+      if (import_node_process.default.platform === "win32" && import_node_path4.default.basename(file, ".exe") === "cmd") {
         args.unshift("/q");
       }
       return { file, args, options, parsed };
@@ -15209,7 +15209,7 @@ var require_chunk_5EPDNTW3 = __commonJS({
     module2.exports = __toCommonJS(chunk_5EPDNTW3_exports);
     var import_chunk_3UEKS5W6 = require_chunk_3UEKS5W6();
     var import_chunk_2ESYSVXG = require_chunk_2ESYSVXG();
-    var import_node_path3 = __toESM2(require("node:path"));
+    var import_node_path4 = __toESM2(require("node:path"));
     var import_fs_jetpack = (0, import_chunk_2ESYSVXG.__toESM)((0, import_chunk_3UEKS5W6.require_main)());
     var import_tempy = (0, import_chunk_2ESYSVXG.__toESM)((0, import_chunk_3UEKS5W6.require_tempy)());
     var jestContext = {
@@ -15244,13 +15244,13 @@ ${[...generateDirectoryTree(children, indent)].join("\n")}
 `;
           };
           c.fixture = (name) => {
-            c.fs.copy(import_node_path3.default.join(originalCwd, "src", "__tests__", "fixtures", name), ".", {
+            c.fs.copy(import_node_path4.default.join(originalCwd, "src", "__tests__", "fixtures", name), ".", {
               overwrite: true
             });
-            c.fs.symlink(import_node_path3.default.join(originalCwd, "..", "client"), import_node_path3.default.join(c.fs.cwd(), "node_modules", "@prisma", "client"));
+            c.fs.symlink(import_node_path4.default.join(originalCwd, "..", "client"), import_node_path4.default.join(c.fs.cwd(), "node_modules", "@prisma", "client"));
           };
           c.cli = (...input) => {
-            return (0, import_chunk_3UEKS5W6.execaNode)(import_node_path3.default.join(originalCwd, "../cli/build/index.js"), input, {
+            return (0, import_chunk_3UEKS5W6.execaNode)(import_node_path4.default.join(originalCwd, "../cli/build/index.js"), input, {
               cwd: c.fs.cwd(),
               stdio: "pipe",
               all: true
@@ -15259,9 +15259,9 @@ ${[...generateDirectoryTree(children, indent)].join("\n")}
           c.printDir = (dir, extensions) => {
             const content = c.fs.list(dir) ?? [];
             content.sort((a, b) => a.localeCompare(b));
-            return content.filter((name) => extensions.includes(import_node_path3.default.extname(name))).map((name) => `${name}:
+            return content.filter((name) => extensions.includes(import_node_path4.default.extname(name))).map((name) => `${name}:
 
-${c.fs.read(import_node_path3.default.join(dir, name))}`).join("\n\n");
+${c.fs.read(import_node_path4.default.join(dir, name))}`).join("\n\n");
           };
           process.chdir(c.tmpDir);
         });
@@ -16929,11 +16929,11 @@ var require_dist2 = __commonJS({
 
 // src/cli/index.ts
 var import_node_child_process = require("node:child_process");
-var import_node_fs2 = require("node:fs");
+var import_node_fs3 = require("node:fs");
 var import_promises = require("node:fs/promises");
 var import_node_net = require("node:net");
-var import_node_os = require("node:os");
-var import_node_path2 = require("node:path");
+var import_node_os2 = require("node:os");
+var import_node_path3 = require("node:path");
 var import_node_crypto = require("node:crypto");
 
 // src/cli/prisma-support.ts
@@ -17048,26 +17048,129 @@ Run the published version explicitly:
   );
 }
 
+// src/cli/install-app.ts
+var import_node_fs2 = require("node:fs");
+var import_node_os = require("node:os");
+var import_node_path2 = require("node:path");
+var ICONSET_SIZES = [
+  [16, "icon_16x16"],
+  [32, "icon_16x16@2x"],
+  [32, "icon_32x32"],
+  [64, "icon_32x32@2x"],
+  [128, "icon_128x128"],
+  [256, "icon_128x128@2x"],
+  [256, "icon_256x256"],
+  [512, "icon_256x256@2x"],
+  [512, "icon_512x512"],
+  [1024, "icon_512x512@2x"]
+];
+function defaultAppDir() {
+  return (0, import_node_path2.join)((0, import_node_os.homedir)(), "Applications");
+}
+function macosAssetDir(packageRoot2) {
+  return (0, import_node_path2.join)(packageRoot2, "scripts", "macos");
+}
+async function installApp(options, runCommand2) {
+  if (process.platform !== "darwin") {
+    throw new Error("daily-hub install-app builds a macOS app bundle and only runs on macOS.");
+  }
+  const assets = macosAssetDir(options.packageRoot);
+  const launcherSource = (0, import_node_path2.join)(assets, "launcher.sh");
+  const plistSource = (0, import_node_path2.join)(assets, "Info.plist");
+  const iconSource = (0, import_node_path2.join)(assets, "icon-1024.png");
+  for (const required of [launcherSource, plistSource, iconSource]) {
+    if (!(0, import_node_fs2.existsSync)(required)) {
+      throw new Error(
+        `This DailyHub package is missing ${required}, so the app bundle cannot be built.`
+      );
+    }
+  }
+  const appDir = options.appDir ?? defaultAppDir();
+  (0, import_node_fs2.mkdirSync)(appDir, { recursive: true });
+  const staging = (0, import_node_fs2.mkdtempSync)((0, import_node_path2.join)((0, import_node_os.tmpdir)(), "dailyhub-app-"));
+  const app = (0, import_node_path2.join)(staging, "DailyHub.app");
+  const macosDir = (0, import_node_path2.join)(app, "Contents", "MacOS");
+  const resourcesDir = (0, import_node_path2.join)(app, "Contents", "Resources");
+  (0, import_node_fs2.mkdirSync)(macosDir, { recursive: true });
+  (0, import_node_fs2.mkdirSync)(resourcesDir, { recursive: true });
+  try {
+    (0, import_node_fs2.writeFileSync)(
+      (0, import_node_path2.join)(app, "Contents", "Info.plist"),
+      (0, import_node_fs2.readFileSync)(plistSource, "utf8").replaceAll("__VERSION__", options.version)
+    );
+    let launcher = (0, import_node_fs2.readFileSync)(launcherSource, "utf8").replaceAll(
+      "__REPO_CLI__",
+      (0, import_node_path2.join)(options.packageRoot, "bin", "daily-hub.js")
+    );
+    if (options.appMode) {
+      launcher = launcher.replace(
+        'APP_MODE="${DAILYHUB_APP_MODE:-0}"',
+        'APP_MODE="${DAILYHUB_APP_MODE:-1}"'
+      );
+    }
+    const launcherPath = (0, import_node_path2.join)(macosDir, "DailyHub");
+    (0, import_node_fs2.writeFileSync)(launcherPath, launcher);
+    (0, import_node_fs2.chmodSync)(launcherPath, 493);
+    const iconset = (0, import_node_path2.join)(staging, "DailyHub.iconset");
+    (0, import_node_fs2.mkdirSync)(iconset, { recursive: true });
+    for (const [size, name] of ICONSET_SIZES) {
+      await runCommand2(
+        "sips",
+        ["-z", String(size), String(size), iconSource, "--out", (0, import_node_path2.join)(iconset, `${name}.png`)],
+        { ...process.env, PATH: process.env.PATH ?? "" },
+        staging
+      );
+    }
+    await runCommand2(
+      "iconutil",
+      ["-c", "icns", iconset, "-o", (0, import_node_path2.join)(resourcesDir, "DailyHub.icns")],
+      { ...process.env, PATH: process.env.PATH ?? "" },
+      staging
+    );
+    try {
+      await runCommand2(
+        "codesign",
+        ["--force", "--deep", "--sign", "-", app],
+        { ...process.env, PATH: process.env.PATH ?? "" },
+        staging
+      );
+    } catch {
+    }
+    const destination = (0, import_node_path2.join)(appDir, "DailyHub.app");
+    (0, import_node_fs2.rmSync)(destination, { recursive: true, force: true });
+    await runCommand2(
+      "/bin/mv",
+      [app, destination],
+      { ...process.env, PATH: process.env.PATH ?? "" },
+      staging
+    );
+    return destination;
+  } finally {
+    (0, import_node_fs2.rmSync)(staging, { recursive: true, force: true });
+  }
+}
+
 // src/cli/index.ts
-var packageRoot = (0, import_node_path2.resolve)(__dirname, "..");
-var schemaPath = (0, import_node_path2.join)(packageRoot, "prisma", "schema.prisma");
-var standaloneServerPath = (0, import_node_path2.join)(packageRoot, ".next", "standalone", "server.js");
-var bundledSeedPath = (0, import_node_path2.join)(packageRoot, "bin", "seed.js");
+var packageRoot = (0, import_node_path3.resolve)(__dirname, "..");
+var schemaPath = (0, import_node_path3.join)(packageRoot, "prisma", "schema.prisma");
+var standaloneServerPath = (0, import_node_path3.join)(packageRoot, ".next", "standalone", "server.js");
+var bundledSeedPath = (0, import_node_path3.join)(packageRoot, "bin", "seed.js");
 var packageName = "@baselhusam/daily-hub";
 function parseArgs(argv) {
   const options = {
     port: 9999,
-    dataDir: process.env.DAILYHUB_DATA_DIR ?? (0, import_node_path2.join)((0, import_node_os.homedir)(), ".daily-hub"),
+    dataDir: process.env.DAILYHUB_DATA_DIR ?? (0, import_node_path3.join)((0, import_node_os2.homedir)(), ".daily-hub"),
     openBrowser: true,
     seed: false,
     mcpEnabled: true,
     detach: false,
     detachedChild: false,
+    appMode: false,
     command: "start"
   };
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
-    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs" || arg === "mcp" || arg === "update") {
+    if (arg === "seed" || arg === "start" || arg === "status" || arg === "stop" || arg === "logs" || arg === "mcp" || arg === "update" || arg === "install-app") {
       options.command = arg;
       continue;
     }
@@ -17096,6 +17199,19 @@ function parseArgs(argv) {
       options.seed = true;
       continue;
     }
+    if (arg === "--app-mode") {
+      options.appMode = true;
+      continue;
+    }
+    if (arg === "--app-dir") {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error("Expected a path after --app-dir.");
+      }
+      options.appDir = (0, import_node_path3.resolve)(value);
+      index++;
+      continue;
+    }
     if (arg === "--port") {
       const value = Number(argv[index + 1]);
       if (!Number.isInteger(value) || value < 1 || value > 65535) {
@@ -17110,7 +17226,7 @@ function parseArgs(argv) {
       if (!value) {
         throw new Error("Expected a path after --data-dir.");
       }
-      options.dataDir = (0, import_node_path2.resolve)(value);
+      options.dataDir = (0, import_node_path3.resolve)(value);
       index++;
       continue;
     }
@@ -17139,7 +17255,7 @@ async function openBrowser(url) {
 function packageVersion() {
   try {
     const pkg = JSON.parse(
-      (0, import_node_fs2.readFileSync)((0, import_node_path2.join)(packageRoot, "package.json"), "utf8")
+      (0, import_node_fs3.readFileSync)((0, import_node_path3.join)(packageRoot, "package.json"), "utf8")
     );
     return pkg.version ?? "unknown";
   } catch {
@@ -17161,6 +17277,8 @@ Options:
   --detach            Start in the background and return after it is ready
   --seed              Seed sample data on first start
   --update            Run the latest published DailyHub version
+  --app-mode          install-app: open a chromeless window, not a browser tab
+  --app-dir <path>    install-app: where to write DailyHub.app
 
 Commands:
   start               Start DailyHub (default)
@@ -17170,21 +17288,22 @@ Commands:
   logs                Print the most recent detached-instance log output
   mcp                 Print MCP connection details for a running instance
   update              Run the latest published DailyHub version
+  install-app         Install DailyHub.app into ~/Applications (macOS)
   -h, --help          Show this help message
 `);
 }
 function backgroundStatePath(dataDir) {
-  return (0, import_node_path2.join)(dataDir, "daily-hub.pid");
+  return (0, import_node_path3.join)(dataDir, "daily-hub.pid");
 }
 function backgroundLogPath(dataDir) {
-  return (0, import_node_path2.join)(dataDir, "daily-hub.log");
+  return (0, import_node_path3.join)(dataDir, "daily-hub.log");
 }
 function mcpConfigPath(dataDir) {
-  return (0, import_node_path2.join)(dataDir, "daily-hub-mcp.json");
+  return (0, import_node_path3.join)(dataDir, "daily-hub-mcp.json");
 }
 function readMcpConfig(dataDir) {
   try {
-    const config = JSON.parse((0, import_node_fs2.readFileSync)(mcpConfigPath(dataDir), "utf8"));
+    const config = JSON.parse((0, import_node_fs3.readFileSync)(mcpConfigPath(dataDir), "utf8"));
     return typeof config.token === "string" && config.token.length >= 32 ? config : void 0;
   } catch {
     return void 0;
@@ -17194,12 +17313,12 @@ function getOrCreateMcpConfig(dataDir) {
   const existing = readMcpConfig(dataDir);
   if (existing) return existing;
   const config = { token: (0, import_node_crypto.randomBytes)(32).toString("base64url") };
-  (0, import_node_fs2.writeFileSync)(mcpConfigPath(dataDir), `${JSON.stringify(config)}
+  (0, import_node_fs3.writeFileSync)(mcpConfigPath(dataDir), `${JSON.stringify(config)}
 `, {
     encoding: "utf8",
     mode: 384
   });
-  (0, import_node_fs2.chmodSync)(mcpConfigPath(dataDir), 384);
+  (0, import_node_fs3.chmodSync)(mcpConfigPath(dataDir), 384);
   return config;
 }
 function printMcpConnection(dataDir, port) {
@@ -17219,7 +17338,7 @@ function printMcpConnection(dataDir, port) {
 }
 function readBackgroundState(dataDir) {
   try {
-    const state = JSON.parse((0, import_node_fs2.readFileSync)(backgroundStatePath(dataDir), "utf8"));
+    const state = JSON.parse((0, import_node_fs3.readFileSync)(backgroundStatePath(dataDir), "utf8"));
     if (!Number.isInteger(state.pid) || state.pid < 1 || !Number.isInteger(state.port)) {
       return void 0;
     }
@@ -17242,7 +17361,7 @@ function removeBackgroundState(dataDir, pid) {
     return;
   }
   try {
-    (0, import_node_fs2.unlinkSync)(backgroundStatePath(dataDir));
+    (0, import_node_fs3.unlinkSync)(backgroundStatePath(dataDir));
   } catch (error) {
     if (error.code !== "ENOENT") {
       throw error;
@@ -17255,7 +17374,7 @@ function writeBackgroundState(dataDir, port) {
     port,
     startedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
-  (0, import_node_fs2.writeFileSync)(backgroundStatePath(dataDir), `${JSON.stringify(state)}
+  (0, import_node_fs3.writeFileSync)(backgroundStatePath(dataDir), `${JSON.stringify(state)}
 `, "utf8");
 }
 function printBackgroundStatus(dataDir) {
@@ -17288,19 +17407,19 @@ function stopBackgroundServer(dataDir) {
 }
 function printBackgroundLogs(dataDir) {
   const logPath = backgroundLogPath(dataDir);
-  if (!(0, import_node_fs2.existsSync)(logPath)) {
+  if (!(0, import_node_fs3.existsSync)(logPath)) {
     console.log(`No background log has been created at ${logPath}.`);
     return;
   }
-  const lines = (0, import_node_fs2.readFileSync)(logPath, "utf8").trimEnd().split("\n");
+  const lines = (0, import_node_fs3.readFileSync)(logPath, "utf8").trimEnd().split("\n");
   console.log(lines.slice(-100).join("\n"));
 }
-function runCommand(command, args, env, cwd = packageRoot) {
+function runCommand(command, args, env, cwd = packageRoot, stdio = "inherit") {
   return new Promise((resolvePromise, reject) => {
     const child = (0, import_node_child_process.spawn)(command, args, {
       cwd,
       env,
-      stdio: "inherit",
+      stdio,
       shell: process.platform === "win32"
     });
     child.on("error", reject);
@@ -17344,7 +17463,7 @@ async function waitForServer(url, timeoutMs = 12e4) {
   throw new Error(`Timed out waiting for DailyHub at ${url}`);
 }
 async function prepareDataDir(dataDir) {
-  await (0, import_promises.mkdir)((0, import_node_path2.join)(dataDir, "uploads"), { recursive: true });
+  await (0, import_promises.mkdir)((0, import_node_path3.join)(dataDir, "uploads"), { recursive: true });
 }
 function buildEnv(options, queryEnginePath, mcpConfig) {
   return {
@@ -17381,7 +17500,7 @@ async function migrateDatabase(env, dataDir) {
       if (!locked || attempt === maxAttempts) {
         if (locked) {
           throw new Error(
-            `SQLite database at ${(0, import_node_path2.join)(dataDir, "data.db")} is locked. Stop any other DailyHub process (check port ${env.PORT ?? 9999}), then retry. If nothing is running, delete ${(0, import_node_path2.join)(dataDir, "data.db-wal")} and ${(0, import_node_path2.join)(dataDir, "data.db-shm")} and try again.`
+            `SQLite database at ${(0, import_node_path3.join)(dataDir, "data.db")} is locked. Stop any other DailyHub process (check port ${env.PORT ?? 9999}), then retry. If nothing is running, delete ${(0, import_node_path3.join)(dataDir, "data.db-wal")} and ${(0, import_node_path3.join)(dataDir, "data.db-shm")} and try again.`
           );
         }
         throw error;
@@ -17391,16 +17510,16 @@ async function migrateDatabase(env, dataDir) {
   }
 }
 async function seedDatabase(env) {
-  if ((0, import_node_fs2.existsSync)(bundledSeedPath)) {
+  if ((0, import_node_fs3.existsSync)(bundledSeedPath)) {
     await runCommand(process.execPath, [bundledSeedPath], env);
     return;
   }
-  await runCommand("npx", ["tsx", (0, import_node_path2.join)(packageRoot, "prisma", "seed.ts")], env);
+  await runCommand("npx", ["tsx", (0, import_node_path3.join)(packageRoot, "prisma", "seed.ts")], env);
 }
 async function startDetached(options, rawArgs) {
   await prepareDataDir(options.dataDir);
   const logPath = backgroundLogPath(options.dataDir);
-  const logFile = (0, import_node_fs2.openSync)(logPath, "a");
+  const logFile = (0, import_node_fs3.openSync)(logPath, "a");
   const childArgs = rawArgs.filter((arg) => arg !== "--detach");
   childArgs.push("--detach-child", "--no-open");
   const child = (0, import_node_child_process.spawn)(process.execPath, [process.argv[1], ...childArgs], {
@@ -17418,7 +17537,7 @@ async function startDetached(options, rawArgs) {
     );
   });
   child.unref();
-  (0, import_node_fs2.closeSync)(logFile);
+  (0, import_node_fs3.closeSync)(logFile);
   const url = `http://127.0.0.1:${options.port}`;
   try {
     const startedAt = Date.now();
@@ -17464,7 +17583,7 @@ async function startServer(options) {
     await seedDatabase(env);
   }
   const server = (0, import_node_child_process.spawn)(process.execPath, [standaloneServerPath], {
-    cwd: (0, import_node_path2.join)(packageRoot, ".next", "standalone"),
+    cwd: (0, import_node_path3.join)(packageRoot, ".next", "standalone"),
     env,
     stdio: "inherit"
   });
@@ -17539,6 +17658,23 @@ async function main() {
   }
   if (options.command === "update") {
     await runLatest(rawArgs);
+    return;
+  }
+  if (options.command === "install-app") {
+    const destination = await installApp(
+      {
+        packageRoot,
+        version: packageVersion(),
+        appMode: options.appMode,
+        appDir: options.appDir
+      },
+      (command, args, env, cwd) => runCommand(command, args, env, cwd, "ignore")
+    );
+    console.log(`Installed ${destination}`);
+    console.log("Open it from Spotlight or Launchpad, or keep it in the Dock.");
+    if (options.appDir === void 0) {
+      console.log(`Move it to /Applications if you would rather it live there than in ${defaultAppDir()}.`);
+    }
     return;
   }
   if (options.command === "seed") {

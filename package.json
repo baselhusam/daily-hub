@@ -22,6 +22,7 @@
     "bin",
     "prisma",
     "scripts/prisma-postinstall.mjs",
+    "scripts/macos",
     "public/brand-mark.svg",
     ".next/standalone",
     ".next/static",
