@@ -7,18 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-09-13
+
 ### Added
 
 - Projects now carry a colour. Upload or link a logo and DailyHub picks an accent from it, or choose one yourself from the palette, the colour picker, or a typed hex; the colour flows through avatars, the sidebar, and every chart.
 - Pick a project's colour straight off its logo: "Pick from logo" opens the image with a magnifying loupe, and clicking a pixel takes that exact colour. The custom-colour slot now stays available even while the accent came from the logo.
-- Project rhythm on Analytics: a line per project over 14, 30, or 90 days, daily or cumulative, with a legend of project logos you can click to isolate a project.
+- Every project has a page of its own. A project card now opens a page carrying its logo, status, description, ship date, and progress, with tiles for open and overdue work, finished tasks, milestones reached, and focus logged; a completion rhythm over 14, 30, or 90 days; and its tasks, its milestones, and the weekday shape of its work. The numbers above the chart cover the project's whole life, so narrowing the range never makes finished work disappear.
+- Project rhythm on Analytics: a line per project over 14, 30, or 90 days, daily or cumulative. Every project that logged something starts visible and is drawn at the same weight, each line closing to the baseline under a wash of its own colour. The legend sits beside the plot with each project's own mark, its total, and a sparkline of the window on screen — click a row to drop a project, option-click to isolate one, and fold the quiet ones away with "Only active".
+- A full-year momentum calendar, and a Daily rhythm line on Today.
 - Projects on Today can be collapsed, and a project whose tasks are all finished folds itself away until there is open work again.
 
 ### Changed
 
 - Updating an existing DailyHub now fills in project colours by itself: the first time you open the app after the update, every project that has a logo but no colour gets one derived from that logo, quietly and once. Colours set by hand before this release are recognised as deliberate and are never overwritten, and the order of projects on Today is left untouched.
+- A project marked Done stays in view. It used to vanish from Today and the sidebar; both lists now keep it and sort it last, the sidebar trades its open-task count for a faint Done pill, and its card on Today starts collapsed. Done projects no longer set the next deadline, count towards the Projects tally, or raise a stalled nudge.
+- A project's colour now sits in a slim rail rather than a saturated band — on the projects grid, the project hero, and the Analytics lists — so a screenful of projects reads as one family. The full colour still blooms on the row you point at.
+- The three cards at the top of Today share one frame, and their charts fill the space they were given: the open-tasks bars grow with the card, and the momentum tiles lay out in three rows instead of two.
 - The open-tasks chart is now interactive like the others — hover, click, or arrow-key through it for a dated breakdown.
 - Charts draw themselves in, and their hover markers glide rather than jump.
+- Analytics no longer emphasises things on its own. Hovering a project lights it up without dimming the rest, cards no longer light their borders from across the page, and dimming happens only once you pin something — with the Clear chip to undo it.
+- Page titles are set in the body sans, tightened, instead of a pixel display face — which also drops a webfont from first paint.
+- The icon picker in the project and habit dialogs is easier to search and scan.
+- The theme toggle switches directly again, without the view transition added in 0.1.10.
+
+### Fixed
+
+- The dashboard and habits pages no longer break their layout at narrow widths.
 
 ## [0.1.11] - 2026-09-06
 
@@ -161,8 +176,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose path with PostgreSQL 16 and migrate-on-start.
 - Today, Projects, Habits, and Analytics surfaces with completion logging.
 
-[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.1.11...HEAD
+[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.1.12...HEAD
+[0.1.12]: https://github.com/baselhusam/daily-hub/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/baselhusam/daily-hub/compare/v0.1.10...v0.1.11
+[0.1.10]: https://github.com/baselhusam/daily-hub/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/baselhusam/daily-hub/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/baselhusam/daily-hub/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/baselhusam/daily-hub/compare/v0.1.6...v0.1.7
