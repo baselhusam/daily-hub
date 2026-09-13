@@ -11,7 +11,13 @@
 set -uo pipefail
 
 PORT="${DAILYHUB_PORT:-9999}"
-URL="http://127.0.0.1:${PORT}"
+
+# The server binds 127.0.0.1, so the health check asks for that address directly
+# rather than depending on how localhost resolves. The browser gets the friendlier
+# name — and a stable origin, which is what lets an installed web app keep its
+# identity, its Dock icon, and its stored settings.
+PROBE_URL="http://127.0.0.1:${PORT}"
+URL="http://localhost:${PORT}"
 
 # Set DAILYHUB_APP_MODE=1 for a chromeless Chrome window instead of a browser tab.
 APP_MODE="${DAILYHUB_APP_MODE:-0}"
@@ -39,7 +45,7 @@ die() {
 }
 
 server_up() {
-  /usr/bin/curl -sf -o /dev/null --max-time 2 "$URL"
+  /usr/bin/curl -sf -o /dev/null --max-time 2 "$PROBE_URL"
 }
 
 open_ui() {
