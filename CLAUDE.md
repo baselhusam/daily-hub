@@ -232,4 +232,5 @@ npx ./baselhusam-daily-hub-0.1.5.tgz
 - [docs/SCOPE.md](docs/SCOPE.md) — in/out of scope
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — technical design
 - [docs/DESIGN.md](docs/DESIGN.md) — visual and UX direction
+- [branding/DailyHub UI Refresh.html](branding/DailyHub%20UI%20Refresh.html) — target design for the 0.2.0 UI revamp; consult it for any look-and-feel work
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — Docker and hosting

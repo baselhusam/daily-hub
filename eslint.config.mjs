@@ -17,6 +17,8 @@ const eslintConfig = [
       ".next/**",
       "node_modules/**",
       "next-env.d.ts",
+      // Design sources and their generated runtime, not app code.
+      "branding/**",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

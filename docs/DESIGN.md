@@ -10,6 +10,16 @@ DailyHub is a **quiet workspace that keeps the day in one place** — paper, ink
 
 Source of truth: `branding/DailyHub UI App.html`, `branding/DailyHub Design System.html`, and `branding/DailyHub Branding.html`.
 
+**UI revamp (0.2.0):** `branding/DailyHub UI Refresh.html` is the target design for the
+next major version — a single interactive Claude Design canvas covering Today, Projects,
+a project detail page, Habits, Analytics, the command palette, workspace settings, and the
+new-project / edit-project sheets. When a request touches the app's look and feel, read it
+first and match it; it supersedes `DailyHub UI App.html` for layout and interaction. To see
+it rendered, serve the folder (`python3 -m http.server 8787 --bind 127.0.0.1` from
+`branding/`) and open the file — `branding/support.js` is the runtime it loads, and it pulls
+React from unpkg. The markup, colour values, and component `state` in its `text/x-dc`
+script are also readable as-is. Today (`/`) was rebuilt to it first.
+
 ## Theme
 
 ### Color
