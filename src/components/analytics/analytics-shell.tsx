@@ -384,7 +384,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     style={{
                       backgroundColor:
                         cell === "kept" || cell === "today-done"
-                          ? `color-mix(in srgb, ${entry.habit.color} 60%, var(--card))`
+                          ? "color-mix(in srgb, var(--done) 60%, var(--card))"
                           : "var(--hover)",
                     }}
                   />
@@ -747,7 +747,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-rule-soft px-[18px] pt-[15px] pb-[13px]">
             <div>
               <h2 className="text-[15px] tracking-[-0.01em]">Habit consistency</h2>
-              <p className="mt-[5px] text-[12px] text-muted-foreground">One cell per day, last column is today. Hollow dashes are scheduled off-days.</p>
+              <p className="mt-[5px] text-[12px] text-muted-foreground">One cell per day, last column is today. Dashes are scheduled off-days.</p>
             </div>
             <span className="flex-none text-[11.5px] text-muted-foreground tabular-nums">
               {gridDays[0]?.label} → today
@@ -792,7 +792,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
                     </span>
                     <span className="flex flex-1 items-center gap-1">
                       {row.cells.map((cell, index) => (
-                        <HabitCell key={index} cell={cell} color={row.habit.color} day={gridDays[index]} title={row.habit.title} />
+                        <HabitCell key={index} cell={cell} day={gridDays[index]} title={row.habit.title} />
                       ))}
                     </span>
                     <span className="flex w-24 flex-none items-center justify-end gap-2">
@@ -816,12 +816,12 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-rule-soft px-[18px] py-[11px] text-[11.5px] text-muted-foreground">
             <span className="inline-flex flex-wrap items-center gap-3.5">
               <span className="inline-flex items-center gap-1.5">
-                <span className="inline-flex gap-0.5">
-                  {habitRows.slice(0, 3).map((row) => (
-                    <span key={row.habit.id} className="h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: `color-mix(in srgb, ${row.habit.color} 58%, var(--card))` }} />
-                  ))}
-                </span>
-                kept, in each habit&apos;s colour
+                <span className="h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: "color-mix(in srgb, var(--done) 58%, var(--card))" }} />
+                kept
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-[3px] bg-done" />
+                kept today
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-[3px] bg-rule-soft" />
@@ -922,7 +922,7 @@ export function AnalyticsShell({ data }: { data: AnalyticsData }) {
   );
 }
 
-function HabitCell({ cell, color, day, title }: { cell: StripCell; color: string; day?: AnalyticsDay; title: string }) {
+function HabitCell({ cell, day, title }: { cell: StripCell; day?: AnalyticsDay; title: string }) {
   const scheduled = cell !== "off";
   const kept = cell === "kept" || cell === "today-done";
   const isToday = cell === "today-done" || cell === "today-open";
@@ -932,7 +932,13 @@ function HabitCell({ cell, color, day, title }: { cell: StripCell; color: string
       title={label}
       className="flex h-5 flex-1 items-center justify-center rounded-[4px]"
       style={{
-        backgroundColor: !scheduled ? "transparent" : kept ? `color-mix(in srgb, ${color} ${isToday ? 100 : 58}%, var(--card))` : "var(--rule-soft)",
+        backgroundColor: !scheduled
+          ? "transparent"
+          : kept
+            ? isToday
+              ? "var(--done)"
+              : "color-mix(in srgb, var(--done) 58%, var(--card))"
+            : "var(--rule-soft)",
         boxShadow: isToday && !kept ? "inset 0 0 0 1.5px var(--border-strong)" : undefined,
       }}
     >
