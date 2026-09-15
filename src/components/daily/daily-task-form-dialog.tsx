@@ -1,39 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Plus } from "lucide-react";
-import {
-  createDailyTask,
-  updateDailyTask,
-} from "@/app/actions/daily-tasks";
-import { Button } from "@/components/ui/button";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Pause, Play, Plus, X } from "lucide-react";
+import { createDailyTask, updateDailyTask } from "@/app/actions/daily-tasks";
+import { Dialog, DialogOverlay, DialogPortal, DialogTrigger } from "@/components/ui/dialog";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { LogoField } from "@/components/ui/logo-field";
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DialogInput,
-  FieldLabel,
-} from "@/components/ui/input";
-import {
-  habitStatusMenuOptions,
-  iconMenuOptions,
-} from "@/components/ui/option-mark";
-import { SelectMenu } from "@/components/ui/select-menu";
-import { applyLogoToFormData } from "@/lib/logo";
 import { WEEKDAY_LABELS, WEEKDAY_SHORT } from "@/lib/dates";
-import { useWeekStart, weekdayOrder } from "@/lib/week-start";
+import { getIcon, getIconLabel, ICON_OPTIONS } from "@/lib/icons";
+import { applyLogoToFormData } from "@/lib/logo";
 import { cn } from "@/lib/utils";
-import {
-  DeleteDailyTaskDialog,
-  type DeleteDailyTaskTarget,
-} from "./delete-daily-task-dialog";
+import { useWeekStart, weekdayOrder } from "@/lib/week-start";
+import type { DeleteDailyTaskTarget } from "./delete-daily-task-dialog";
 
 export type DailyTaskFormValues = {
   id?: string;
@@ -49,209 +28,368 @@ type DailyTaskFormDialogProps = {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Hands the delete to the parent, which owns the confirm dialog. */
+  onRequestDelete?: (target: DeleteDailyTaskTarget) => void;
 };
 
+const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
+const WEEKDAYS = [1, 2, 3, 4, 5];
+const WEEKENDS = [0, 6];
+
+function sameDays(a: number[], b: number[]) {
+  return a.length === b.length && [...a].sort().every((value, index) => value === [...b].sort()[index]);
+}
+
+/**
+ * The New / Edit habit sheet: name, the weekly schedule with one-tap presets,
+ * an avatar (icon or image), and whether the habit is active. Enter saves.
+ */
 export function DailyTaskFormDialog({
   task,
   trigger,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  onRequestDelete,
 }: DailyTaskFormDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
-  const [error, setError] = React.useState<string | null>(null);
-  const [pending, setPending] = React.useState(false);
+  const isEdit = Boolean(task?.id);
   const weekStartsOn = useWeekStart();
-  const [selectedWeekdays, setSelectedWeekdays] = React.useState<number[]>(
-    task?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]
-  );
+
+  const [title, setTitle] = React.useState(task?.title ?? "");
+  const [weekdays, setWeekdays] = React.useState<number[]>(task?.weekdays ?? EVERY_DAY);
+  const [avatarTab, setAvatarTab] = React.useState<"icon" | "image">(task?.logoUrl ? "image" : "icon");
   const [iconKey, setIconKey] = React.useState(task?.iconKey ?? "check");
   const [isActive, setIsActive] = React.useState(task?.isActive ?? true);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
-  const isEdit = Boolean(task?.id);
+  const [error, setError] = React.useState<string | null>(null);
+  const [pending, setPending] = React.useState(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {
-    if (open) {
-      setSelectedWeekdays(task?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]);
-      setIconKey(task?.iconKey ?? "check");
-      setIsActive(task?.isActive ?? true);
-    }
-  }, [open, task?.weekdays, task?.iconKey, task?.isActive]);
+    if (!open) return;
+    setTitle(task?.title ?? "");
+    setWeekdays(task?.weekdays ?? EVERY_DAY);
+    setAvatarTab(task?.logoUrl ? "image" : "icon");
+    setIconKey(task?.iconKey ?? "check");
+    setIsActive(task?.isActive ?? true);
+    setError(null);
+  }, [open, task]);
+
+  const ready = title.trim().length > 0 && weekdays.length > 0 && !pending;
 
   function toggleWeekday(day: number) {
-    setSelectedWeekdays((current) =>
-      current.includes(day)
-        ? current.filter((value) => value !== day)
-        : [...current, day].sort((a, b) => a - b)
+    setWeekdays((current) =>
+      current.includes(day) ? current.filter((value) => value !== day) : [...current, day].sort((a, b) => a - b)
     );
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submit() {
+    if (!ready || !formRef.current) return;
     setPending(true);
     setError(null);
-
-    if (selectedWeekdays.length === 0) {
-      setError("Select at least one weekday.");
-      setPending(false);
-      return;
-    }
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-
-    for (const day of selectedWeekdays) {
-      formData.append("weekdays", String(day));
-    }
-
+    const formData = new FormData(formRef.current);
+    formData.set("title", title.trim());
+    formData.set("iconKey", iconKey);
+    formData.set("isActive", isActive ? "true" : "false");
+    formData.delete("weekdays");
+    for (const day of weekdays) formData.append("weekdays", String(day));
+    if (task?.id) formData.set("id", task.id);
     try {
-      await applyLogoToFormData(formData, task?.logoUrl);
-
-      const result = isEdit
-        ? await updateDailyTask(formData)
-        : await createDailyTask(formData);
-
+      if (avatarTab === "image") {
+        await applyLogoToFormData(formData, task?.logoUrl);
+      } else {
+        formData.delete("logo");
+        formData.set("logoUrl", "");
+      }
+      const result = isEdit ? await updateDailyTask(formData) : await createDailyTask(formData);
       if (!result.success) {
-        setError(result.error ?? "Failed to save habit.");
+        setError(result.error ?? "Could not save the habit. Try again.");
         return;
       }
-
-      form.reset();
       setOpen(false);
     } catch (uploadError) {
-      setError(
-        uploadError instanceof Error
-          ? uploadError.message
-          : "Failed to save logo."
-      );
+      setError(uploadError instanceof Error ? uploadError.message : "Could not save the logo.");
     } finally {
       setPending(false);
     }
   }
 
+  const presets = [
+    { label: "Every day", days: EVERY_DAY },
+    { label: "Weekdays", days: WEEKDAYS },
+    { label: "Weekends", days: WEEKENDS },
+  ];
+
   return (
-    <>
     <Dialog open={open} onOpenChange={setOpen}>
       {(trigger || controlledOpen === undefined) && (
         <DialogTrigger asChild>
           {trigger ?? (
-            <Button size="sm" className="h-9 gap-1 px-4 text-[13.5px] font-semibold">
-              <Plus className="h-3.5 w-3.5" />
-              Habit
-            </Button>
+            <button
+              type="button"
+              className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] bg-signal px-3.5 text-[13px] font-semibold text-primary-foreground shadow-[0_1px_1px_color-mix(in_srgb,var(--signal)_22%,transparent)] transition-colors duration-[120ms] hover:bg-signal-hover"
+            >
+              <Plus className="h-[15px] w-[15px]" strokeWidth={2.4} />
+              New habit
+            </button>
           )}
         </DialogTrigger>
       )}
-      <DialogContent>
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{isEdit ? "Edit habit" : "New habit"}</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            {task?.id && <input type="hidden" name="id" value={task.id} />}
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Habit</FieldLabel>
-              <DialogInput
-                name="title"
-                placeholder="e.g. Post on Medium…"
-                defaultValue={task?.title}
-                required
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Content
+          data-slot="dialog-content"
+          aria-describedby={undefined}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && event.target instanceof HTMLInputElement) {
+              event.preventDefault();
+              void submit();
+            }
+          }}
+          className={cn(
+            "fixed z-50 flex w-full flex-col overflow-hidden border border-border bg-card shadow-dialog outline-none",
+            "data-[state=open]:animate-dh-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+            "inset-x-0 bottom-0 top-auto max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-top)-0.75rem))] rounded-t-2xl",
+            "dh:inset-auto dh:top-[82px] dh:left-1/2 dh:bottom-auto dh:max-h-[calc(100dvh-100px)] dh:w-[min(calc(100%-2.5rem),440px)] dh:-translate-x-1/2 dh:rounded-[14px]"
+          )}
+        >
+          <div className="flex shrink-0 items-center justify-between border-b border-rule-soft px-[18px] py-[15px]">
+            <DialogPrimitive.Title className="truncate text-[14.5px] font-semibold tracking-[-0.01em]">
+              {isEdit ? `Edit ${task?.title}` : "New habit"}
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Close
+              className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-[6px] text-faint transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/20"
+              aria-label="Close"
+            >
+              <X className="h-3.5 w-3.5" />
+            </DialogPrimitive.Close>
+          </div>
+
+          <form
+            ref={formRef}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
+            }}
+            className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-[18px]"
+          >
+            <Field label="Habit">
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="e.g. Read 20 minutes"
+                autoFocus
+                maxLength={120}
+                className="h-9 rounded-[8px] border border-border bg-card px-[11px] text-[13.5px] text-foreground outline-none transition-colors placeholder:text-faint focus:border-signal"
               />
-            </label>
-            <div className="flex flex-col gap-1.5">
-              <FieldLabel>Schedule</FieldLabel>
-              <div className="grid grid-cols-7 gap-1">
-                {weekdayOrder(weekStartsOn).map((index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => toggleWeekday(index)}
-                    aria-pressed={selectedWeekdays.includes(index)}
-                    aria-label={WEEKDAY_SHORT[index]}
-                    className={cn(
-                      "relative grid h-11 w-full place-items-center rounded-lg border text-xs font-semibold transition-colors",
-                      selectedWeekdays.includes(index)
-                        ? "border-foreground text-white"
-                        : "border-border bg-card text-foreground hover:border-foreground"
-                    )}
-                  >
-                    {selectedWeekdays.includes(index) && (
-                      <span className="absolute inset-[-1px] rounded-lg bg-foreground" />
-                    )}
-                    <span className="relative z-10">{WEEKDAY_LABELS[index]}</span>
-                  </button>
-                ))}
+            </Field>
+
+            <div className="flex flex-col gap-[7px]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold tracking-[0.04em] text-faint uppercase">Schedule</span>
+                <span className="flex gap-1">
+                  {presets.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      aria-pressed={sameDays(weekdays, preset.days)}
+                      onClick={() => setWeekdays(preset.days)}
+                      className={cn(
+                        "h-6 rounded-[6px] px-2 text-[11px] font-semibold transition-colors",
+                        sameDays(weekdays, preset.days)
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:bg-hover hover:text-foreground"
+                      )}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </span>
               </div>
+              <div className="grid grid-cols-7 gap-1.5">
+                {weekdayOrder(weekStartsOn).map((index) => {
+                  const on = weekdays.includes(index);
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => toggleWeekday(index)}
+                      aria-pressed={on}
+                      aria-label={WEEKDAY_SHORT[index]}
+                      title={WEEKDAY_SHORT[index]}
+                      className={cn(
+                        "grid h-10 place-items-center rounded-[8px] border text-[12px] font-semibold transition-colors duration-[110ms]",
+                        on
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border bg-paper text-faint hover:border-hairline hover:text-foreground"
+                      )}
+                    >
+                      {WEEKDAY_LABELS[index]}
+                    </button>
+                  );
+                })}
+              </div>
+              {weekdays.length === 0 ? (
+                <span className="text-[11px] text-destructive">Pick at least one day.</span>
+              ) : null}
+            </div>
+
+            <div className="flex gap-3.5 rounded-[10px] border border-track bg-canvas-sunk p-[13px]">
+              <EntityAvatar
+                name={title.trim() || "?"}
+                logoUrl={avatarTab === "image" ? (task?.logoUrl ?? null) : null}
+                iconKey={avatarTab === "icon" ? iconKey : "initials"}
+                size={46}
+                rounded="lg"
+                className="shrink-0"
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-[9px]">
+                <span role="group" aria-label="Avatar" className="inline-flex w-fit gap-0.5 rounded-[8px] border border-border bg-card p-[3px]">
+                  {(["icon", "image"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      aria-pressed={avatarTab === tab}
+                      onClick={() => setAvatarTab(tab)}
+                      className={cn(
+                        "inline-flex h-[26px] items-center rounded-[6px] px-3 text-[12px] font-semibold transition-colors",
+                        avatarTab === tab ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {tab === "icon" ? "Icon" : "Image"}
+                    </button>
+                  ))}
+                </span>
+                {avatarTab === "icon" ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {ICON_OPTIONS.map((key) => {
+                      const Icon = getIcon(key);
+                      const on = iconKey === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          title={getIconLabel(key)}
+                          aria-pressed={on}
+                          onClick={() => setIconKey(key)}
+                          className={cn(
+                            "grid h-8 w-8 place-items-center rounded-[8px] border transition-colors duration-[110ms]",
+                            on
+                              ? "border-foreground bg-foreground text-background"
+                              : "border-border bg-card text-muted-foreground hover:border-hairline hover:text-foreground"
+                          )}
+                        >
+                          <Icon className="h-4 w-4" strokeWidth={1.8} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <LogoField key={String(open)} existingLogoUrl={task?.logoUrl} />
+                )}
+              </div>
+            </div>
+
+            <Field label="Status">
+              <div className="flex gap-1.5">
+                <ChoiceChip active={isActive} activeClassName="border-done bg-done-wash text-done" onClick={() => setIsActive(true)}>
+                  <Play className="h-3 w-3" strokeWidth={2.2} />
+                  Active
+                </ChoiceChip>
+                <ChoiceChip active={!isActive} activeClassName="border-warn bg-warn-wash text-warn" onClick={() => setIsActive(false)}>
+                  <Pause className="h-3 w-3" strokeWidth={2.2} />
+                  Paused
+                </ChoiceChip>
+              </div>
+              <span className="text-[10.5px] text-muted-foreground">
+                A paused habit keeps its history but stays off Today.
+              </span>
+            </Field>
+
+            {error ? (
+              <p role="alert" aria-live="polite" className="text-[12.5px] text-destructive">
+                {error}
+              </p>
+            ) : null}
+          </form>
+
+          <div className="flex shrink-0 items-center gap-2.5 border-t border-rule-soft bg-canvas-sunk px-[18px] py-[13px]">
+            {isEdit && task?.id && onRequestDelete ? (
               <button
                 type="button"
-                onClick={() => setSelectedWeekdays([0, 1, 2, 3, 4, 5, 6])}
-                aria-pressed={selectedWeekdays.length === 7}
-                className="h-10 rounded-lg border border-dashed border-hairline px-4 text-[12.5px] font-semibold text-muted-foreground hover:border-signal hover:text-signal"
+                onClick={() => {
+                  const target: DeleteDailyTaskTarget = {
+                    id: task.id!,
+                    title: task.title,
+                    iconKey: task.iconKey,
+                    logoUrl: task.logoUrl,
+                  };
+                  setOpen(false);
+                  onRequestDelete(target);
+                }}
+                className="text-[11.5px] font-semibold text-faint transition-colors hover:text-destructive"
               >
-                Every day
+                Delete habit
               </button>
-            </div>
-            <LogoField key={String(open)} existingLogoUrl={task?.logoUrl} />
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Icon</FieldLabel>
-              <SelectMenu
-                name="iconKey"
-                value={iconKey}
-                onValueChange={setIconKey}
-                options={iconMenuOptions()}
-                ariaLabel="Habit icon"
-                layout="icon-grid"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <FieldLabel>Status</FieldLabel>
-              <SelectMenu
-                name="isActive"
-                value={isActive ? "true" : "false"}
-                onValueChange={(next) => setIsActive(next === "true")}
-                options={habitStatusMenuOptions()}
-                ariaLabel="Habit status"
-              />
-            </label>
-            {error && <p role="alert" aria-live="polite" className="text-sm text-destructive">{error}</p>}
-          </DialogBody>
-          <DialogFooter>
-            {isEdit && task?.id && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="mr-auto text-faint hover:text-destructive"
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
-                Delete
-              </Button>
+            ) : (
+              <span className={cn("text-[11.5px]", ready ? "text-faint" : "text-hairline")}>
+                {ready ? "Enter to save · Esc to discard" : "Name the habit"}
+              </span>
             )}
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <span className="flex-1" />
+            <DialogPrimitive.Close className="inline-flex h-8 items-center rounded-[8px] px-3 text-[12.5px] text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
               Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : isEdit ? "Save" : "Create"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
+            </DialogPrimitive.Close>
+            <button
+              type="button"
+              onClick={() => void submit()}
+              disabled={!ready}
+              className={cn(
+                "inline-flex h-8 items-center rounded-[8px] px-[15px] text-[12.5px] font-semibold transition-colors",
+                ready ? "bg-foreground text-background hover:bg-ink-soft" : "cursor-default bg-track text-faint"
+              )}
+            >
+              {pending ? "Saving…" : isEdit ? "Save changes" : "Create habit"}
+            </button>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
-    <DeleteDailyTaskDialog
-      task={
-        task?.id
-          ? ({
-              id: task.id,
-              title: task.title,
-              iconKey: task.iconKey,
-              logoUrl: task.logoUrl,
-            } satisfies DeleteDailyTaskTarget)
-          : null
-      }
-      open={deleteConfirmOpen}
-      onOpenChange={setDeleteConfirmOpen}
-      onDeleted={() => setOpen(false)}
-    />
-    </>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-semibold tracking-[0.04em] text-faint uppercase">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function ChoiceChip({
+  active,
+  activeClassName,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  activeClassName: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-[30px] items-center gap-1.5 rounded-[7px] border px-3 text-[12.5px] font-semibold transition-colors duration-[120ms]",
+        active ? activeClassName : "border-border bg-card text-muted-foreground hover:border-hairline"
+      )}
+    >
+      {children}
+    </button>
   );
 }

@@ -1,10 +1,10 @@
 import { DailyShell } from "@/components/daily/daily-shell";
-import { getDailyPageData } from "@/lib/dashboard";
+import { getHabitsPageData } from "@/lib/habits-page";
 
 export const dynamic = "force-dynamic";
 
 export default async function DailyPage() {
-  const { dailyTasks } = await getDailyPageData();
+  const data = await getHabitsPageData();
 
-  return <DailyShell dailyTasks={dailyTasks} />;
+  return <DailyShell data={data} />;
 }
