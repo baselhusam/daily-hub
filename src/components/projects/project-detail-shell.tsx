@@ -510,8 +510,8 @@ export function ProjectDetailShell({ data }: { data: ProjectDetailData }) {
           </div>
         </section>
 
-        <div className="grid items-start gap-3.5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-          <section className="rounded-[12px] border border-border bg-card shadow-raised">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-3.5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <section className="min-w-0 rounded-[12px] border border-border bg-card shadow-raised">
             <div className="flex items-center justify-between border-b border-rule-soft px-[18px] py-3.5">
               <h2 className="text-[15px] tracking-[-0.01em]">
                 Tasks{" "}
@@ -608,7 +608,7 @@ export function ProjectDetailShell({ data }: { data: ProjectDetailData }) {
             </div>
           </section>
 
-          <div className="flex flex-col gap-3.5">
+          <div className="flex min-w-0 flex-col gap-3.5">
             <section className="rounded-[12px] border border-border bg-card shadow-raised">
               <div className="flex items-center justify-between border-b border-rule-soft px-[18px] py-3.5">
                 <h2 className="text-[15px] tracking-[-0.01em]">Milestones</h2>

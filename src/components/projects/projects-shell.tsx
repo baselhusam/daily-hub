@@ -120,6 +120,10 @@ export function ProjectsShell({ projects, todayISO, nudgeDays }: ProjectsShellPr
   const [filter, setFilter] = React.useState<Filter>("all");
   const [query, setQuery] = React.useState("");
   const [prefs, setPrefs] = React.useState<Prefs>(DEFAULT_PREFS);
+  // Phones get cards until a view is chosen; the table only scrolls sideways there.
+  const [viewChosen, setViewChosen] = React.useState(false);
+  const [phone, setPhone] = React.useState(false);
+  const view: View = viewChosen || !phone ? prefs.view : "grid";
   const [editing, setEditing] = React.useState<ProjectRecord | null>(null);
   const [pendingDelete, setPendingDelete] = React.useState<DeleteProjectTarget | null>(null);
   const [composerFor, setComposerFor] = React.useState<string | null>(null);
@@ -137,13 +141,23 @@ export function ProjectsShell({ projects, todayISO, nudgeDays }: ProjectsShellPr
   React.useEffect(() => {
     try {
       const raw = window.localStorage.getItem(PREFS_KEY);
-      if (raw) setPrefs({ ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) });
+      if (raw) {
+        const stored = JSON.parse(raw) as Partial<Prefs>;
+        setPrefs({ ...DEFAULT_PREFS, ...stored });
+        if (stored.view) setViewChosen(true);
+      }
     } catch {
       // Storage blocked; keep the defaults.
     }
+    const media = window.matchMedia("(max-width: 639px)");
+    const sync = () => setPhone(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
   }, []);
 
   function updatePrefs(patch: Partial<Prefs>) {
+    if (patch.view) setViewChosen(true);
     setPrefs((current) => {
       const next = { ...current, ...patch };
       try {
@@ -530,11 +544,11 @@ export function ProjectsShell({ projects, todayISO, nudgeDays }: ProjectsShellPr
                 key={option.value}
                 type="button"
                 title={option.label}
-                aria-pressed={prefs.view === option.value}
+                aria-pressed={view === option.value}
                 onClick={() => updatePrefs({ view: option.value })}
                 className={cn(
                   "grid h-[26px] w-[30px] place-items-center rounded-[6px] transition-colors duration-[120ms]",
-                  prefs.view === option.value
+                  view === option.value
                     ? "bg-card text-foreground shadow-raised"
                     : "text-faint hover:text-foreground"
                 )}
@@ -575,7 +589,7 @@ export function ProjectsShell({ projects, todayISO, nudgeDays }: ProjectsShellPr
               </button>
             )}
           </div>
-        ) : prefs.view === "list" ? (
+        ) : view === "list" ? (
           <div className="overflow-hidden rounded-[12px] border border-border bg-card shadow-raised">
             <div className="overflow-x-auto">
               <div className="min-w-[820px]">

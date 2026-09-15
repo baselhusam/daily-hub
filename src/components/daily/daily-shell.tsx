@@ -248,8 +248,11 @@ export function DailyShell({ data }: { data: HabitsPageData }) {
         ) : (
           <div className="overflow-hidden rounded-[12px] border border-border bg-card shadow-raised">
             <div className="overflow-x-auto">
-              <div className="min-w-[760px]">
-                <div className="grid grid-cols-[minmax(0,1fr)_216px_140px_92px_72px] items-center gap-4 border-b border-border bg-canvas-sunk px-[18px] py-[11px] text-[10.5px] font-bold tracking-[0.08em] text-faint uppercase">
+              {/* A table from `sm` up (the name column keeps room for a logo, a
+                  name and the status chip); below that each row stacks into a
+                  card: name and actions, then the schedule, then the strip. */}
+              <div className="sm:min-w-[850px]">
+                <div className="hidden grid-cols-[minmax(230px,1fr)_216px_140px_92px_72px] items-center gap-4 border-b border-border bg-canvas-sunk px-[18px] py-[11px] text-[10.5px] font-bold tracking-[0.08em] text-faint uppercase sm:grid">
                   <span>Habit</span>
                   <span>Schedule</span>
                   <span>Last 14 days</span>
@@ -260,7 +263,7 @@ export function DailyShell({ data }: { data: HabitsPageData }) {
                   <div
                     key={habit.id}
                     id={`habit-${habit.id}`}
-                    className="group grid grid-cols-[minmax(0,1fr)_216px_140px_92px_72px] items-center gap-4 border-b border-rule-soft px-[18px] py-3.5 transition-colors duration-[120ms] last:border-b-0 hover:bg-canvas-sunk"
+                    className="group grid grid-cols-[minmax(0,1fr)_92px] items-center gap-x-4 gap-y-3 border-b border-rule-soft px-[18px] py-3.5 transition-colors duration-[120ms] last:border-b-0 hover:bg-canvas-sunk sm:grid-cols-[minmax(230px,1fr)_216px_140px_92px_72px] sm:gap-4"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <EntityAvatar
@@ -293,7 +296,7 @@ export function DailyShell({ data }: { data: HabitsPageData }) {
                         <div className="mt-[3px] text-[11.5px] text-faint">{chainLabel(habit)}</div>
                       </div>
                     </div>
-                    <div className="flex gap-[5px]" aria-label={habit.scheduleLabel} title={habit.scheduleLabel}>
+                    <div className="col-span-2 flex gap-[5px] sm:col-span-1" aria-label={habit.scheduleLabel} title={habit.scheduleLabel}>
                       {weekdayOrder(weekStartsOn).map((index) => {
                         const on = habit.weekdays.includes(index);
                         return (
@@ -332,7 +335,7 @@ export function DailyShell({ data }: { data: HabitsPageData }) {
                         />
                       </div>
                     </div>
-                    <div className="flex justify-end gap-0.5">
+                    <div className="col-start-2 row-start-1 flex justify-end gap-0.5 sm:col-auto sm:row-auto">
                       <button
                         type="button"
                         onClick={() => setEditing(habit)}

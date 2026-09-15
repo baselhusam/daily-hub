@@ -23,6 +23,12 @@ import type { SearchIndex } from "@/lib/search";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
 const SIDEBAR_COLLAPSED_KEY = "dh-sidebar-collapsed";
+/**
+ * Below this the full sidebar leaves the page too little room, so it starts
+ * collapsed unless the user has chosen otherwise. Still above the `dh`
+ * breakpoint, where the sidebar gives way to the mobile bar entirely.
+ */
+const NARROW_SHELL_QUERY = "(max-width: 1199px)";
 
 type AppShellProps = {
   stats: SidebarStats;
@@ -63,30 +69,40 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
   const router = useRouter();
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const [collapsed, setCollapsed] = React.useState(false);
+  // The user's explicit choice wins; until they make one, narrow windows
+  // start collapsed and follow the viewport as it is resized.
+  const [collapsedPref, setCollapsedPref] = React.useState<boolean | null>(null);
+  const [narrow, setNarrow] = React.useState(false);
   const [sidebarReady, setSidebarReady] = React.useState(false);
+  const collapsed = collapsedPref ?? narrow;
 
   React.useEffect(() => {
     try {
-      setCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+      const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      if (stored === "1" || stored === "0") setCollapsedPref(stored === "1");
     } catch {
       // Ignore private-mode / blocked storage.
     }
+    const media = window.matchMedia(NARROW_SHELL_QUERY);
+    const sync = () => setNarrow(media.matches);
+    sync();
+    media.addEventListener("change", sync);
     const frame = requestAnimationFrame(() => setSidebarReady(true));
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      media.removeEventListener("change", sync);
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   const toggleSidebar = React.useCallback(() => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
-      } catch {
-        // Ignore private-mode / blocked storage.
-      }
-      return next;
-    });
-  }, []);
+    const next = !collapsed;
+    setCollapsedPref(next);
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+    } catch {
+      // Ignore private-mode / blocked storage.
+    }
+  }, [collapsed]);
 
   React.useEffect(() => {
     let chordArmedUntil = 0;

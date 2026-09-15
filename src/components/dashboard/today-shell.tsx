@@ -201,7 +201,7 @@ export function TodayShell({ data }: TodayShellProps) {
     // that a clipped card continues, and the padding keeps the last card's
     // edge clear of it. Its grid cell must stretch to the full row (the grid
     // is items-start) or there is nothing to stick in.
-    <div className="flex flex-col gap-3 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:px-0.5 dh:pb-8 dh:[scrollbar-width:thin] dh:[mask-image:linear-gradient(to_bottom,black_calc(100%-24px),transparent)]">
+    <div className="flex flex-col gap-3 @min-[760px]:sticky @min-[760px]:top-4 @min-[760px]:max-h-[calc(100svh-4.75rem)] @min-[760px]:overflow-y-auto @min-[760px]:overscroll-contain @min-[760px]:px-0.5 @min-[760px]:pb-8 @min-[760px]:[scrollbar-width:thin] @min-[760px]:[mask-image:linear-gradient(to_bottom,black_calc(100%-24px),transparent)]">
       <HabitsCard
         habits={data.dailyTasks}
         getDone={(id, fallback) => optimisticHabits.get(id, fallback)}
@@ -226,7 +226,7 @@ export function TodayShell({ data }: TodayShellProps) {
   );
 
   return (
-    <div className="page-gutter animate-dh-fade pt-[clamp(18px,2.4vw,26px)] pb-12">
+    <div className="page-gutter @container animate-dh-fade pt-[clamp(18px,2.4vw,26px)] pb-12">
       <MomentumAnalysisDialog
         momentum={data.momentum}
         open={momentumOpen}
@@ -289,7 +289,9 @@ export function TodayShell({ data }: TodayShellProps) {
 
         <section
           aria-label="Daily pulse"
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.05fr)_minmax(0,1.5fr)]"
+          // Sized by the page, not the viewport, so the sidebar's state and
+          // the window width both feed into which layout fits.
+          className="grid grid-cols-1 gap-3 @min-[540px]:grid-cols-2 @min-[880px]:grid-cols-[minmax(0,0.82fr)_minmax(0,1.05fr)_minmax(0,1.5fr)]"
         >
           <OpenTasksCard
             total={openTotal}
@@ -306,11 +308,11 @@ export function TodayShell({ data }: TodayShellProps) {
           <ClosedEachDayCard
             points={closedPoints}
             onExpand={() => setClosedOpen(true)}
-            className="sm:col-span-2 lg:col-span-1"
+            className="@min-[540px]:col-span-2 @min-[880px]:col-span-1"
           />
         </section>
 
-        <div className="grid items-start gap-4 dh:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.88fr)]">
+        <div className="grid items-start gap-4 @min-[760px]:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.88fr)]">
           <div className="flex min-w-0 flex-col gap-3" aria-label="Open work">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="flex min-w-0 items-center gap-[9px]">
@@ -395,7 +397,7 @@ export function TodayShell({ data }: TodayShellProps) {
             )}
           </div>
 
-          <div className="min-w-0 dh:self-stretch">{rail}</div>
+          <div className="min-w-0 @min-[760px]:self-stretch">{rail}</div>
         </div>
 
         <WeekReviewBanner review={data.weekReview} />
