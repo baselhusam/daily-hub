@@ -3,8 +3,10 @@ import { getStalledProjects } from "@/lib/notifications";
 
 const today = new Date(2026, 8, 15);
 
-function project(id: string, status: string, openCount = 3) {
-  return { id, name: id, logoUrl: null, iconKey: "folder", color: null, status, openCount };
+const longAgo = new Date(2026, 0, 1);
+
+function project(id: string, status: string, openCount = 3, createdAt = longAgo) {
+  return { id, name: id, logoUrl: null, iconKey: "folder", color: null, status, openCount, createdAt };
 }
 
 describe("getStalledProjects", () => {
@@ -31,9 +33,12 @@ describe("getStalledProjects", () => {
     expect(stalled[0].idleDays).toBeGreaterThanOrEqual(13);
   });
 
-  it("treats a never-touched active project as stalled", () => {
-    const stalled = getStalledProjects([project("new", "ACTIVE")], new Map(), today, 7);
-    expect(stalled).toHaveLength(1);
-    expect(stalled[0].idleDays).toBe(8);
+  it("counts a never-touched project's idle time from its creation", () => {
+    const fresh = project("fresh", "ACTIVE", 3, new Date(2026, 8, 13));
+    const old = project("old", "ACTIVE", 3, new Date(2026, 8, 1));
+    const stalled = getStalledProjects([fresh, old], new Map(), today, 7);
+    expect(stalled.map((p) => p.id)).toEqual(["old"]);
+    expect(stalled[0].idleDays).toBe(14);
+    expect(stalled[0].lastTouch).toBeUndefined();
   });
 });

@@ -10,12 +10,44 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { toDateInputValue } from "@/lib/dates";
 import type { AppNotification } from "@/lib/notifications";
 
 type NotificationBellProps = {
   notifications: AppNotification[];
   className?: string;
 };
+
+/**
+ * "Mark all read" is remembered per day in this browser. Notifications are
+ * derived, not stored, so a read one is keyed by its id and title: the same
+ * item stays hidden, but if it changes (another task goes overdue) it is new
+ * again, and tomorrow everything starts unread.
+ */
+const READ_KEY = "dh-notifications-read";
+
+function readKeyFor(item: AppNotification) {
+  return `${item.id}|${item.title}`;
+}
+
+function loadRead(day: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(READ_KEY);
+    if (!raw) return new Set();
+    const stored = JSON.parse(raw) as { day?: string; keys?: string[] };
+    return stored.day === day ? new Set(stored.keys ?? []) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveRead(day: string, keys: Set<string>) {
+  try {
+    localStorage.setItem(READ_KEY, JSON.stringify({ day, keys: [...keys] }));
+  } catch {
+    // Ignore private-mode / blocked storage.
+  }
+}
 
 function toneDot(tone: AppNotification["tone"]) {
   if (tone === "warn") return "bg-warn";
@@ -26,11 +58,27 @@ function toneDot(tone: AppNotification["tone"]) {
 export function NotificationBell({ notifications, className }: NotificationBellProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const count = notifications.length;
+  // Null until mounted, so the server render and the first client render agree.
+  const [read, setRead] = React.useState<Set<string> | null>(null);
+
+  React.useEffect(() => {
+    setRead(loadRead(toDateInputValue(new Date())));
+  }, []);
+
+  const unread = read ? notifications.filter((item) => !read.has(readKeyFor(item))) : [];
+  const count = unread.length;
 
   function openItem(item: AppNotification) {
     setOpen(false);
     router.push(item.href);
+  }
+
+  function markAllRead() {
+    const day = toDateInputValue(new Date());
+    const next = new Set(loadRead(day));
+    for (const item of notifications) next.add(readKeyFor(item));
+    saveRead(day, next);
+    setRead(next);
   }
 
   return (
@@ -64,9 +112,15 @@ export function NotificationBell({ notifications, className }: NotificationBellP
           <span className="text-[10.5px] font-bold tracking-[0.08em] text-faint uppercase">
             Notifications
           </span>
-          <span className="text-[11px] font-semibold text-faint tabular-nums">
-            {count === 0 ? "" : count}
-          </span>
+          {count > 0 ? (
+            <button
+              type="button"
+              onClick={markAllRead}
+              className="text-[11px] font-semibold text-signal transition-colors duration-[120ms] hover:text-foreground"
+            >
+              mark all read
+            </button>
+          ) : null}
         </div>
         {count === 0 ? (
           <div className="px-2.5 pt-[18px] pb-[22px] text-center">
@@ -75,7 +129,7 @@ export function NotificationBell({ notifications, className }: NotificationBellP
           </div>
         ) : (
           <div className="max-h-[360px] overflow-y-auto overscroll-contain">
-            {notifications.map((item) => (
+            {unread.map((item) => (
               <button
                 key={item.id}
                 type="button"

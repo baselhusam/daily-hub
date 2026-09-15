@@ -104,6 +104,7 @@ export async function getSidebarStats(): Promise<SidebarStats> {
         color: true,
         status: true,
         sortOrder: true,
+        createdAt: true,
       },
     }),
     prisma.task.groupBy({
@@ -165,7 +166,6 @@ export async function getSidebarStats(): Promise<SidebarStats> {
     overdueCount,
     dueTodayCount,
     remainingHabits,
-    nudgeDays: settings.nudgeDays,
     stalled: getStalledProjects(
       liveProjects.map((project) => ({
         ...project,

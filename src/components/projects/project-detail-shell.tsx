@@ -44,8 +44,8 @@ const WEEKDAY_FULL = [
   "Saturdays",
 ];
 
-function lastTouchedLabel(idleDays: number): string {
-  if (idleDays >= 99) return "Never touched";
+function lastTouchedLabel(idleDays: number, touched: boolean): string {
+  if (!touched) return idleDays === 0 ? "Created today" : "No activity yet";
   if (idleDays === 0) return "Last touched today";
   if (idleDays === 1) return "Last touched yesterday";
   return `Last touched ${idleDays}d ago`;
@@ -189,7 +189,7 @@ export function ProjectDetailShell({ data }: { data: ProjectDetailData }) {
       value: formatFocusHours(stats.focusMinutes),
       delta: stats.focusThisWeekMinutes > 0 ? `+${formatFocusHours(stats.focusThisWeekMinutes)}` : "",
       deltaTone: "text-done",
-      hint: lastTouchedLabel(stats.idleDays).toLowerCase(),
+      hint: lastTouchedLabel(stats.idleDays, stats.lastActiveDate !== null).toLowerCase(),
     },
   ];
 
@@ -342,7 +342,7 @@ export function ProjectDetailShell({ data }: { data: ProjectDetailData }) {
               <div className="mt-3 flex flex-wrap items-center gap-x-[18px] gap-y-1 text-[12px] text-faint">
                 <span className={cn("font-semibold tabular-nums", shipLine.tone)}>{shipLine.label}</span>
                 <span className="tabular-nums">Running {stats.ageDays}d</span>
-                <span>{lastTouchedLabel(stats.idleDays)}</span>
+                <span>{lastTouchedLabel(stats.idleDays, stats.lastActiveDate !== null)}</span>
               </div>
             </div>
             <div className="flex shrink-0 gap-1.5">

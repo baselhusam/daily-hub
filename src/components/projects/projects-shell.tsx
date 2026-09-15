@@ -847,7 +847,7 @@ export function ProjectsShell({ projects, todayISO, nudgeDays }: ProjectsShellPr
                     <div className="flex items-center gap-2 rounded-[9px] border border-warn-border bg-warn-wash px-[11px] py-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-warn" />
                       <span className="text-[12.5px] font-medium text-warn">
-                        {project.idleDays >= 99 ? "Never logged activity" : `No activity for ${project.idleDays} days`} ·{" "}
+                        {project.lastTouch === null ? `No activity in ${project.idleDays} days` : `No activity for ${project.idleDays} days`} ·{" "}
                         {project.openCount} open
                       </span>
                     </div>

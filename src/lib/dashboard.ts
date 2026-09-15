@@ -22,7 +22,7 @@ import { sortCompletedLast, sortInboxLog } from "@/lib/utils";
 import {
   getProjectLastTouchMap,
   getStalledProjects,
-  idleDaysSince,
+  idleDaysFor,
 } from "@/lib/notifications";
 import { formatEstimate } from "@/lib/streak";
 import {
@@ -87,6 +87,7 @@ export type DashboardProject = {
   dueDate: Date | null;
   status: ProjectStatus;
   sortOrder: number;
+  createdAt: Date;
   milestones: DashboardMilestone[];
   tasks: DashboardTaskItem[];
   openCount: number;
@@ -332,6 +333,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       dueDate: project.dueDate,
       status: project.status,
       sortOrder: project.sortOrder,
+      createdAt: project.createdAt,
       milestones: project.milestones,
       tasks: sortInboxLog(
         project.tasks.map((t) => mapTaskItem(t, today, completedTaskIdsToday))
@@ -377,6 +379,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       color: project.color,
       status: project.status,
       openCount: project.openCount,
+      createdAt: project.createdAt,
     })),
     lastTouch,
     today,
@@ -547,7 +550,7 @@ export async function getProjectsPageData() {
       const total = open + done;
       const pct = total === 0 ? 0 : Math.round((done / total) * 100);
       const last = lastTouch.get(project.id);
-      const idle = idleDaysSince(last, today, 99);
+      const idle = idleDaysFor(last, project.createdAt, today);
 
       return {
         ...project,

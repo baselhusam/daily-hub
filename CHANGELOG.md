@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The notification bell gains "mark all read", as in the design: read items stay hidden for the day and the dot clears; a notification that changes (another task goes overdue) comes back as new, and everything starts unread the next morning.
 - Better fit on small laptops, tablets and phones. Between 900 and 1200px the sidebar starts collapsed (until you toggle it, which is then remembered), Today's pulse row and rail reflow on the page's own width rather than the window's, the Habits table gives its name column room and turns into stacked cards on phones, Projects opens in the cards view on phones until you pick one, and the project page no longer overflows on narrow screens.
 - The search palette (⌘K) is rebuilt to the 0.2.0 design: a wider, flatter list of 38px rows with a logo, name, inline detail and the kind on the right, no section headers or footer. The four pages (Today, Projects, Habits, Analytics) are now jump targets, listed first while the box is empty, and they replace the old "See all …" rows; "Create …" shortcuts for a type name stay.
 - Today has been rebuilt to the 0.2.0 design (`branding/DailyHub UI Refresh.html`). The greeting now carries a one-line summary and a New task button; a capture bar underneath takes a title, a target, and a due date; and a row of nudges names what deserves attention first — overdue work with how far it has slipped, projects that have gone quiet, and milestones landing this week.
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The favicon sat on a solid white square, which showed as a box on tab strips and new-tab tiles; it is now transparent and rendered at 64px for retina screens.
 - Paused projects no longer count as stalled: the Today nudge chips, the notification bell and the Projects page flagged any project that was not done, so a deliberately parked project kept asking for attention.
 - Today and the sidebar list active projects first, then paused, then done; paused projects used to sit among the active ones by recency.
+- A project with no completions yet was treated as idle for the nudge threshold plus one day, so a project created yesterday was already "stalled, 15 days quiet" on Today while the bell said "14+". Idle time now counts from the project's creation when there is no activity, so the chips, the bell, the Projects page and the project hero agree, and a new project is not stalled on day one.
 
 ## [0.1.12] - 2026-09-13
 

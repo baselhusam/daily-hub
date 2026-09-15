@@ -8,7 +8,7 @@ import {
 } from "@/lib/dates";
 import { isCompletedToday } from "@/lib/due-meta";
 import { projectAccent } from "@/lib/entity-colors";
-import { idleDaysSince } from "@/lib/notifications";
+import { idleDaysFor } from "@/lib/notifications";
 import { getSettings } from "@/lib/settings";
 import type { ProjectStatus, TaskStatus } from "@/lib/status";
 import { openCountAt } from "@/lib/today-insights";
@@ -235,7 +235,7 @@ export async function getProjectDetailData(
     .map((milestone) => calendarDaysBetween(milestone.dueDate!, today))
     .sort((a, b) => a - b)[0];
 
-  const idleDays = idleDaysSince(lastActiveDate ?? undefined, today, 99);
+  const idleDays = idleDaysFor(lastActiveDate ?? undefined, project.createdAt, today);
   const ageDays = Math.max(
     1,
     Math.floor((today.getTime() - project.createdAt.getTime()) / 86400000)

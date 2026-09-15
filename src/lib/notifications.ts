@@ -32,7 +32,6 @@ export type NotificationInput = {
   overdueCount: number;
   dueTodayCount: number;
   remainingHabits: number;
-  nudgeDays: number;
   stalled: StalledProject[];
 };
 
@@ -78,12 +77,28 @@ export function idleDaysSince(
 }
 
 /**
+ * Days since a project was last touched — its latest completion, or, with no
+ * activity yet, the day it was created. A brand-new project therefore starts
+ * at zero rather than counting as stalled on day one.
+ */
+export function idleDaysFor(
+  lastTouch: string | undefined,
+  createdAt: Date,
+  today: Date
+): number {
+  if (lastTouch) return idleDaysSince(lastTouch, today, 0);
+  return Math.max(0, Math.floor((today.getTime() - createdAt.getTime()) / 86400000));
+}
+
+/**
  * Projects that have gone quiet: active, with open work, and untouched for
  * `nudgeDays`. Paused and done projects are parked on purpose, so they never
  * count, however long they sit.
  */
 export function getStalledProjects(
-  projects: Array<NotificationProject & { status: string; openCount: number }>,
+  projects: Array<
+    NotificationProject & { status: string; openCount: number; createdAt: Date }
+  >,
   lastTouch: Map<string, string>,
   today: Date,
   nudgeDays: number
@@ -91,7 +106,7 @@ export function getStalledProjects(
   return projects.flatMap((project) => {
     if (project.status !== "ACTIVE" || project.openCount === 0) return [];
     const last = lastTouch.get(project.id);
-    const idleDays = idleDaysSince(last, today, nudgeDays + 1);
+    const idleDays = idleDaysFor(last, project.createdAt, today);
     if (idleDays < nudgeDays) return [];
     return [
       {
@@ -111,7 +126,6 @@ export function buildNotifications({
   overdueCount,
   dueTodayCount,
   remainingHabits,
-  nudgeDays,
   stalled,
 }: NotificationInput): AppNotification[] {
   const items: AppNotification[] = [];
@@ -156,7 +170,7 @@ export function buildNotifications({
       title: project.name,
       detail: project.lastTouch
         ? `Untouched for ${project.idleDays} days`
-        : `Untouched for ${nudgeDays}+ days`,
+        : `No activity in ${project.idleDays} days`,
       href: `/?project=${project.id}`,
       actionLabel: "Focus",
       tone: "neutral",
