@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Editing a task or project east of Greenwich showed its due date a day early; the date field now reads the stored calendar date directly.
 - The end dot on the Today page's "Closed each day" sparkline was stretched into an oval with the chart; it is now a true circle at any card width.
 - The Today rail (habits, Inbox, up next) stopped sticking once the Inbox grew tall, so its cards scrolled off and were cut mid-content; it now pins under the top bar, scrolls on its own, and fades at its bottom edge instead of clipping.
+- The favicon sat on a solid white square, which showed as a box on tab strips and new-tab tiles; it is now transparent and rendered at 64px for retina screens.
 
 ## [0.1.12] - 2026-09-13
 
