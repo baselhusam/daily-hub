@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Today rail (habits, Inbox, up next) stopped sticking once the Inbox grew tall, so its cards scrolled off and were cut mid-content; it now pins under the top bar, scrolls on its own, and fades at its bottom edge instead of clipping.
 - The favicon sat on a solid white square, which showed as a box on tab strips and new-tab tiles; it is now transparent and rendered at 64px for retina screens.
 - Paused projects no longer count as stalled: the Today nudge chips, the notification bell and the Projects page flagged any project that was not done, so a deliberately parked project kept asking for attention.
+- Today and the sidebar list active projects first, then paused, then done; paused projects used to sit among the active ones by recency.
 
 ## [0.1.12] - 2026-09-13
 

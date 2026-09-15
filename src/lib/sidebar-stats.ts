@@ -92,7 +92,7 @@ export async function getSidebarStats(): Promise<SidebarStats> {
       },
       select: { entityId: true, completedOn: true },
     }),
-    // Done projects stay listed, sorted to the bottom by
+    // Paused and done projects stay listed, ranked below active ones by
     // sortProjectsByManualOrder below.
     prisma.project.findMany({
       orderBy: { sortOrder: "asc" },

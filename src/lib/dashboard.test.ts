@@ -55,6 +55,30 @@ describe("sortProjectsByRecentActivity", () => {
       justFinished,
     ]);
   });
+
+  it("orders active, then paused, then done, before recency", () => {
+    const paused = {
+      updatedAt: new Date("2026-08-06T12:00:00Z"),
+      sortOrder: 0,
+      status: "PAUSED" as const,
+    };
+    const done = {
+      updatedAt: new Date("2026-08-07T12:00:00Z"),
+      sortOrder: 1,
+      status: "DONE" as const,
+    };
+    const active = {
+      updatedAt: new Date("2026-07-01T12:00:00Z"),
+      sortOrder: 2,
+      status: "ACTIVE" as const,
+    };
+
+    expect([paused, done, active].sort(sortProjectsByRecentActivity)).toEqual([
+      active,
+      paused,
+      done,
+    ]);
+  });
 });
 
 describe("sortProjectsByManualOrder", () => {

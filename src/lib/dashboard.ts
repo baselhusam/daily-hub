@@ -224,8 +224,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     momentumCompletions,
     lastTouch,
   ] = await Promise.all([
-    // Done projects stay in the list — sortProjectsByRecentActivity drops them
-    // to the bottom rather than hiding the work that was finished.
+    // Paused and done projects stay in the list — sortProjectsByRecentActivity
+    // ranks them below active ones rather than hiding their work.
     prisma.project.findMany({
       orderBy: [{ updatedAt: "desc" }, { sortOrder: "asc" }],
       include: {
