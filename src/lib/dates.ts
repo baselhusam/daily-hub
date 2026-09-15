@@ -70,6 +70,16 @@ export function toDateOnlyString(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
+/**
+ * The `yyyy-MM-dd` a date input should show for a stored calendar date. Dates
+ * are saved as local midnight (`parseDateInput`), so this must read the local
+ * fields — `toDateOnlyString` goes through UTC and lands a day early east of
+ * Greenwich.
+ */
+export function toDateInputValue(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
+
 export function parseDateInput(value: string | null | undefined): Date | null {
   if (!value || value === "") return null;
 

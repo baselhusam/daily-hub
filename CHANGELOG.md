@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Today has been rebuilt to the 0.2.0 design (`branding/DailyHub UI Refresh.html`). The greeting now carries a one-line summary and a New task button; a capture bar underneath takes a title, a target, and a due date; and a row of nudges names what deserves attention first — overdue work with how far it has slipped, projects that have gone quiet, and milestones landing this week.
+- The pulse row is three cards: Open tasks, with a stacked bar splitting the count into overdue, due today, and later and a badge for the change since a week ago; Momentum, a single 30-day strip beside the streak and today's habit tally; and Closed each day, a filled sparkline of the last fortnight that opens into a full view with 7-, 14-, 30-, and 90-day ranges, area or bars, the previous period overlaid, a weekdays-only switch, and average closed per weekday.
+- Project cards on Today show the project's status, its open count and ship date, and a progress bar, and list at most five open tasks ordered by urgency; the rest sit behind "N more open →", which goes to the project page. Filtering to a project from the sidebar still shows everything.
+- Tasks are added and edited in place. "Add task to …" opens a composer under the list with one-tap due dates (today, tomorrow, the end of the week, next week, or a picked date) and estimates; the pencil on a row opens the same card pre-filled, with a project mover and a two-step delete. Enter commits, Esc closes.
+- The right rail now holds Today's habits (each row with a week strip and its trailing completion rate), the Inbox (with an empty state that points back at the capture bar), and Up next — the three nearest milestones and ship dates across projects. Week in review closes the page with a sentence, the tasks closed, habits kept, and focus hours this week, and a Back to top pill appears once you have scrolled.
+
+### Fixed
+
+- Editing a task or project east of Greenwich showed its due date a day early; the date field now reads the stored calendar date directly.
+
 ### Added
 
 - `daily-hub install-app` puts DailyHub in `~/Applications`, so it has a Dock icon, a Spotlight entry, and a double-click that opens it. The app starts the server in the background and opens the browser; `daily-hub status` and `daily-hub stop` work on it exactly as before. Pass `--app-mode` for a window without browser chrome.

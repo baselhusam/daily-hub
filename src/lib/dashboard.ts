@@ -21,14 +21,24 @@ import { getSettings } from "@/lib/settings";
 import { sortCompletedLast, sortInboxLog } from "@/lib/utils";
 import {
   getProjectLastTouchMap,
+  getStalledProjects,
   idleDaysSince,
 } from "@/lib/notifications";
+import { formatEstimate } from "@/lib/streak";
 import {
-  daysUntil,
-  formatEstimate,
-  mkSparkBars,
-  type SparkBar,
-} from "@/lib/streak";
+  buildUpNext,
+  habitDots,
+  habitRate,
+  habitsKeptThisWeek,
+  milestonesDueWithin,
+  oldestOverdueDays,
+  openCountAt,
+  openMixOf,
+  weekReviewLine,
+  type HabitDot,
+  type OpenMix,
+  type UpNextItem,
+} from "@/lib/today-insights";
 import type { ProjectStatus, TaskStatus } from "@/lib/status";
 import { withParsedWeekdays } from "@/lib/weekdays-db";
 import {
@@ -41,6 +51,9 @@ export {
   sortProjectsByManualOrder,
   sortProjectsByRecentActivity,
 } from "@/lib/project-sort";
+
+/** Enough history for the 90-day closed chart plus its previous period. */
+const ACTIVITY_DAYS = 180;
 
 export type DashboardMilestone = {
   id: string;
@@ -90,6 +103,10 @@ export type DashboardDailyTask = {
   completedToday: boolean;
   carriedOver: boolean;
   scheduleLabel: string;
+  /** One cell per day for the trailing week, ending today. */
+  dots: HabitDot[];
+  /** Trailing-fortnight completion rate, null until the habit has history. */
+  rate: number | null;
 };
 
 export type DashboardTask = {
@@ -108,19 +125,10 @@ export type DashboardTask = {
   doneToday: boolean;
 };
 
-export type DashboardSnapshot = {
-  label: string;
-  value: string;
-  unit: string;
-  color: string;
-  hint: string;
-  hintColor: string;
-  foot: string;
-  bars?: SparkBar[];
-  logoUrl?: string | null;
-  iconKey?: string | null;
-  entityName?: string;
-  entityColor?: string | null;
+export type DashboardNudges = {
+  overdue: { count: number; oldestDays: number };
+  stalled: Array<{ id: string; name: string; idleDays: number }>;
+  milestonesThisWeek: number;
 };
 
 export type DashboardActivityPoint = {
@@ -143,16 +151,26 @@ export type DashboardData = {
   };
   todayISO: string;
   todayLabel: string;
+  /** "Thursday, September 10" — the Today page eyebrow. */
+  todayEyebrow: string;
   greeting: string;
   projects: DashboardProject[];
   dailyTasks: DashboardDailyTask[];
   inboxTasks: DashboardTask[];
-  snapshots: DashboardSnapshot[];
+  openMix: OpenMix;
+  /** Open tasks now minus open tasks a week ago. */
+  openDelta: number;
+  nudges: DashboardNudges;
+  upNext: UpNextItem[];
   momentum: MomentumInfo;
+  /** One point per day for the last 180 days, oldest first. */
   activity: DashboardActivityPoint[];
   weekReview: {
     line: string;
-    stats: Array<{ value: string; label: string }>;
+    closed: number;
+    habitsKept: number;
+    habitsTotal: number;
+    focusMinutes: number;
   };
   stats: {
     openTasks: number;
@@ -205,6 +223,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     allOpenTasks,
     momentumTasks,
     momentumCompletions,
+    lastTouch,
   ] = await Promise.all([
     // Done projects stay in the list — sortProjectsByRecentActivity drops them
     // to the bottom rather than hiding the work that was finished.
@@ -233,16 +252,16 @@ export async function getDashboardData(): Promise<DashboardData> {
     prisma.completionLog.findMany({
       where: {
         entityType: "DAILY_TASK",
-        completedOn: { gte: subDays(today, 7) },
+        completedOn: { gte: subDays(today, 14) },
       },
       select: { entityId: true, completedOn: true },
     }),
     prisma.completionLog.findMany({
       where: { completedOn: { gte: thisWeekStart } },
-      select: { completedOn: true, entityType: true, entityId: true },
+      select: { completedOn: true, entityType: true, entityId: true, minutes: true },
     }),
     prisma.completionLog.findMany({
-      where: { completedOn: { gte: subDays(today, 89) } },
+      where: { completedOn: { gte: subDays(today, ACTIVITY_DAYS - 1) } },
       select: { completedOn: true, entityType: true, entityId: true },
     }),
     prisma.task.findMany({
@@ -259,12 +278,20 @@ export async function getDashboardData(): Promise<DashboardData> {
     // Include every task so completed Inbox/project work without a due date can
     // still contribute to the day on which it was actually finished.
     prisma.task.findMany({
-      select: { id: true, projectId: true, dueDate: true, createdAt: true },
+      select: {
+        id: true,
+        projectId: true,
+        dueDate: true,
+        createdAt: true,
+        status: true,
+        completedAt: true,
+      },
     }),
     prisma.completionLog.findMany({
       where: { entityType: { in: ["TASK", "DAILY_TASK"] } },
       select: { entityType: true, entityId: true, completedOn: true },
     }),
+    getProjectLastTouchMap(),
   ]);
 
   const todayKey = toDateOnlyString(today);
@@ -331,61 +358,56 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const overdueTasks = allOpenTasks.filter((t) => isOverdue(t.dueDate, today));
 
-  let nearest: {
-    days: number;
-    label: string;
-    project: string;
-    logoUrl: string | null;
-    iconKey: string;
-    color: string;
-  } | null = null;
-  for (const project of projects) {
-    // A finished project no longer sets the next deadline.
-    if (project.status === "DONE") continue;
-    for (const milestone of project.milestones) {
-      if (milestone.done || !milestone.dueDate) continue;
-      const n = daysUntil(milestone.dueDate, today);
-      if (n !== null && n >= 0 && (!nearest || n < nearest.days)) {
-        nearest = {
-          days: n,
-          label: milestone.name,
-          project: project.name,
-          logoUrl: project.logoUrl,
-          iconKey: project.iconKey,
-          color: projectAccent(project),
-        };
-      }
-    }
-    if (project.dueDate) {
-      const n = daysUntil(project.dueDate, today);
-      if (n !== null && n >= 0 && (!nearest || n < nearest.days)) {
-        nearest = {
-          days: n,
-          label: `${project.name} ships`,
-          project: project.name,
-          logoUrl: project.logoUrl,
-          iconKey: project.iconKey,
-          color: projectAccent(project),
-        };
-      }
-    }
-  }
-
-  const back7Meta = Array.from({ length: 7 }, (_, i) => {
-    const day = subDays(today, 6 - i);
-    return {
-      date: toDateOnlyString(day),
-      label: format(day, "d MMM"),
-      fullLabel: format(day, "EEEE, d MMMM"),
-    };
-  });
-  const doneSeries = back7Meta.map(
-    ({ date }) =>
-      activityCompletions.filter(
-        (l) => toDateOnlyString(l.completedOn) === date && l.entityType === "TASK"
-      ).length
+  const upNext = buildUpNext(
+    projects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      color: projectAccent(project),
+      status: project.status,
+      dueDate: project.dueDate,
+      milestones: project.milestones,
+    })),
+    today
   );
-  const closed7 = doneSeries.reduce((sum, value) => sum + value, 0);
+  const stalled = getStalledProjects(
+    mappedProjects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      logoUrl: project.logoUrl,
+      iconKey: project.iconKey,
+      color: project.color,
+      openCount: project.status === "DONE" ? 0 : project.openCount,
+    })),
+    lastTouch,
+    today,
+    settings.nudgeDays
+  );
+  const nudges: DashboardNudges = {
+    overdue: {
+      count: overdueTasks.length,
+      oldestDays: oldestOverdueDays(allOpenTasks, today),
+    },
+    stalled: stalled.map((project) => ({
+      id: project.id,
+      name: project.name,
+      idleDays: project.idleDays,
+    })),
+    milestonesThisWeek: milestonesDueWithin(
+      projects.map((project) => ({
+        id: project.id,
+        name: project.name,
+        color: "",
+        status: project.status,
+        dueDate: project.dueDate,
+        milestones: project.milestones,
+      })),
+      today,
+      7
+    ),
+  };
+  const openDelta =
+    allOpenTasks.length - openCountAt(momentumTasks, subDays(today, 7));
+
   const momentum = calculateMomentumInfo(
     dailyTasks,
     momentumTasks,
@@ -393,34 +415,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     today,
     365
   );
-
-  const snapshots: DashboardSnapshot[] = [
-    {
-      label: "Open tasks",
-      value: String(allOpenTasks.length),
-      unit: "",
-      color: "var(--foreground)",
-      hint: overdueTasks.length
-        ? `${overdueTasks.length} overdue`
-        : "nothing overdue",
-      hintColor: overdueTasks.length ? "var(--destructive)" : "var(--faint)",
-      foot: closed7 === 1 ? "1 closed" : `${closed7} closed`,
-      bars: mkSparkBars(doneSeries, 6, back7Meta),
-    },
-    {
-      label: "Next deadline",
-      value: nearest ? String(nearest.days) : "—",
-      unit: nearest ? "days" : "",
-      color: nearest ? "var(--signal)" : "var(--faint)",
-      hint: nearest ? nearest.label : "no dated milestones",
-      hintColor: "var(--faint)",
-      foot: nearest ? nearest.project : "nothing scheduled",
-      logoUrl: nearest?.logoUrl,
-      iconKey: nearest?.iconKey,
-      entityName: nearest?.project,
-      entityColor: nearest?.color,
-    },
-  ];
 
   const activityByDay = new Map<string, { tasks: number; habits: number }>();
   for (const log of activityCompletions) {
@@ -430,8 +424,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (log.entityType === "DAILY_TASK") current.habits += 1;
     activityByDay.set(key, current);
   }
-  const activity = Array.from({ length: 90 }, (_, index) => {
-    const day = subDays(today, 89 - index);
+  const activity = Array.from({ length: ACTIVITY_DAYS }, (_, index) => {
+    const day = subDays(today, ACTIVITY_DAYS - 1 - index);
     const date = toDateOnlyString(day);
     const counts = activityByDay.get(date) ?? { tasks: 0, habits: 0 };
     return {
@@ -448,15 +442,22 @@ export async function getDashboardData(): Promise<DashboardData> {
   const weekTaskCount = weekCompletions.filter(
     (l) => l.entityType === "TASK"
   ).length;
-  const byDay: Record<string, number> = {};
-  for (const log of weekCompletions) {
-    const key = toDateOnlyString(log.completedOn);
-    byDay[key] = (byDay[key] ?? 0) + 1;
-  }
-  const bestKey = Object.keys(byDay).sort((a, b) => byDay[b] - byDay[a])[0];
-  const bestDay = bestKey
-    ? format(new Date(bestKey), "EEEE")
-    : null;
+  const lastWeekStart = subDays(thisWeekStart, 7);
+  const lastWeekTaskCount = activityCompletions.filter(
+    (l) =>
+      l.entityType === "TASK" &&
+      l.completedOn >= lastWeekStart &&
+      l.completedOn < thisWeekStart
+  ).length;
+  const weekHabits = habitsKeptThisWeek(
+    dailyTasks,
+    weekCompletions.filter((l) => l.entityType === "DAILY_TASK"),
+    today
+  );
+  const focusMinutes = weekCompletions.reduce(
+    (sum, log) => sum + (log.entityType === "TASK" ? log.minutes ?? 0 : 0),
+    0
+  );
 
   return {
     settings: {
@@ -468,6 +469,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     todayISO: today.toISOString(),
     todayLabel: formatTodayLabel(today),
+    todayEyebrow: format(today, "EEEE, MMMM d"),
     greeting: getGreeting(settings.displayName),
     projects: mappedProjects,
     dailyTasks: sortCompletedLast(
@@ -481,27 +483,29 @@ export async function getDashboardData(): Promise<DashboardData> {
         completedToday: completedDailyIds.has(task.id),
         carriedOver: !isScheduledOn(task.weekdays, today),
         scheduleLabel: formatWeekdays(task.weekdays),
+        dots: habitDots(task, todayCompletions, today),
+        rate: habitRate(task, todayCompletions, today),
       })),
       (task) => task.completedToday
     ),
     inboxTasks,
-    snapshots,
+    openMix: openMixOf(allOpenTasks, today),
+    openDelta,
+    nudges,
+    upNext,
     momentum,
     activity,
     weekReview: {
-      line: weekCompletions.length
-        ? `${weekCompletions.length} things done since Monday${bestDay ? `, best on ${bestDay}.` : "."}`
-        : "Fresh week. Nothing logged yet.",
-      stats: [
-        { value: String(weekCompletions.length), label: "Completions" },
-        { value: String(weekTaskCount), label: "Tasks" },
-        {
-          value: String(
-            weekCompletions.filter((l) => l.entityType === "DAILY_TASK").length
-          ),
-          label: "Habits",
-        },
-      ],
+      line: weekReviewLine({
+        closed: weekTaskCount,
+        closedLastWeek: lastWeekTaskCount,
+        habitsKept: weekHabits.kept,
+        habitsTotal: weekHabits.total,
+      }),
+      closed: weekTaskCount,
+      habitsKept: weekHabits.kept,
+      habitsTotal: weekHabits.total,
+      focusMinutes,
     },
     stats: {
       openTasks: allOpenTasks.length,

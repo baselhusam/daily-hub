@@ -28,7 +28,7 @@ import {
 import { SelectMenu } from "@/components/ui/select-menu";
 import { applyLogoToFormData } from "@/lib/logo";
 import { extractAccentFromDataUrl } from "@/lib/logo-color-client";
-import { parseDateInput, toDateOnlyString } from "@/lib/dates";
+import { parseDateInput, toDateInputValue } from "@/lib/dates";
 
 type MilestoneForm = {
   name: string;
@@ -77,7 +77,7 @@ export function ProjectFormDialog({
     project?.status ?? "ACTIVE"
   );
   const [dueDate, setDueDate] = React.useState(
-    project?.dueDate ? toDateOnlyString(project.dueDate) : ""
+    project?.dueDate ? toDateInputValue(project.dueDate) : ""
   );
   const [color, setColor] = React.useState<string | null>(project?.color ?? null);
   const [colorSource, setColorSource] = React.useState<"auto" | "manual">(
@@ -101,12 +101,12 @@ export function ProjectFormDialog({
       setMilestones(
         project?.milestones?.map((m) => ({
           name: m.name,
-          dueDate: m.dueDate ? toDateOnlyString(m.dueDate) : "",
+          dueDate: m.dueDate ? toDateInputValue(m.dueDate) : "",
         })) ?? []
       );
       setIconKey(project?.iconKey ?? "folder");
       setStatus(project?.status ?? "ACTIVE");
-      setDueDate(project?.dueDate ? toDateOnlyString(project.dueDate) : "");
+      setDueDate(project?.dueDate ? toDateInputValue(project.dueDate) : "");
       setColor(project?.color ?? null);
       setColorSource(project?.colorSource ?? "auto");
       setAutoColor(project?.colorSource === "auto" ? project?.color ?? null : null);

@@ -3,7 +3,6 @@
 import * as React from "react";
 import { addDays, format, parseISO, startOfWeek } from "date-fns";
 import { motion, useReducedMotion } from "motion/react";
-import { Flame } from "lucide-react";
 import type { MomentumDay, MomentumInfo } from "@/lib/momentum";
 import { cn } from "@/lib/utils";
 import {
@@ -12,14 +11,10 @@ import {
   momentumTileBorder,
   momentumTileColor,
 } from "@/lib/momentum-colors";
-import { ChartTooltip } from "@/components/ui/chart-tooltip";
 import { MetricTile } from "@/components/ui/metric-tile";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import {
-  StatCardHeader,
-  StatCardMetric,
-  StatCardShell,
-} from "@/components/ui/stat-card";
+import { Eyebrow, TodayCard } from "./today-card";
+import { ExpandButton } from "./expand-button";
 import {
   Dialog,
   DialogBody,
@@ -31,6 +26,8 @@ import {
 
 type MomentumCardProps = {
   momentum: MomentumInfo;
+  habitsDone: number;
+  habitsDue: number;
   onExpand: () => void;
 };
 
@@ -41,129 +38,121 @@ type MomentumAnalysisDialogProps = {
 };
 
 const CARD_DAYS = 30;
-// Ten columns of three rather than fifteen of two: at the card's width that
-// lands each tile close to square and lets the strip fill the height the row
-// gives it, instead of leaving a band of dead space above two thin rows.
-const CARD_COLUMNS = 10;
-const CARD_ROWS = CARD_DAYS / CARD_COLUMNS;
-const CARD_TILE_GAP = 4;
-/** Floor for the stacked layout, where the card is sized by its content. */
-const CARD_MIN_TILE = 26;
 const cellHoverSpring = { type: "spring" as const, stiffness: 420, damping: 32 };
 
-export function MomentumCard({ momentum, onExpand }: MomentumCardProps) {
+/** Swatches for the "Less … More" legend, weakest first. */
+const LEGEND_RATIOS = [0, 0.5, 0.85, 1];
+
+/**
+ * Streak plus a single 30-cell strip, one tile per day. Hovering a tile
+ * rewrites the footer instead of floating a tooltip, so the strip stays
+ * uncovered while it is being read.
+ */
+export function MomentumCard({
+  momentum,
+  habitsDone,
+  habitsDue,
+  onExpand,
+}: MomentumCardProps) {
   const visibleDays = momentum.days.slice(-CARD_DAYS);
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const reducedMotion = useReducedMotion();
-  const todayIndex = Math.max(
-    0,
-    visibleDays.findIndex((day) => day.isToday)
-  );
-  const activeDay =
-    activeIndex === null ? momentum.today : visibleDays[activeIndex] ?? momentum.today;
-  const activeDayIndex = activeIndex ?? todayIndex;
-  // The strip wraps, so tooltips are anchored within the hovered row rather
-  // than across all 30 days — otherwise the card points at the wrong tile.
-  const activeColumn = activeDayIndex % CARD_COLUMNS;
+  const activeDay = activeIndex === null ? null : visibleDays[activeIndex] ?? null;
+  const activeDays = visibleDays.filter((day) => day.completed > 0).length;
+  const foot = activeDay
+    ? activeDay.isToday
+      ? "Today — in progress"
+      : `${activeDay.label} — ${daySummary(activeDay)}`
+    : `${activeDays} of ${visibleDays.length} days active`;
 
   return (
-    <StatCardShell
+    <TodayCard
+      interactive
       aria-labelledby="momentum-heading"
-      className="col-span-2 overflow-visible lg:col-span-1"
+      className="group/stat flex flex-col px-4 pt-3.5 pb-3.5"
     >
-      <StatCardHeader
-        labelId="momentum-heading"
-        icon={<Flame className="h-3.5 w-3.5" strokeWidth={2.3} />}
-        label="Daily momentum"
-        meta={`last ${CARD_DAYS} days`}
-        onExpand={onExpand}
-        expandLabel="daily momentum history"
-      />
+      <div className="flex h-[18px] items-center justify-between gap-3">
+        <Eyebrow id="momentum-heading">Momentum</Eyebrow>
+        <span className="flex items-center gap-1.5 text-[11px] text-faint">
+          last {CARD_DAYS} days
+          <ExpandButton onClick={onExpand} label="momentum history" />
+        </span>
+      </div>
 
-      <div className="mt-2 flex items-start gap-3">
-        <StatCardMetric value={momentum.streak} caption="day streak" />
-        <p
-          className="flex min-w-0 items-center gap-1.5 pt-1 text-[12px] leading-[1.3]"
-          style={{ color: momentumTextColor(activeDay.ratio) }}
-        >
+      <div className="mt-3 flex items-end gap-2">
+        <span className="text-[34px] leading-none font-semibold tracking-[-0.035em] tabular-nums">
+          {momentum.streak}
+        </span>
+        <span className="pb-0.5 text-[12px] text-muted-foreground">
+          day streak
+        </span>
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-paper px-2 py-[3px] text-[11px] font-semibold text-ink-soft tabular-nums">
           <span
-            aria-hidden="true"
-            className="h-1.5 w-1.5 shrink-0 rounded-full ring-1 ring-inset ring-black/5"
-            style={{ backgroundColor: momentumTileColor(activeDay.ratio) }}
+            aria-hidden
+            className="h-1.5 w-1.5 rounded-full"
+            style={{
+              backgroundColor: habitsDone > 0 ? "var(--signal)" : "var(--border-strong)",
+            }}
           />
-          <span className="min-w-0">{daySummary(activeDay)}</span>
-        </p>
+          {habitsDone}/{habitsDue} today
+        </span>
       </div>
 
       <div
-        // z-20 keeps the tooltip, which hangs below the card, above the
-        // project list that renders after it in the document.
-        className="relative z-20 mt-2.5 flex flex-1 flex-col"
+        className="mt-3.5 grid gap-0.5"
+        style={{ gridTemplateColumns: `repeat(${visibleDays.length}, minmax(0, 1fr))` }}
+        role="list"
+        aria-label={`Daily completion over the last ${CARD_DAYS} days`}
         onMouseLeave={() => setActiveIndex(null)}
       >
-        <div
-          className="grid flex-1 auto-rows-fr gap-1"
-          style={{
-            gridTemplateColumns: `repeat(${CARD_COLUMNS}, minmax(0, 1fr))`,
-            minHeight: `${CARD_ROWS * CARD_MIN_TILE + (CARD_ROWS - 1) * CARD_TILE_GAP}px`,
-          }}
-          role="list"
-          aria-label={`Daily completion over the last ${CARD_DAYS} days`}
-        >
-          {visibleDays.map((day, index) => (
-            <div key={day.date} role="listitem" className="min-w-0">
-              <motion.button
-                type="button"
-                aria-label={`${day.fullLabel}: ${daySummary(day)}`}
-                aria-current={day.isToday ? "date" : undefined}
-                onMouseEnter={() => setActiveIndex(index)}
-                onFocus={() => setActiveIndex(index)}
-                onBlur={() => setActiveIndex(null)}
-                onClick={onExpand}
-                whileHover={reducedMotion ? undefined : { scale: 1.16 }}
-                transition={cellHoverSpring}
-                className={cn(
-                  "block h-full max-h-9 w-full min-w-0 rounded-[3px] border transition-[box-shadow] duration-150",
-                  "hover:shadow-raised focus-visible:outline-none focus-visible:ring-[2.5px] focus-visible:ring-signal/25",
-                  // A hairline ring, not a haloed offset ring: at 20px an
-                  // offset ring swallowed the tile and clipped on the card edge.
-                  day.isToday &&
-                    "ring-[1.5px] ring-signal ring-offset-1 ring-offset-card"
-                )}
-                style={{
-                  backgroundColor: momentumTileColor(day.ratio),
-                  borderColor: momentumTileBorder(day.ratio),
-                }}
-              >
-                <span className="sr-only">{daySummary(day)}</span>
-              </motion.button>
-            </div>
-          ))}
-        </div>
-
-        {activeIndex !== null ? (
-          <ChartTooltip
-            x={activeColumn + 0.5}
-            chartWidth={CARD_COLUMNS}
-            title={activeDay.fullLabel}
-            compact
-            placement="bottom"
-            layout="list"
-            rows={[
-              {
-                label: activeDay.total === 0 ? "nothing due" : "complete",
-                value:
-                  activeDay.total === 0
-                    ? "—"
-                    : `${activeDay.completed}/${activeDay.total}`,
-                color: momentumTileColor(activeDay.ratio),
-              },
-              ...sourceRows(activeDay),
-            ]}
-          />
-        ) : null}
+        {visibleDays.map((day, index) => (
+          <div key={day.date} role="listitem" className="min-w-0">
+            <motion.button
+              type="button"
+              aria-label={`${day.fullLabel}: ${daySummary(day)}`}
+              aria-current={day.isToday ? "date" : undefined}
+              onMouseEnter={() => setActiveIndex(index)}
+              onFocus={() => setActiveIndex(index)}
+              onBlur={() => setActiveIndex(null)}
+              onClick={onExpand}
+              whileHover={reducedMotion ? undefined : { scaleY: 1.12 }}
+              transition={cellHoverSpring}
+              className={cn(
+                "block h-6 w-full min-w-0 rounded-[3px] outline outline-[1.5px] outline-offset-[1.5px] outline-transparent transition-[outline-color] duration-[130ms]",
+                "hover:outline-foreground focus-visible:outline-foreground",
+                day.isToday && "bg-paper shadow-[inset_0_0_0_1.5px_var(--signal)]"
+              )}
+              style={
+                day.isToday ? undefined : { backgroundColor: momentumTileColor(day.ratio) }
+              }
+            >
+              <span className="sr-only">{daySummary(day)}</span>
+            </motion.button>
+          </div>
+        ))}
       </div>
-    </StatCardShell>
+
+      <div className="mt-auto flex items-center justify-between gap-3 pt-3 text-[12px] text-muted-foreground">
+        <span
+          className={cn("min-w-0 truncate", activeDay && "font-semibold text-foreground")}
+          aria-live="polite"
+        >
+          {foot}
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-faint">
+          Less
+          {LEGEND_RATIOS.map((ratio) => (
+            <span
+              key={ratio}
+              aria-hidden
+              className="h-[9px] w-[9px] rounded-[3px]"
+              style={{ backgroundColor: momentumTileColor(ratio) }}
+            />
+          ))}
+          More
+        </span>
+      </div>
+    </TodayCard>
   );
 }
 
@@ -541,22 +530,6 @@ function SourceMetric({ label, value }: { label: string; value: { completed: num
 }
 
 /** Only the sources that actually had something due that day. */
-function sourceRows(day: MomentumDay) {
-  return (
-    [
-      { label: "habits", source: day.habits },
-      { label: "inbox", source: day.inbox },
-      { label: "projects", source: day.projects },
-    ] as const
-  )
-    .filter(({ source }) => source.total > 0)
-    .map(({ label, source }) => ({
-      label,
-      value: `${source.completed}/${source.total}`,
-      color: momentumTileColor(source.completed / source.total),
-    }));
-}
-
 function daySummary(day: MomentumDay): string {
   if (day.total === 0) return "No commitments due";
   if (day.isComplete) return `${day.completed} of ${day.total} complete · all done`;

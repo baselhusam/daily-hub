@@ -17,7 +17,7 @@ import {
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { DialogInput, FieldLabel } from "@/components/ui/input";
 import { SelectMenu } from "@/components/ui/select-menu";
-import { toDateOnlyString } from "@/lib/dates";
+import { toDateInputValue } from "@/lib/dates";
 
 type TaskFormValues = {
   id: string;
@@ -64,14 +64,14 @@ export function CreateTaskDialog({
     task?.projectId ?? defaultProjectId ?? "none"
   );
   const [dueDate, setDueDate] = React.useState(
-    task?.dueDate ? toDateOnlyString(task.dueDate) : ""
+    task?.dueDate ? toDateInputValue(task.dueDate) : ""
   );
   const isEdit = Boolean(task?.id);
 
   React.useEffect(() => {
     if (open) {
       setProjectId(task?.projectId ?? defaultProjectId ?? "none");
-      setDueDate(task?.dueDate ? toDateOnlyString(task.dueDate) : "");
+      setDueDate(task?.dueDate ? toDateInputValue(task.dueDate) : "");
       setError(null);
     }
   }, [open, task, defaultProjectId]);
