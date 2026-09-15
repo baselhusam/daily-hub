@@ -4,11 +4,12 @@ import * as React from "react";
 import type { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowUpRight,
+  BarChart3,
   CalendarCheck,
   CheckCircle2,
   Flag,
   FolderKanban,
+  LayoutGrid,
   ListChecks,
   Plus,
   Search,
@@ -40,8 +41,8 @@ type SearchPaletteProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-type ResultType = "project" | "task" | "milestone" | "habit";
-type CreateKind = ResultType;
+type ResultType = "page" | "project" | "task" | "milestone" | "habit";
+type CreateKind = Exclude<ResultType, "page">;
 type ItemAction = "see" | "create";
 
 type PaletteItem = {
@@ -57,6 +58,8 @@ type PaletteItem = {
   iconKey: string | null;
   color: string | null;
   inbox?: boolean;
+  /** Two-letter mark for rows without a logo, like a page. */
+  mark?: string;
   statusMark?: {
     Icon: LucideIcon;
     tone: OptionTone;
@@ -68,53 +71,58 @@ const TYPE_META: Record<
   ResultType,
   {
     label: string;
-    plural: string;
-    Icon: typeof FolderKanban;
+    Icon: LucideIcon;
     aliases: string[];
-    seeHref: string;
-    seeSubtitle: string;
     createSubtitle: string;
   }
 > = {
+  page: {
+    label: "Page",
+    Icon: LayoutGrid,
+    aliases: [],
+    createSubtitle: "",
+  },
   project: {
     label: "Project",
-    plural: "Projects",
     Icon: FolderKanban,
     aliases: ["project", "projects"],
-    seeHref: "/projects",
-    seeSubtitle: "Open the projects page",
     createSubtitle: "Add a new project",
   },
   task: {
     label: "Task",
-    plural: "Tasks",
     Icon: ListChecks,
     aliases: ["task", "tasks"],
-    seeHref: "/",
-    seeSubtitle: "Open today’s open work",
     createSubtitle: "Add a new task",
   },
   milestone: {
     label: "Milestone",
-    plural: "Milestones",
     Icon: Flag,
     aliases: ["milestone", "milestones"],
-    seeHref: "/projects",
-    seeSubtitle: "See milestones on projects",
     createSubtitle: "Add a milestone to a project",
   },
   habit: {
     label: "Habit",
-    plural: "Habits",
     Icon: CalendarCheck,
     aliases: ["habit", "habits", "daily"],
-    seeHref: "/daily",
-    seeSubtitle: "Open the habits page",
     createSubtitle: "Add a new habit",
   },
 };
 
-const TYPE_ORDER: ResultType[] = ["project", "task", "milestone", "habit"];
+/** The app's pages, always searchable and listed first while the box is empty. */
+const PAGES: Array<{
+  label: string;
+  href: string;
+  mark: string;
+  Icon: LucideIcon;
+  aliases: string[];
+}> = [
+  { label: "Today", href: "/", mark: "TD", Icon: LayoutGrid, aliases: ["home", "dashboard"] },
+  { label: "Projects", href: "/projects", mark: "PR", Icon: FolderKanban, aliases: ["project"] },
+  { label: "Habits", href: "/daily", mark: "HB", Icon: CalendarCheck, aliases: ["habit", "daily"] },
+  { label: "Analytics", href: "/analytics", mark: "AN", Icon: BarChart3, aliases: ["stats", "insights"] },
+];
+
+const TYPE_ORDER: CreateKind[] = ["project", "task", "milestone", "habit"];
 const EMPTY_LIMIT = 4;
 
 function queryTokens(query: string) {
@@ -125,7 +133,7 @@ function isInboxQuery(query: string): boolean {
   return query.trim().toLowerCase() === "inbox";
 }
 
-function isTypeQuery(query: string, type: ResultType): boolean {
+function isTypeQuery(query: string, type: CreateKind): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return false;
   return TYPE_META[type].aliases.some(
@@ -220,45 +228,53 @@ function projectHref(status: "ACTIVE" | "PAUSED" | "DONE", id: string) {
   return `/?project=${id}`;
 }
 
-function typeActions(type: ResultType): PaletteItem[] {
+/** "Create …" shortcut for a type-name query; pages cover "see all". */
+function createAction(type: CreateKind): PaletteItem {
   const meta = TYPE_META[type];
-  return [
-    {
-      key: `see-${type}`,
-      type,
-      title: `See all ${meta.plural.toLowerCase()}`,
-      subtitle: meta.seeSubtitle,
-      href: meta.seeHref,
-      action: "see",
-      badge: "View",
-      name: meta.label,
-      logoUrl: null,
-      iconKey: null,
-      color: null,
-    },
-    {
-      key: `create-${type}`,
-      type,
-      title: `Create ${meta.label.toLowerCase()}`,
-      subtitle: meta.createSubtitle,
-      action: "create",
-      badge: "Create",
-      name: meta.label,
-      logoUrl: null,
-      iconKey: null,
-      color: null,
-    },
-  ];
+  return {
+    key: `create-${type}`,
+    type,
+    title: `Create ${meta.label.toLowerCase()}`,
+    subtitle: meta.createSubtitle,
+    action: "create",
+    badge: "Create",
+    name: meta.label,
+    logoUrl: null,
+    iconKey: null,
+    color: null,
+  };
+}
+
+function pageItems(query: string): PaletteItem[] {
+  const q = query.trim().toLowerCase();
+  return PAGES.filter(
+    (page) =>
+      !q ||
+      page.label.toLowerCase().includes(q) ||
+      page.aliases.some((alias) => alias.startsWith(q))
+  ).map((page) => ({
+    key: `page-${page.href}`,
+    type: "page",
+    title: page.label,
+    subtitle: "",
+    href: page.href,
+    badge: TYPE_META.page.label,
+    name: page.label,
+    logoUrl: null,
+    iconKey: null,
+    color: null,
+    mark: page.mark,
+  }));
 }
 
 function buildItems(index: SearchIndex, query: string): PaletteItem[] {
   const limit = query.trim() ? Number.POSITIVE_INFINITY : EMPTY_LIMIT;
-  const items: PaletteItem[] = [];
+  const items: PaletteItem[] = pageItems(query);
   const inboxHit = isInboxQuery(query);
 
   for (const type of TYPE_ORDER) {
     const typeHit = isTypeQuery(query, type);
-    if (typeHit) items.push(...typeActions(type));
+    if (typeHit) items.push(createAction(type));
 
     const entityQuery = typeHit ? "" : query;
 
@@ -429,6 +445,34 @@ function buildItems(index: SearchIndex, query: string): PaletteItem[] {
   return items;
 }
 
+/** The 22px mark at the start of a row: a logo, the inbox tray, or a chip. */
+function ResultMark({ item }: { item: PaletteItem }) {
+  if (item.action === "create") {
+    return (
+      <span className="inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md border border-signal-wash bg-signal-wash text-signal">
+        <Plus className="h-3 w-3" strokeWidth={2.2} />
+      </span>
+    );
+  }
+  if (item.inbox) return <InboxAvatar size={22} />;
+  if (item.type === "page") {
+    return (
+      <span className="inline-grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md border border-border bg-canvas-sunk text-[9.5px] font-bold tracking-[0.02em] text-muted-foreground">
+        {item.mark}
+      </span>
+    );
+  }
+  return (
+    <EntityAvatar
+      name={item.name}
+      color={item.color}
+      logoUrl={item.logoUrl}
+      iconKey={item.iconKey}
+      size={22}
+    />
+  );
+}
+
 export function SearchPalette({
   index: initialIndex,
   open,
@@ -486,7 +530,7 @@ export function SearchPalette({
   }
 
   function select(item: PaletteItem) {
-    if (item.action === "create") {
+    if (item.action === "create" && item.type !== "page") {
       openCreate(item.type);
       return;
     }
@@ -530,22 +574,22 @@ export function SearchPalette({
         <DialogContent
           showClose={false}
           placement="top"
-          className="w-[min(calc(100%-1.5rem),480px)] max-w-[480px] gap-0 overflow-hidden p-0 sm:max-w-[480px]"
+          className="w-[min(calc(100%-1.5rem),560px)] max-w-[560px] gap-0 overflow-hidden rounded-[14px] p-0 shadow-[0_30px_70px_-24px_rgb(15_15_15/0.5)] sm:max-w-[560px] dh:top-[112px] dh:max-h-[430px]"
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
         >
           <DialogTitle className="sr-only">Search</DialogTitle>
           <DialogDescription className="sr-only">
-            Search projects, tasks, milestones, and habits
+            Jump to a page, project, task, milestone or habit
           </DialogDescription>
-          <div className="flex items-center gap-2.5 border-b border-border px-3.5 py-3">
-            <Search className="h-4 w-4 shrink-0 text-faint" />
+          <div className="flex shrink-0 items-center gap-2.5 border-b border-rule-soft px-[15px] py-[13px]">
+            <Search className="h-4 w-4 shrink-0 text-faint" strokeWidth={1.8} />
             <input
               ref={inputRef}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Find a task or inbox…"
+              placeholder="Jump to a page, project, task or habit…"
               className="min-w-0 flex-1 border-0 bg-transparent text-base outline-none placeholder:text-faint dh:text-[14.5px]"
               role="combobox"
               aria-expanded
@@ -554,115 +598,67 @@ export function SearchPalette({
               autoComplete="off"
               spellCheck={false}
             />
-            <kbd className="hidden rounded border border-border bg-paper px-1.5 py-0.5 text-[11px] font-semibold text-faint sm:inline">
+            <kbd className="hidden rounded-[5px] border border-border px-1.5 py-0.5 font-mono text-[11px] font-semibold text-faint sm:inline">
               esc
             </kbd>
           </div>
           <div
             id="search-palette-results"
             role="listbox"
-            className="max-h-[min(360px,50dvh)] overflow-y-auto overscroll-contain py-1.5"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5"
           >
             {items.length === 0 ? (
-              <p className="px-3.5 py-8 text-center text-[13px] text-muted-foreground">
-                {query.trim()
-                  ? `No matches for “${query.trim()}”. Try a task title or inbox.`
-                  : "Nothing to search yet."}
-              </p>
+              <div className="px-2.5 pt-[34px] pb-[38px] text-center">
+                <p className="text-[13.5px] text-muted-foreground">
+                  {query.trim() ? "Nothing matches that search." : "Nothing to search yet."}
+                </p>
+                <p className="mt-1 text-[12px] text-faint">
+                  {query.trim()
+                    ? "Try a project name, a task title or a page."
+                    : "Add a project, task or habit and it will show up here."}
+                </p>
+              </div>
             ) : (
-              items.map((item, index) => {
-                const meta = TYPE_META[item.type];
-                const TypeIcon = meta.Icon;
-                const showTypeHeader =
-                  index === 0 || items[index - 1]?.type !== item.type;
-
-                return (
-                  <React.Fragment key={item.key}>
-                    {showTypeHeader && (
-                      <p className="px-3.5 pt-2 pb-1 text-[11px] font-semibold tracking-[0.04em] text-faint uppercase">
-                        {meta.plural}
-                      </p>
-                    )}
-                    <button
-                      id={item.key}
-                      ref={index === activeIndex ? activeRef : undefined}
-                      type="button"
-                      role="option"
-                      aria-selected={index === activeIndex}
-                      onMouseEnter={() => setActiveIndex(index)}
-                      onClick={() => select(item)}
-                      className={cn(
-                        "flex w-full items-center gap-2.5 px-3.5 py-2 text-left transition-colors duration-[120ms]",
-                        index === activeIndex
-                          ? "bg-hover"
-                          : "hover:bg-canvas-sunk"
-                      )}
-                    >
-                      {item.action === "see" && item.inbox ? (
-                        <InboxAvatar size={28} />
-                      ) : item.action === "see" ? (
-                        <span className="inline-grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border bg-paper text-muted-foreground">
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </span>
-                      ) : item.action === "create" ? (
-                        <span className="inline-grid h-7 w-7 shrink-0 place-items-center rounded-md border border-signal-wash bg-signal-wash text-signal">
-                          <Plus className="h-3.5 w-3.5" />
-                        </span>
-                      ) : item.inbox ? (
-                        <InboxAvatar size={28} />
-                      ) : (
-                        <EntityAvatar
-                          name={item.name}
-                          color={item.color}
-                          logoUrl={item.logoUrl}
-                          iconKey={item.iconKey}
-                          size={28}
-                        />
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13.5px] font-semibold">
-                          <Highlight text={item.title} query={query} />
-                        </span>
-                        <span className="mt-0.5 block truncate text-[12px] text-faint">
-                          {item.subtitle}
-                        </span>
+              items.map((item, index) => (
+                <button
+                  key={item.key}
+                  id={item.key}
+                  ref={index === activeIndex ? activeRef : undefined}
+                  type="button"
+                  role="option"
+                  aria-selected={index === activeIndex}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => select(item)}
+                  className={cn(
+                    "flex h-[38px] w-full items-center gap-2.5 rounded-lg px-2.5 text-left transition-colors duration-[120ms]",
+                    index === activeIndex && "bg-canvas-sunk"
+                  )}
+                >
+                  <ResultMark item={item} />
+                  <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+                    <span className="min-w-0 truncate text-[13.5px] font-medium">
+                      <Highlight text={item.title} query={query} />
+                    </span>
+                    {item.subtitle ? (
+                      // Gives way before the title does, but never vanishes.
+                      <span className="min-w-[72px] shrink-[4] truncate text-[12px] text-faint">
+                        {item.subtitle}
                       </span>
-                      <span className="inline-flex shrink-0 items-center gap-1.5">
-                        {item.statusMark ? (
-                          <span title={item.statusMark.label}>
-                            <OptionMark
-                              icon={item.statusMark.Icon}
-                              tone={item.statusMark.tone}
-                              size={16}
-                            />
-                          </span>
-                        ) : null}
-                        <span className="inline-flex items-center gap-1 rounded border border-border bg-paper px-1.5 py-0.5 text-[10.5px] font-semibold tracking-[0.02em] text-muted-foreground">
-                          {item.action ? (
-                            item.action === "create" ? (
-                              <Plus className="h-3 w-3" />
-                            ) : (
-                              <ArrowUpRight className="h-3 w-3" />
-                            )
-                          ) : (
-                            <TypeIcon className="h-3 w-3" />
-                          )}
-                          {item.badge}
-                        </span>
-                      </span>
-                    </button>
-                  </React.Fragment>
-                );
-              })
+                    ) : null}
+                  </span>
+                  {item.statusMark ? (
+                    <span title={item.statusMark.label} className="shrink-0">
+                      <OptionMark
+                        icon={item.statusMark.Icon}
+                        tone={item.statusMark.tone}
+                        size={15}
+                      />
+                    </span>
+                  ) : null}
+                  <span className="shrink-0 text-[11.5px] text-faint">{item.badge}</span>
+                </button>
+              ))
             )}
-          </div>
-          <div className="flex items-center justify-between border-t border-border px-3.5 py-2">
-            <p className="text-[11.5px] text-faint">
-              Projects, tasks, inbox, habits
-            </p>
-            <p className="hidden text-[11.5px] text-faint sm:block">
-              ↑↓ move · ↵ open
-            </p>
           </div>
         </DialogContent>
       </Dialog>
