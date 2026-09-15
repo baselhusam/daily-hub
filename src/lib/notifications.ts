@@ -77,14 +77,19 @@ export function idleDaysSince(
   );
 }
 
+/**
+ * Projects that have gone quiet: active, with open work, and untouched for
+ * `nudgeDays`. Paused and done projects are parked on purpose, so they never
+ * count, however long they sit.
+ */
 export function getStalledProjects(
-  projects: Array<NotificationProject & { openCount: number }>,
+  projects: Array<NotificationProject & { status: string; openCount: number }>,
   lastTouch: Map<string, string>,
   today: Date,
   nudgeDays: number
 ): StalledProject[] {
   return projects.flatMap((project) => {
-    if (project.openCount === 0) return [];
+    if (project.status !== "ACTIVE" || project.openCount === 0) return [];
     const last = lastTouch.get(project.id);
     const idleDays = idleDaysSince(last, today, nudgeDays + 1);
     if (idleDays < nudgeDays) return [];

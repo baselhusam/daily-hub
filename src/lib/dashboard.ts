@@ -375,7 +375,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       logoUrl: project.logoUrl,
       iconKey: project.iconKey,
       color: project.color,
-      openCount: project.status === "DONE" ? 0 : project.openCount,
+      status: project.status,
+      openCount: project.openCount,
     })),
     lastTouch,
     today,
@@ -556,7 +557,7 @@ export async function getProjectsPageData() {
         doneCount: done,
         completionPct: pct,
         stalled:
-          project.status !== "DONE" && open > 0 && idle >= nudgeDays,
+          project.status === "ACTIVE" && open > 0 && idle >= nudgeDays,
         idleDays: idle,
         lastTouch: last ?? null,
       };
