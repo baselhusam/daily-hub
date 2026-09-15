@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import type { DashboardData, DashboardTaskItem } from "@/lib/dashboard";
@@ -137,8 +136,8 @@ export function ProjectGroup({
   const reducedMotion = useReducedMotion();
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
-  // Adding a task from this card lifts the cap for the session, so the new
-  // row is never swallowed by "N more open".
+  // "N more open" lifts the cap in place; adding a task does too, so the new
+  // row is never swallowed by it.
   const [revealAll, setRevealAll] = React.useState(false);
 
   const visibleTasks = sortInboxLog(
@@ -160,6 +159,7 @@ export function ProjectGroup({
   const cappedOpen =
     expanded || revealAll ? openTasks : openTasks.slice(0, TODAY_TASK_CAP);
   const hiddenOpen = openTasks.length - cappedOpen.length;
+  const canFold = !expanded && revealAll && openTasks.length > TODAY_TASK_CAP;
   const openCount = openTasks.length;
   const total = openCount + project.doneCount;
   const pct = total === 0 ? 0 : Math.round((project.doneCount / total) * 100);
@@ -236,15 +236,16 @@ export function ProjectGroup({
   const body = (
     <div className="border-t border-rule-soft pt-1 pb-1.5">
       {cappedOpen.map((task) => renderTask(task, rowIndex++))}
-      {doneTodayTasks.map((task) => renderTask(task, rowIndex++))}
-      {hiddenOpen > 0 ? (
-        <Link
-          href={`/projects/${project.id}`}
-          className="block py-1.5 pr-4 pl-[45px] text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
+      {hiddenOpen > 0 || canFold ? (
+        <button
+          type="button"
+          onClick={() => setRevealAll(!revealAll)}
+          className="block w-full py-1.5 pr-4 pl-[45px] text-left text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
         >
-          {hiddenOpen} more open →
-        </Link>
+          {hiddenOpen > 0 ? `${hiddenOpen} more open ↓` : "Show fewer ↑"}
+        </button>
       ) : null}
+      {doneTodayTasks.map((task) => renderTask(task, rowIndex++))}
       {composerOpen ? (
         <div className="mx-2.5 mt-1 mb-1">
           <TaskComposer

@@ -197,10 +197,11 @@ export function TodayShell({ data }: TodayShellProps) {
   }));
 
   const rail = (
-    // Sticky with its own scroll for short viewports. The bottom padding keeps
-    // the last card's edge off the clip line, and the cap on the Inbox card
-    // keeps the rail short enough to fit on most screens without scrolling.
-    <div className="flex flex-col gap-3 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:px-0.5 dh:pb-6 dh:[scrollbar-width:thin]">
+    // Sticky with its own scroll for short viewports. The bottom fade shows
+    // that a clipped card continues, and the padding keeps the last card's
+    // edge clear of it. Its grid cell must stretch to the full row (the grid
+    // is items-start) or there is nothing to stick in.
+    <div className="flex flex-col gap-3 dh:sticky dh:top-4 dh:max-h-[calc(100svh-4.75rem)] dh:overflow-y-auto dh:overscroll-contain dh:px-0.5 dh:pb-8 dh:[scrollbar-width:thin] dh:[mask-image:linear-gradient(to_bottom,black_calc(100%-24px),transparent)]">
       <HabitsCard
         habits={data.dailyTasks}
         getDone={(id, fallback) => optimisticHabits.get(id, fallback)}
@@ -394,7 +395,7 @@ export function TodayShell({ data }: TodayShellProps) {
             )}
           </div>
 
-          <div className="min-w-0">{rail}</div>
+          <div className="min-w-0 dh:self-stretch">{rail}</div>
         </div>
 
         <WeekReviewBanner review={data.weekReview} />

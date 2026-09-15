@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Today has been rebuilt to the 0.2.0 design (`branding/DailyHub UI Refresh.html`). The greeting now carries a one-line summary and a New task button; a capture bar underneath takes a title, a target, and a due date; and a row of nudges names what deserves attention first — overdue work with how far it has slipped, projects that have gone quiet, and milestones landing this week.
 - The pulse row is three cards: Open tasks, with a stacked bar splitting the count into overdue, due today, and later and a badge for the change since a week ago; Momentum, a single 30-day strip beside the streak and today's habit tally; and Closed each day, a filled sparkline of the last fortnight that opens into a full view with 7-, 14-, 30-, and 90-day ranges, area or bars, the previous period overlaid, a weekdays-only switch, and average closed per weekday.
-- Project cards on Today show the project's status, its open count and ship date, and a progress bar, and list at most five open tasks ordered by urgency; the rest sit behind "N more open →", which goes to the project page. Filtering to a project from the sidebar still shows everything.
+- Project cards on Today show the project's status, its open count and ship date, and a progress bar, and list at most five open tasks ordered by urgency; the rest unfold in place behind "N more open". The Inbox card lists every open unfiled task. Filtering to a project from the sidebar still shows everything.
 - Tasks are added and edited in place. "Add task to …" opens a composer under the list with one-tap due dates (today, tomorrow, the end of the week, next week, or a picked date) and estimates; the pencil on a row opens the same card pre-filled, with a project mover and a two-step delete. Enter commits, Esc closes.
 - The shell follows the same design. The top bar carries the workspace mark and name, a breadcrumb (workspace › page, or › Projects › project on a project page), the search field, notifications, the theme switch, the GitHub link, and an avatar menu listing the keyboard jumps. The sidebar's main menu shows counts in pills with an accent bar on the active page; Filter today lists Everything, the Inbox, and each project with its open count; the Chain card at the foot marks a "best yet" streak.
 - Workspace settings is now a single card: workspace name, display name, theme, week start, the stalled-project threshold, and streaks. The role field is gone from the form.
@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Editing a task or project east of Greenwich showed its due date a day early; the date field now reads the stored calendar date directly.
 - The end dot on the Today page's "Closed each day" sparkline was stretched into an oval with the chart; it is now a true circle at any card width.
+- The Today rail (habits, Inbox, up next) stopped sticking once the Inbox grew tall, so its cards scrolled off and were cut mid-content; it now pins under the top bar, scrolls on its own, and fades at its bottom edge instead of clipping.
 
 ## [0.1.12] - 2026-09-13
 

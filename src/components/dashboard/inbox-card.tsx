@@ -48,13 +48,9 @@ function groupByDay<T extends { completedAt: Date | null }>(
   return groups;
 }
 
-/** Open items shown in the rail before the card defers to the Inbox view. */
-const RAIL_OPEN_CAP = 6;
-
 /**
- * Unfiled tasks. On Today it shows the first few open ones plus anything
- * finished today; with the Inbox filter on it becomes the full ledger,
- * grouped by day.
+ * Unfiled tasks. On Today it shows every open one plus anything finished
+ * today; with the Inbox filter on it becomes the full ledger, grouped by day.
  */
 export function InboxCard({
   tasks,
@@ -75,9 +71,7 @@ export function InboxCard({
       return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
     })
   );
-  const allOpen = visible.filter((task) => !task.done);
-  const openTasks = expanded ? allOpen : allOpen.slice(0, RAIL_OPEN_CAP);
-  const hiddenOpen = allOpen.length - openTasks.length;
+  const openTasks = visible.filter((task) => !task.done);
   const doneTasks = visible.filter((task) =>
     expanded ? task.done : task.done && (task.doneToday || getDone(task.id, task.done) !== task.done)
   );
@@ -94,8 +88,8 @@ export function InboxCard({
       : openTasks.length > 0
         ? `${openTasks.length} open`
         : `${doneTasks.length} finished`
-    : allOpen.length > 0
-      ? `${allOpen.length} unfiled`
+    : openTasks.length > 0
+      ? `${openTasks.length} unfiled`
       : "unfiled";
 
   function renderTask(task: (typeof visible)[number]) {
@@ -170,14 +164,6 @@ export function InboxCard({
       ) : (
         <div className="pt-1 pb-1.5">
           {openTasks.map(renderTask)}
-          {hiddenOpen > 0 ? (
-            <Link
-              href="/?project=inbox"
-              className="block py-1.5 pr-4 pl-[45px] text-[12.5px] text-faint transition-colors duration-[120ms] hover:text-signal"
-            >
-              {hiddenOpen} more unfiled →
-            </Link>
-          ) : null}
           {doneGroups.map((group) => (
             <div key={group.key} className={openTasks.length > 0 ? "mt-1" : undefined}>
               {expanded ? (
