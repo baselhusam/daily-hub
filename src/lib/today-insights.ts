@@ -157,9 +157,10 @@ type CompletionLike = { entityId: string; completedOn: Date };
 export function habitsKeptThisWeek(
   habits: HabitLike[],
   completions: CompletionLike[],
-  today: Date
+  today: Date,
+  weekStartsOn: 0 | 1 = 1
 ): { kept: number; total: number } {
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const weekStart = startOfWeek(today, { weekStartsOn });
   const hitKeys = new Set(
     completions.map((c) => `${c.entityId}:${toDateOnlyString(c.completedOn)}`)
   );

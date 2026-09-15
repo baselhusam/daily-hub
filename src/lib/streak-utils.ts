@@ -10,12 +10,18 @@ import {
 
 export type StreakInfo = {
   streak: number;
+  /** The longest run on record (within the last two years), for "best yet". */
+  best: number;
   dots: Array<{ color: string }>;
 };
+
+/** How far back the best-streak scan looks; enough for any real chain. */
+const BEST_STREAK_LOOKBACK_DAYS = 730;
 
 export function emptyStreakInfo(): StreakInfo {
   return {
     streak: 0,
+    best: 0,
     dots: Array.from({ length: 14 }, () => ({ color: "var(--track)" })),
   };
 }
@@ -65,19 +71,35 @@ export function calculateStreakInfo(
     cursor = subDays(cursor, 1);
   }
 
+  // Longest run of good days between the first habit and yesterday; today
+  // is still in progress so it neither breaks nor extends the record here.
+  let best = 0;
+  let run = 0;
+  for (let k = 1; k <= BEST_STREAK_LOOKBACK_DAYS; k++) {
+    const date = subDays(today, k);
+    if (startedOn && date < startedOn) break;
+    if (dayOk(date)) {
+      run++;
+      if (run > best) best = run;
+    } else {
+      run = 0;
+    }
+  }
+  best = Math.max(best, streak);
+
   const dots: Array<{ color: string }> = [];
   for (let k = 13; k >= 0; k--) {
     const ok = dayOk(subDays(today, k));
     dots.push({
       color: ok
         ? k === 0
-          ? "var(--chart-hit)"
-          : "var(--chart-hit-soft)"
+          ? "var(--signal)"
+          : "var(--chart-ink)"
         : "var(--track)",
     });
   }
 
-  return { streak, dots };
+  return { streak, best, dots };
 }
 
 function startOfCalendarDay(date: Date): Date {

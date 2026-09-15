@@ -21,8 +21,9 @@ import {
   parseDateInput,
 } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import { useWeekStart, weekdayOrder } from "@/lib/week-start";
 
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const;
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
 
 type DatePickerProps = {
   name?: string;
@@ -72,9 +73,8 @@ export function DatePicker({
     onValueChange?.(next);
   }
 
-  const gridStart = startOfWeek(startOfMonth(visibleMonth), {
-    weekStartsOn: 1,
-  });
+  const weekStartsOn = useWeekStart();
+  const gridStart = startOfWeek(startOfMonth(visibleMonth), { weekStartsOn });
   const days = Array.from({ length: 42 }, (_, index) =>
     addDays(gridStart, index)
   );
@@ -137,7 +137,7 @@ export function DatePicker({
             </button>
           </div>
           <div className="mb-1 grid grid-cols-7 gap-0.5">
-            {WEEKDAYS.map((day) => (
+            {weekdayOrder(weekStartsOn).map((index) => WEEKDAYS[index]).map((day) => (
               <span
                 key={day}
                 className="py-1 text-center text-[10.5px] font-semibold tracking-[0.04em] text-faint"

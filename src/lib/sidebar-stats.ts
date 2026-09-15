@@ -17,7 +17,7 @@ import {
 } from "@/lib/notifications";
 import { withParsedWeekdays } from "@/lib/weekdays-db";
 import { getStreakInfo } from "@/lib/streak";
-import { getSettings } from "@/lib/settings";
+import { getSettings, type WeekStart } from "@/lib/settings";
 
 export type SidebarProject = {
   id: string;
@@ -39,22 +39,23 @@ export type SidebarStats = {
   dailyConsistencyToday: number;
   projects: SidebarProject[];
   streak: number;
+  bestStreak: number;
   streakDots: Array<{ color: string }>;
   showStreaks: boolean;
   notifications: AppNotification[];
   settings: {
     displayName: string;
-    role: string;
     workspaceName: string;
     showStreaks: boolean;
     nudgeDays: number;
+    weekStartsOn: WeekStart;
   };
 };
 
 export async function getSidebarStats(): Promise<SidebarStats> {
   const today = getTodayDate();
-  const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
   const settings = await getSettings();
+  const thisWeekStart = startOfWeek(today, { weekStartsOn: settings.weekStartsOn });
 
   const [
     openTasks,
@@ -198,15 +199,16 @@ export async function getSidebarStats(): Promise<SidebarStats> {
         openCount: countMap.get(project.id) ?? 0,
       })),
     streak: streakInfo.streak,
+    bestStreak: streakInfo.best,
     streakDots: streakInfo.dots,
     showStreaks: settings.showStreaks,
     notifications,
     settings: {
       displayName: settings.displayName,
-      role: settings.role,
       workspaceName: settings.workspaceName,
       showStreaks: settings.showStreaks,
       nudgeDays: settings.nudgeDays,
+      weekStartsOn: settings.weekStartsOn,
     },
   };
 }

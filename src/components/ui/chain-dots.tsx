@@ -7,7 +7,7 @@ type ChainDot = {
 type ChainDotsProps = {
   dots: ChainDot[];
   className?: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "bar";
 };
 
 export function ChainDots({ dots, className, size = "sm" }: ChainDotsProps) {
@@ -18,7 +18,7 @@ export function ChainDots({ dots, className, size = "sm" }: ChainDotsProps) {
           key={index}
           className={cn(
             "flex-1 rounded-[2px]",
-            size === "sm" ? "h-1.5" : "h-4"
+            size === "sm" ? "h-1.5" : size === "bar" ? "h-[7px]" : "h-4"
           )}
           style={{ backgroundColor: dot.color }}
         />

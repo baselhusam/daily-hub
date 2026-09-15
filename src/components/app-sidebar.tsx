@@ -17,6 +17,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { reorderProjects } from "@/app/actions/projects";
 import { cn } from "@/lib/utils";
 import type { SidebarStats } from "@/lib/sidebar-stats";
+import {
+  SIDEBAR_COLLAPSED_WIDTH,
+  SIDEBAR_WIDTH,
+  TOP_BAR_HEIGHT,
+} from "@/components/app-top-bar";
 
 const navItems = [
   { href: "/", label: "Today", icon: LayoutDashboard, countKey: "openTasks" as const },
@@ -170,21 +175,23 @@ export function AppSidebar({
   const isSidebarInteractive = (target: EventTarget | null) =>
     target instanceof Element && Boolean(target.closest("[data-sidebar-interactive]"));
 
+  const onToday = pathname === "/";
+  const scoped = onToday && Boolean(activeProjectId);
+  const hasFilters = stats.projects.length > 0 || stats.inboxTotalCount > 0;
+  const bestYet =
+    stats.showStreaks && stats.streak > 0 && stats.streak >= stats.bestStreak;
+
   return (
     <aside
       onClick={(event) => {
         if (!collapsed) return;
-
-        if (!isSidebarInteractive(event.target)) {
-          onExpand?.();
-        }
+        if (!isSidebarInteractive(event.target)) onExpand?.();
       }}
       onPointerMove={(event) => {
         if (!collapsed || isSidebarInteractive(event.target)) {
           setShowExpandHint(false);
           return;
         }
-
         const hint = expandHintRef.current;
         if (hint) {
           hint.style.transform = `translate3d(${event.clientX + 12}px, ${event.clientY + 12}px, 0)`;
@@ -193,11 +200,14 @@ export function AppSidebar({
       }}
       onPointerLeave={() => setShowExpandHint(false)}
       className={cn(
-        "group/sidebar fixed top-[52px] bottom-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-border bg-paper dh:flex",
-        animate &&
-          "transition-[width] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
-        collapsed ? "w-[68px] cursor-pointer" : "w-64"
+        "group/sidebar fixed bottom-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-border bg-paper dh:flex",
+        animate && "transition-[width] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
+        collapsed ? "cursor-pointer" : ""
       )}
+      style={{
+        top: TOP_BAR_HEIGHT,
+        width: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH,
+      }}
     >
       {collapsed && (
         <span
@@ -213,203 +223,194 @@ export function AppSidebar({
           Open
         </span>
       )}
+
       <div
         className={cn(
-          "relative z-10 flex min-h-0 flex-1 flex-col pb-3",
-          collapsed ? "gap-3 p-2" : "gap-5 p-3.5"
+          "flex min-h-0 flex-1 flex-col pt-3.5 pb-4",
+          collapsed ? "gap-3 px-3" : "gap-[18px] px-3"
         )}
       >
-        <nav className="flex shrink-0 flex-col gap-0.5">
+        <nav className="flex shrink-0 flex-col gap-0.5" aria-label="Main menu">
           {!collapsed && (
-            <p className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[0.02em] text-faint">
-              Main Menu
+            <p className="px-2.5 pb-2 text-[10.5px] font-bold tracking-[0.08em] text-faint uppercase">
+              Main menu
             </p>
           )}
           {navItems.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href);
-              const Icon = item.icon;
-              const count =
-                item.countKey !== null ? stats[item.countKey] : undefined;
+            const isActive =
+              item.href === "/" ? onToday : pathname.startsWith(item.href);
+            const Icon = item.icon;
+            const count = item.countKey !== null ? stats[item.countKey] : undefined;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  data-sidebar-interactive
-                  title={item.label}
-                  aria-current={isActive ? "page" : undefined}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                data-sidebar-interactive
+                title={item.label}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "relative flex h-[34px] items-center rounded-[8px] px-2.5 text-[13.5px] font-medium transition-colors duration-[120ms]",
+                  isActive ? "text-foreground" : "text-ink-soft hover:bg-hover hover:text-foreground",
+                  collapsed && "justify-center px-0"
+                )}
+              >
+                {isActive && (
+                  <>
+                    <span className="absolute inset-0 rounded-[8px] border border-border bg-card shadow-raised" />
+                    <span className="absolute top-[9px] bottom-[9px] left-[-12px] w-[2.5px] rounded-r-[2px] bg-signal" />
+                  </>
+                )}
+                <span
                   className={cn(
-                    "relative flex items-center rounded-md text-[13.5px] font-medium transition-colors duration-[120ms]",
-                    collapsed
-                      ? "h-9 justify-center"
-                      : "gap-2.5 px-2.5 py-2",
-                    isActive
-                      ? "text-foreground"
-                      : "text-ink-soft hover:bg-hover"
+                    "relative flex w-full items-center gap-2.5",
+                    collapsed && "justify-center"
                   )}
                 >
-                  {isActive && (
-                    <span className="absolute inset-0 rounded-md border border-border bg-card shadow-raised" />
+                  <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 whitespace-nowrap">{item.label}</span>
+                      {count !== undefined && (
+                        <span className="grid h-[18px] min-w-5 place-items-center rounded-[6px] bg-hover px-[5px] text-[11px] font-semibold text-muted-foreground tabular-nums">
+                          {count}
+                        </span>
+                      )}
+                    </>
                   )}
-                  <span
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {collapsed && hasFilters && (
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pt-0.5 [scrollbar-width:none]">
+            <div className="mx-auto mb-1.5 h-px w-5 bg-border-strong/60" />
+            <nav className="flex flex-col items-center gap-1" aria-label="Today filters">
+              <Link
+                href="/"
+                data-sidebar-interactive
+                title="Everything"
+                aria-label={`Everything, ${stats.openTasks} open tasks`}
+                aria-current={onToday && !activeProjectId ? "page" : undefined}
+                className={cn(
+                  "grid h-[30px] w-[30px] place-items-center rounded-[8px] transition-colors duration-[120ms] hover:bg-hover",
+                  onToday && !activeProjectId && "border border-border bg-card shadow-raised"
+                )}
+              >
+                <span className="h-[18px] w-[18px] rounded-[5px] bg-foreground" />
+              </Link>
+              <Link
+                href="/?project=inbox"
+                data-sidebar-interactive
+                title="Inbox"
+                aria-label={`Inbox, ${stats.inboxCount} open tasks`}
+                aria-current={onToday && activeProjectId === "inbox" ? "page" : undefined}
+                className={cn(
+                  "grid h-[30px] w-[30px] place-items-center rounded-[8px] transition-colors duration-[120ms] hover:bg-hover",
+                  onToday && activeProjectId === "inbox" && "border border-border bg-card shadow-raised"
+                )}
+              >
+                <InboxAvatar size={18} />
+              </Link>
+              {projects.map((project) => {
+                const isActive = onToday && activeProjectId === project.id;
+                const isDone = project.status === "DONE";
+                return (
+                  <Link
+                    key={project.id}
+                    href={`/?project=${project.id}`}
+                    data-sidebar-interactive
+                    title={isDone ? `${project.name} — Done` : project.name}
+                    aria-label={
+                      isDone
+                        ? `${project.name}, done`
+                        : `${project.name}, ${project.openCount} open tasks`
+                    }
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "relative z-10 flex items-center",
-                      collapsed ? "justify-center" : "w-full gap-2.5"
+                      "grid h-[30px] w-[30px] place-items-center rounded-[8px] transition-[background-color,opacity] duration-[120ms] hover:bg-hover",
+                      isActive && "border border-border bg-card shadow-raised",
+                      isDone && !isActive && "opacity-55 hover:opacity-100"
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && (
-                      <>
-                        <span className="flex-1">{item.label}</span>
-                        {count !== undefined && (
-                          <span className="text-[11px] text-faint tabular-nums">
-                            {count}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
+                    <EntityAvatar
+                      name={project.name}
+                      color={project.color}
+                      logoUrl={project.logoUrl}
+                      iconKey={project.iconKey}
+                      size={18}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        )}
 
-          {collapsed && (stats.projects.length > 0 || stats.inboxTotalCount > 0) && (
-            <div className="min-h-0 flex-1 overflow-y-auto pt-1">
-              <div className="mx-auto mb-2 h-px w-7 bg-border" />
-              <nav className="flex flex-col items-center gap-1" aria-label="Today filters">
+        {!collapsed && hasFilters && (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-2.5 pb-2">
+              <p className="text-[10.5px] font-bold tracking-[0.08em] text-faint uppercase">
+                Filter today
+              </p>
+              <Link
+                href="/"
+                data-sidebar-interactive
+                aria-disabled={!scoped}
+                tabIndex={scoped ? 0 : -1}
+                className={cn(
+                  "text-[11px] font-semibold transition-colors duration-[120ms]",
+                  scoped ? "text-signal hover:text-signal-hover" : "pointer-events-none text-faint"
+                )}
+              >
+                clear
+              </Link>
+            </div>
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="flex flex-col gap-0.5 pr-2">
                 <Link
                   href="/"
                   data-sidebar-interactive
-                  title="Everything"
-                  aria-label={`Everything, ${stats.openTasks} open tasks`}
-                  aria-current={pathname === "/" && !activeProjectId ? "page" : undefined}
+                  aria-current={onToday && !activeProjectId ? "page" : undefined}
                   className={cn(
-                    "grid h-9 w-9 place-items-center rounded-md transition-colors duration-[120ms]",
-                    pathname === "/" && !activeProjectId
-                      ? "border border-border bg-card text-foreground shadow-raised"
-                      : "text-ink-soft hover:bg-hover"
+                    "flex h-[30px] items-center gap-[9px] rounded-[7px] px-2.5 text-[13px] font-medium transition-colors duration-[120ms] hover:bg-hover",
+                    onToday && !activeProjectId && "bg-hover"
                   )}
                 >
-                  <span className="h-[18px] w-[18px] rounded-md bg-foreground" />
+                  <span className="h-[18px] w-[18px] shrink-0 rounded-[5px] bg-foreground" />
+                  <span className="flex-1 truncate">Everything</span>
+                  <span className="text-[11px] text-muted-foreground tabular-nums">
+                    {stats.openTasks}
+                  </span>
                 </Link>
                 <Link
                   href="/?project=inbox"
                   data-sidebar-interactive
-                  title="Inbox"
-                  aria-label={`Inbox, ${stats.inboxCount} open tasks`}
-                  aria-current={pathname === "/" && activeProjectId === "inbox" ? "page" : undefined}
+                  aria-current={onToday && activeProjectId === "inbox" ? "page" : undefined}
                   className={cn(
-                    "grid h-9 w-9 place-items-center rounded-md transition-colors duration-[120ms]",
-                    pathname === "/" && activeProjectId === "inbox"
-                      ? "border border-border bg-card shadow-raised"
-                      : "hover:bg-hover"
+                    "flex h-[30px] items-center gap-[9px] rounded-[7px] px-2.5 text-[13px] font-medium transition-colors duration-[120ms] hover:bg-hover",
+                    onToday && activeProjectId === "inbox" && "bg-hover"
                   )}
                 >
                   <InboxAvatar size={18} />
+                  <span className="flex-1 truncate">Inbox</span>
+                  <span className="text-[11px] text-muted-foreground tabular-nums">
+                    {stats.inboxCount}
+                  </span>
                 </Link>
                 {projects.map((project) => {
-                  const isActive = pathname === "/" && activeProjectId === project.id;
+                  const isActive = onToday && activeProjectId === project.id;
                   const isDone = project.status === "DONE";
-
                   return (
-                    <Link
-                      key={project.id}
-                      href={`/?project=${project.id}`}
-                      data-sidebar-interactive
-                      title={isDone ? `${project.name} — Done` : project.name}
-                      aria-label={
-                        isDone
-                          ? `${project.name}, done`
-                          : `${project.name}, ${project.openCount} open tasks`
-                      }
-                      aria-current={isActive ? "page" : undefined}
-                      className={cn(
-                        "grid h-9 w-9 place-items-center rounded-md transition-colors duration-[120ms]",
-                        isActive
-                          ? "border border-border bg-card shadow-raised"
-                          : "hover:bg-hover",
-                        isDone && !isActive && "opacity-60 hover:opacity-100"
-                      )}
-                    >
-                      <EntityAvatar
-                        name={project.name}
-                        color={project.color}
-                        logoUrl={project.logoUrl}
-                        iconKey={project.iconKey}
-                        size={18}
-                      />
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-          )}
-
-          {!collapsed && (stats.projects.length > 0 || stats.inboxTotalCount > 0) && (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="mb-1 flex items-center justify-between px-3">
-                <p className="text-[11.5px] font-semibold tracking-[0.02em] text-faint">
-                  Filter Today
-                </p>
-                {activeProjectId && (
-                  <Link
-                    href="/"
-                    data-sidebar-interactive
-                    className="text-[11px] font-semibold text-signal hover:text-signal-hover"
-                  >
-                    clear
-                  </Link>
-                )}
-              </div>
-              <ScrollArea className="min-h-0 flex-1">
-                <div className="space-y-0.5 pr-2">
-                  <Link
-                    href="/"
-                    className={cn(
-                      "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13.5px] font-medium",
-                      pathname === "/" && !activeProjectId
-                        ? "bg-hover text-foreground"
-                        : "text-foreground hover:bg-hover"
-                    )}
-                  >
-                    <span className="h-[18px] w-[18px] shrink-0 rounded-md bg-foreground" />
-                    <span className="flex-1">Everything</span>
-                    <span className="text-[11px] text-faint tabular-nums">
-                      {stats.openTasks}
-                    </span>
-                  </Link>
-                  <Link
-                    href="/?project=inbox"
-                    data-sidebar-interactive
-                    className={cn(
-                      "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-[13.5px] font-medium",
-                      pathname === "/" && activeProjectId === "inbox"
-                        ? "bg-hover text-foreground"
-                        : "text-foreground hover:bg-hover"
-                    )}
-                  >
-                    <InboxAvatar size={18} />
-                    <span className="flex-1">Inbox</span>
-                    <span className="text-[11px] text-faint tabular-nums">
-                      {stats.inboxCount}
-                    </span>
-                  </Link>
-                  {projects.map((project) => (
                     <div
                       key={project.id}
                       data-project-row
                       data-project-id={project.id}
                       className={cn(
-                        "group/project relative flex items-center gap-1 rounded-md py-1.5 pr-3 text-[13.5px] font-medium transition-[background-color,opacity,box-shadow] duration-150",
-                        pathname === "/" && activeProjectId === project.id
-                          ? "bg-hover"
-                          : "hover:bg-hover",
-                        project.status === "DONE" &&
-                          "opacity-60 hover:opacity-100 focus-within:opacity-100",
+                        "group/project relative flex h-[30px] items-center rounded-[7px] px-2.5 text-[13px] font-medium transition-[background-color,opacity,box-shadow] duration-150 hover:bg-hover",
+                        isActive && "bg-hover",
                         draggedProjectId === project.id && "select-none opacity-45",
                         dropProjectId === project.id &&
                           "bg-signal/10 shadow-[inset_0_2px_0_var(--color-signal)]"
@@ -419,7 +420,7 @@ export function AppSidebar({
                         type="button"
                         data-project-drag-handle
                         data-sidebar-interactive
-                        className="grid h-[18px] w-[18px] shrink-0 touch-none cursor-grab place-items-center rounded text-faint/70 opacity-45 transition-opacity active:cursor-grabbing group-hover/project:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50"
+                        className="absolute top-1/2 left-[-3px] grid h-[18px] w-[13px] -translate-y-1/2 touch-none cursor-grab place-items-center rounded text-faint/80 opacity-0 transition-opacity active:cursor-grabbing group-hover/project:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50"
                         aria-label={`Reorder ${project.name}`}
                         title="Drag to reorder"
                         onPointerDown={(event) => {
@@ -448,7 +449,9 @@ export function AppSidebar({
                       <Link
                         href={`/?project=${project.id}`}
                         data-sidebar-interactive
-                        className="flex min-w-0 flex-1 items-center gap-2"
+                        title={project.name}
+                        aria-current={isActive ? "page" : undefined}
+                        className="flex h-full min-w-0 flex-1 items-center gap-[9px]"
                       >
                         <EntityAvatar
                           name={project.name}
@@ -457,43 +460,50 @@ export function AppSidebar({
                           iconKey={project.iconKey}
                           size={18}
                         />
-                        <span className="flex-1 truncate">{project.name}</span>
-                        {project.status === "DONE" ? (
-                          <span className="shrink-0 rounded border border-border px-1.5 py-px text-[10px] font-semibold tracking-[0.02em] text-faint">
-                            Done
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-faint tabular-nums">
-                            {project.openCount}
-                          </span>
-                        )}
+                        <span
+                          className={cn(
+                            "flex-1 truncate",
+                            isDone ? "text-faint" : "text-foreground"
+                          )}
+                        >
+                          {project.name}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                          {isDone ? "done" : project.openCount}
+                        </span>
                       </Link>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          )}
-        </div>
-
-        {!collapsed && stats.showStreaks && (
-          <div className="mt-auto shrink-0 p-3">
-            <div className="rounded-[10px] border border-border bg-card p-3.5">
-              <p className="mb-1.5 text-[11.5px] font-semibold tracking-[0.02em] text-faint">
-                Chain
-              </p>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[26px] font-semibold text-signal tabular-nums leading-none">
-                  {stats.streak}
-                </span>
-                <span className="text-[12.5px] text-muted-foreground">
-                  days unbroken
-                </span>
+                  );
+                })}
               </div>
-              <ChainDots dots={stats.streakDots} className="mt-2.5" />
-            </div>
+            </ScrollArea>
           </div>
         )}
+
+        {!collapsed && stats.showStreaks && (
+          <div className="mt-auto shrink-0 rounded-[11px] border border-border bg-card px-3.5 py-[13px] shadow-raised">
+            <div className="flex items-center justify-between">
+              <span className="text-[10.5px] font-bold tracking-[0.08em] text-faint uppercase">
+                Chain
+              </span>
+              {bestYet ? (
+                <span className="rounded-[5px] bg-done-wash px-1.5 py-px text-[10.5px] font-bold text-done">
+                  best yet
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-[28px] leading-none font-semibold tracking-[-0.03em] text-signal tabular-nums">
+                {stats.streak}
+              </span>
+              <span className="text-[12.5px] text-muted-foreground">
+                {stats.streak === 1 ? "day unbroken" : "days unbroken"}
+              </span>
+            </div>
+            <ChainDots dots={stats.streakDots} className="mt-[11px]" size="bar" />
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

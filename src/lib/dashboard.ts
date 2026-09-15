@@ -144,7 +144,6 @@ export type DashboardActivityPoint = {
 export type DashboardData = {
   settings: {
     displayName: string;
-    role: string;
     workspaceName: string;
     showStreaks: boolean;
     nudgeDays: number;
@@ -210,8 +209,8 @@ function mapTaskItem(
 
 export async function getDashboardData(): Promise<DashboardData> {
   const today = getTodayDate();
-  const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
   const settings = await getSettings();
+  const thisWeekStart = startOfWeek(today, { weekStartsOn: settings.weekStartsOn });
 
   const [
     projects,
@@ -452,7 +451,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   const weekHabits = habitsKeptThisWeek(
     dailyTasks,
     weekCompletions.filter((l) => l.entityType === "DAILY_TASK"),
-    today
+    today,
+    settings.weekStartsOn
   );
   const focusMinutes = weekCompletions.reduce(
     (sum, log) => sum + (log.entityType === "TASK" ? log.minutes ?? 0 : 0),
@@ -462,7 +462,6 @@ export async function getDashboardData(): Promise<DashboardData> {
   return {
     settings: {
       displayName: settings.displayName,
-      role: settings.role,
       workspaceName: settings.workspaceName,
       showStreaks: settings.showStreaks,
       nudgeDays: settings.nudgeDays,

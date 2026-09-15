@@ -4,7 +4,6 @@ import * as React from "react";
 import { flushSync } from "react-dom";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function switchThemeFromEvent(
@@ -70,12 +69,10 @@ export function ThemeToggle({ className }: { className?: string }) {
   const isDark = mounted && resolvedTheme === "dark";
 
   return (
-    <Button
+    <button
       type="button"
-      variant="outline"
-      size="icon"
       className={cn(
-        "relative h-8 w-8 overflow-hidden border-border bg-card text-muted-foreground shadow-none hover:text-foreground",
+        "relative grid h-8 w-8 place-items-center overflow-hidden rounded-[8px] text-muted-foreground transition-colors duration-[120ms] hover:bg-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/20",
         className
       )}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
@@ -88,8 +85,8 @@ export function ThemeToggle({ className }: { className?: string }) {
         );
       }}
     >
-      <Sun className="h-4 w-4 scale-100 rotate-0 opacity-100 transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] dark:scale-0 dark:-rotate-90 dark:opacity-0" />
-      <Moon className="absolute h-4 w-4 scale-0 rotate-90 opacity-0 transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] dark:scale-100 dark:rotate-0 dark:opacity-100" />
-    </Button>
+      <Sun className="h-[17px] w-[17px] scale-100 rotate-0 opacity-100 transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] dark:scale-0 dark:-rotate-90 dark:opacity-0" />
+      <Moon className="absolute h-[17px] w-[17px] scale-0 rotate-90 opacity-0 transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] dark:scale-100 dark:rotate-0 dark:opacity-100" />
+    </button>
   );
 }

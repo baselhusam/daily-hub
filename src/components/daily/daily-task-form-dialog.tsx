@@ -28,6 +28,7 @@ import {
 import { SelectMenu } from "@/components/ui/select-menu";
 import { applyLogoToFormData } from "@/lib/logo";
 import { WEEKDAY_LABELS, WEEKDAY_SHORT } from "@/lib/dates";
+import { useWeekStart, weekdayOrder } from "@/lib/week-start";
 import { cn } from "@/lib/utils";
 import {
   DeleteDailyTaskDialog,
@@ -61,6 +62,7 @@ export function DailyTaskFormDialog({
   const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  const weekStartsOn = useWeekStart();
   const [selectedWeekdays, setSelectedWeekdays] = React.useState<number[]>(
     task?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]
   );
@@ -160,7 +162,7 @@ export function DailyTaskFormDialog({
             <div className="flex flex-col gap-1.5">
               <FieldLabel>Schedule</FieldLabel>
               <div className="grid grid-cols-7 gap-1">
-                {WEEKDAY_LABELS.map((label, index) => (
+                {weekdayOrder(weekStartsOn).map((index) => (
                   <button
                     key={index}
                     type="button"
@@ -177,7 +179,7 @@ export function DailyTaskFormDialog({
                     {selectedWeekdays.includes(index) && (
                       <span className="absolute inset-[-1px] rounded-lg bg-foreground" />
                     )}
-                    <span className="relative z-10">{label}</span>
+                    <span className="relative z-10">{WEEKDAY_LABELS[index]}</span>
                   </button>
                 ))}
               </div>

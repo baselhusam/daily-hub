@@ -3,14 +3,22 @@
 import * as React from "react";
 import { Suspense } from "react";
 import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
-import { AppTopBar, MobileTabBar } from "@/components/app-top-bar";
+import {
+  AppTopBar,
+  MobileTabBar,
+  SIDEBAR_COLLAPSED_WIDTH,
+  SIDEBAR_WIDTH,
+  TOP_BAR_HEIGHT,
+} from "@/components/app-top-bar";
 import { BrandMark } from "@/components/brand-mark";
 import { NotificationBell } from "@/components/notification-bell";
 import { SearchPalette } from "@/components/search-palette";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn, isTypingTarget } from "@/lib/utils";
+import { WeekStartProvider } from "@/lib/week-start";
 import type { SearchIndex } from "@/lib/search";
 import type { SidebarStats } from "@/lib/sidebar-stats";
 
@@ -43,7 +51,16 @@ function SidebarWithSearchParams({
   );
 }
 
+/** `g` then one of these, within a second, jumps to the page. */
+const GO_CHORDS: Record<string, string> = {
+  t: "/",
+  p: "/projects",
+  h: "/daily",
+  a: "/analytics",
+};
+
 export function AppShell({ stats, searchIndex, children }: AppShellProps) {
+  const router = useRouter();
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
@@ -72,10 +89,20 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
   }, []);
 
   React.useEffect(() => {
+    let chordArmedUntil = 0;
+
     function handleKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      const key = event.key.toLowerCase();
+
+      if ((event.metaKey || event.ctrlKey) && key === "k") {
         event.preventDefault();
         setPaletteOpen((open) => !open);
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && key === "b") {
+        event.preventDefault();
+        toggleSidebar();
         return;
       }
 
@@ -88,7 +115,19 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
         return;
       }
 
-      if (event.key.toLowerCase() === "n") {
+      if (chordArmedUntil > Date.now() && key in GO_CHORDS) {
+        chordArmedUntil = 0;
+        event.preventDefault();
+        router.push(GO_CHORDS[key]);
+        return;
+      }
+
+      if (key === "g") {
+        chordArmedUntil = Date.now() + 1000;
+        return;
+      }
+
+      if (key === "n") {
         const composer = document.getElementById("quick-add-title");
         if (composer instanceof HTMLElement) {
           event.preventDefault();
@@ -99,9 +138,10 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [router, toggleSidebar]);
 
   return (
+    <WeekStartProvider value={stats.settings.weekStartsOn}>
     <div className="h-svh overflow-hidden bg-background">
       <SearchPalette
         index={searchIndex}
@@ -138,12 +178,17 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
 
       <div
         className={cn(
-          "flex h-full flex-col",
+          "flex h-full flex-col dh:pt-[var(--shell-top)] dh:pl-[var(--shell-left)]",
           sidebarReady &&
-            "transition-[padding] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]",
-          "dh:pt-[52px]",
-          collapsed ? "dh:pl-[68px]" : "dh:pl-64"
+            "transition-[padding] duration-200 ease-[cubic-bezier(0.2,0.8,0.3,1)]"
         )}
+        style={
+          {
+            "--shell-top": `${TOP_BAR_HEIGHT}px`,
+            "--shell-left": `${collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH}px`,
+          } as React.CSSProperties
+        }
+        data-shell
       >
         <div className="dh:hidden">
           <header className="flex items-center justify-between gap-2 border-b border-border bg-paper pt-[max(0.625rem,env(safe-area-inset-top))] pr-[max(0.75rem,env(safe-area-inset-right))] pb-2.5 pl-[max(0.75rem,env(safe-area-inset-left))]">
@@ -170,7 +215,7 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
-                className="grid h-10 w-10 place-items-center rounded-md border border-border bg-card text-muted-foreground shadow-raised transition-colors hover:border-border-strong hover:text-foreground"
+                className="grid h-10 w-10 place-items-center rounded-[9px] border border-border bg-card text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
                 aria-label="Search"
                 title="Search (⌘K or /)"
               >
@@ -178,9 +223,9 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
               </button>
               <NotificationBell
                 notifications={stats.notifications}
-                className="h-10 w-10"
+                className="h-10 w-10 rounded-[9px] border border-border bg-card"
               />
-              <ThemeToggle className="h-10 w-10" />
+              <ThemeToggle className="h-10 w-10 rounded-[9px] border border-border bg-card" />
             </div>
           </header>
         </div>
@@ -196,5 +241,6 @@ export function AppShell({ stats, searchIndex, children }: AppShellProps) {
         <MobileTabBar />
       </div>
     </div>
+    </WeekStartProvider>
   );
 }

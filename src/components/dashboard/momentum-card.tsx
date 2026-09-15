@@ -13,6 +13,7 @@ import {
 } from "@/lib/momentum-colors";
 import { MetricTile } from "@/components/ui/metric-tile";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { useWeekStart, weekdayOrder } from "@/lib/week-start";
 import { Eyebrow, TodayCard } from "./today-card";
 import { ExpandButton } from "./expand-button";
 import {
@@ -269,6 +270,7 @@ function calendarGeometry(range: number) {
   return { cell: 20, gap: 4 };
 }
 
+/** Row labels by weekday (0 = Sunday); alternate rows stay blank for air. */
 const WEEKDAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
 
 function ContributionCalendar({
@@ -277,7 +279,11 @@ function ContributionCalendar({
   onActiveDateChange,
   range,
 }: ContributionCalendarProps) {
-  const weeks = React.useMemo(() => buildContributionWeeks(days), [days]);
+  const weekStartsOn = useWeekStart();
+  const weeks = React.useMemo(
+    () => buildContributionWeeks(days, weekStartsOn),
+    [days, weekStartsOn]
+  );
   const { cell, gap } = calendarGeometry(range);
   const pitch = cell + gap;
   const monthLabels = React.useMemo(
@@ -300,13 +306,13 @@ function ContributionCalendar({
             }}
             aria-hidden="true"
           >
-            {WEEKDAY_LABELS.map((label, index) => (
+            {weekdayOrder(weekStartsOn).map((weekday) => (
               <span
-                key={index}
+                key={weekday}
                 className="flex items-center justify-end"
                 style={{ height: `${cell}px` }}
               >
-                {label}
+                {WEEKDAY_LABELS[weekday]}
               </span>
             ))}
           </div>
@@ -430,14 +436,14 @@ function LegendSwatch({ ratio, title }: { ratio: number | null; title?: string }
   );
 }
 
-function buildContributionWeeks(days: MomentumDay[]) {
+function buildContributionWeeks(days: MomentumDay[], weekStartsOn: 0 | 1) {
   if (days.length === 0) return [] as Array<Array<{ date: Date; day?: MomentumDay }>>;
 
   const dayByDate = new Map(days.map((day) => [day.date, day]));
   const firstDate = parseISO(days[0].date);
   const lastDate = parseISO(days.at(-1)!.date);
-  const firstWeek = startOfWeek(firstDate, { weekStartsOn: 0 });
-  const lastWeek = startOfWeek(lastDate, { weekStartsOn: 0 });
+  const firstWeek = startOfWeek(firstDate, { weekStartsOn });
+  const lastWeek = startOfWeek(lastDate, { weekStartsOn });
   const weeks: Array<Array<{ date: Date; day?: MomentumDay }>> = [];
 
   for (let weekStart = firstWeek; weekStart <= lastWeek; weekStart = addDays(weekStart, 7)) {
