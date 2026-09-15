@@ -8,6 +8,9 @@ import {
   resolveEntityColor,
 } from "@/lib/entity-colors";
 
+/** Stored as a project's iconKey when it should show its initials instead. */
+export const INITIALS_ICON_KEY = "initials";
+
 type EntityAvatarProps = {
   name: string;
   color?: string | null;
@@ -30,7 +33,8 @@ export function EntityAvatar({
   const radius = rounded === "lg" ? "rounded-[10px]" : "rounded-md";
   const tint = entityTintStyles(color);
   const initials = getEntityInitials(name);
-  const Icon = iconKey ? getIcon(iconKey) : null;
+  // "initials" is the explicit no-icon choice from the project form.
+  const Icon = iconKey && iconKey !== INITIALS_ICON_KEY ? getIcon(iconKey) : null;
   const iconSize = Math.max(10, Math.round(size * 0.48));
 
   if (logoUrl) {

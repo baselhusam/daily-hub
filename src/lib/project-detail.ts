@@ -1,11 +1,17 @@
-import { eachDayOfInterval, format, subDays } from "date-fns";
+import { eachDayOfInterval, format, startOfWeek, subDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { getTodayDate, isOverdue, toDateOnlyString } from "@/lib/dates";
+import {
+  calendarDaysBetween,
+  getTodayDate,
+  isOverdue,
+  toDateOnlyString,
+} from "@/lib/dates";
 import { isCompletedToday } from "@/lib/due-meta";
 import { projectAccent } from "@/lib/entity-colors";
 import { idleDaysSince } from "@/lib/notifications";
 import { getSettings } from "@/lib/settings";
 import type { ProjectStatus, TaskStatus } from "@/lib/status";
+import { openCountAt } from "@/lib/today-insights";
 
 /**
  * The detail page keeps its own 90-day window so the range switcher can slice
@@ -45,13 +51,11 @@ export type ProjectDetailActivityPoint = {
   isToday: boolean;
 };
 
+/** Per weekday (0 = Sunday) over the 90-day window. */
 export type ProjectDetailWeekday = {
   id: number;
-  label: string;
-  name: string;
-  count: number;
-  barHeight: number;
-  isBest: boolean;
+  average: number;
+  total: number;
 };
 
 export type ProjectDetailStats = {
@@ -69,6 +73,12 @@ export type ProjectDetailStats = {
   lastActiveDate: string | null;
   stalled: boolean;
   ageDays: number;
+  /** Open now minus open a week ago. */
+  openDelta: number;
+  finishedThisWeek: number;
+  focusThisWeekMinutes: number;
+  /** Days until the next open milestone, negative when slipped; null if none. */
+  nextMilestoneDays: number | null;
 };
 
 export type ProjectDetailData = {
@@ -101,11 +111,6 @@ export type ProjectDetailData = {
     color: string | null;
   }>;
 };
-
-const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
-const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-/** Monday-first, matching the rest of the app's week. */
-const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export async function getProjectDetailData(
   projectId: string
@@ -217,26 +222,18 @@ export async function getProjectDetailData(
     weekdayTotals[dow] += countByDate.get(toDateOnlyString(day)) ?? 0;
     weekdayDays[dow] += 1;
   }
-  const weekdayAverages = weekdayTotals.map((total, index) =>
-    weekdayDays[index] ? total / weekdayDays[index] : 0
-  );
-  const weekdayMax = Math.max(...weekdayAverages);
-  const bestWeekday = WEEKDAY_ORDER.reduce((best, index) =>
-    weekdayAverages[index] > weekdayAverages[best] ? index : best
-  , WEEKDAY_ORDER[0]);
-
-  const weekdays: ProjectDetailWeekday[] = WEEKDAY_ORDER.map((index) => ({
+  const weekdays: ProjectDetailWeekday[] = weekdayTotals.map((total, index) => ({
     id: index,
-    label: WEEKDAY_LABELS[index],
-    name: WEEKDAY_NAMES[index],
-    count: Math.round(weekdayAverages[index] * 10) / 10,
-    barHeight:
-      weekdayMax > 0
-        ? Math.max(3, Math.round((weekdayAverages[index] / weekdayMax) * 100))
-        : 3,
-    // With nothing logged every day ties at zero — don't crown one of them.
-    isBest: weekdayMax > 0 && index === bestWeekday,
+    average: weekdayDays[index] ? total / weekdayDays[index] : 0,
+    total,
   }));
+
+  const weekStart = startOfWeek(today, { weekStartsOn: settings.weekStartsOn });
+  const weekLogs = logs.filter((log) => log.completedOn >= weekStart);
+  const nextMilestone = project.milestones
+    .filter((milestone) => !milestone.done && milestone.dueDate)
+    .map((milestone) => calendarDaysBetween(milestone.dueDate!, today))
+    .sort((a, b) => a - b)[0];
 
   const idleDays = idleDaysSince(lastActiveDate ?? undefined, today, 99);
   const ageDays = Math.max(
@@ -282,6 +279,10 @@ export async function getProjectDetailData(
       lastActiveDate,
       stalled: openTasks.length > 0 && idleDays >= settings.nudgeDays,
       ageDays,
+      openDelta: openTasks.length - openCountAt(project.tasks, subDays(today, 7)),
+      finishedThisWeek: weekLogs.length,
+      focusThisWeekMinutes: weekLogs.reduce((sum, log) => sum + (log.minutes ?? 0), 0),
+      nextMilestoneDays: nextMilestone ?? null,
     },
     activity,
     weekdays,

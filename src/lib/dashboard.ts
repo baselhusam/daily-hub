@@ -539,6 +539,7 @@ export async function getProjectsPageData() {
 
   return {
     todayISO: today.toISOString(),
+    nudgeDays,
     projects: projects.sort(sortProjectsByManualOrder).map((project) => {
       const open = project.tasks.filter((t) => t.status !== "DONE").length;
       const done = project.tasks.filter((t) => t.status === "DONE").length;
@@ -549,12 +550,15 @@ export async function getProjectsPageData() {
 
       return {
         ...project,
+        color: projectAccent(project),
+        rawColor: project.color,
         openCount: open,
         doneCount: done,
         completionPct: pct,
         stalled:
           project.status !== "DONE" && open > 0 && idle >= nudgeDays,
         idleDays: idle,
+        lastTouch: last ?? null,
       };
     }),
   };

@@ -62,11 +62,13 @@ export function DatePicker({
     () => selected ?? new Date()
   );
 
+  // Keyed on the string value, not the parsed Date: a fresh Date object every
+  // render would re-fire this and loop through setVisibleMonth forever.
   React.useEffect(() => {
     if (open) {
-      setVisibleMonth(selected ?? new Date());
+      setVisibleMonth(parseDateInput(value) ?? new Date());
     }
-  }, [open, selected]);
+  }, [open, value]);
 
   function setValue(next: string) {
     if (controlledValue === undefined) setUncontrolled(next);
