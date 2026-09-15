@@ -440,18 +440,14 @@ export function createDailyHubMcpServer() {
     "get_stats",
     {
       title: "Get DailyHub statistics",
-      description: "Return the 14-day analytics overview, headline metrics, and daily completion series.",
+      description:
+        "Return the 14-day headline: tasks closed (with the change against the prior fortnight), habits kept, focus minutes, active days, open/completed task counts, and the daily completion series.",
       annotations: { readOnlyHint: true },
     },
     async () => {
       await ensureDatabaseReady();
       const analytics = await getAnalyticsData();
-      return result({
-        rangeDays: analytics.rangeDays,
-        overview: analytics.overview,
-        bigStats: analytics.bigStats,
-        completionsByDay: analytics.completionsByDay,
-      });
+      return result(analytics.summary);
     }
   );
 
