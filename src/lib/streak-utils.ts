@@ -119,11 +119,12 @@ export function formatEstimate(
   minutes: number | null | undefined
 ): string | undefined {
   if (!minutes) return undefined;
-  if (minutes >= 60) {
-    const hours = Math.round((minutes / 60) * 10) / 10;
-    return `${hours}h`;
-  }
-  return `${minutes}m`;
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (rest === 0) return `${hours}h`;
+  if (rest === 30) return `${hours}.5h`;
+  return `${hours}h ${rest}m`;
 }
 
 export type SparkBar = {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateStreakInfo,
   emptyStreakInfo,
+  formatEstimate,
   mkSparkBars,
 } from "@/lib/streak-utils";
 
@@ -107,5 +108,16 @@ describe("mkSparkBars", () => {
     expect(bars[0].date).toBe("2026-09-01");
     expect(bars[1].date).toBeUndefined();
     expect(bars[2].date).toBeUndefined();
+  });
+});
+
+describe("formatEstimate", () => {
+  it("keeps odd minutes instead of rounding to a decimal hour", () => {
+    expect(formatEstimate(45)).toBe("45m");
+    expect(formatEstimate(60)).toBe("1h");
+    expect(formatEstimate(90)).toBe("1.5h");
+    expect(formatEstimate(80)).toBe("1h 20m");
+    expect(formatEstimate(150)).toBe("2.5h");
+    expect(formatEstimate(0)).toBeUndefined();
   });
 });

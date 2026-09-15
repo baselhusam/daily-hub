@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Task estimates can be typed: a "Custom" chip next to the presets takes "45m", "1.5h", "1h 20m" or plain minutes, and odd amounts read back as "1h 20m" rather than "1.3h".
 - Choose which day the week starts on (Monday or Sunday) in Workspace settings. Week in review, habits kept, the date picker grid, the momentum calendar rows, and habit schedule pills all follow it.
 - Keyboard jumps: `g` then `t` / `p` / `h` / `a` goes to Today, Projects, Habits, or Analytics; `⌘B` collapses the sidebar.
 - `daily-hub install-app` puts DailyHub in `~/Applications`, so it has a Dock icon, a Spotlight entry, and a double-click that opens it. The app starts the server in the background and opens the browser; `daily-hub status` and `daily-hub stop` work on it exactly as before. Pass `--app-mode` for a window without browser chrome.
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The end dot on the Today page's "Closed each day" sparkline was stretched into an oval with the chart; it is now a true circle at any card width.
 - The Today rail (habits, Inbox, up next) stopped sticking once the Inbox grew tall, so its cards scrolled off and were cut mid-content; it now pins under the top bar, scrolls on its own, and fades at its bottom edge instead of clipping.
 - The favicon sat on a solid white square, which showed as a box on tab strips and new-tab tiles; it is now transparent and rendered at 64px for retina screens.
+- The custom due date in the task composer opens its calendar on the first tap, reads as a selected chip ("Sep 28") once chosen, and goes back to the "Date" button if the calendar is closed without picking.
 - Paused projects no longer count as stalled: the Today nudge chips, the notification bell and the Projects page flagged any project that was not done, so a deliberately parked project kept asking for attention.
 - Today and the sidebar list active projects first, then paused, then done; paused projects used to sit among the active ones by recency.
 - A project with no completions yet was treated as idle for the nudge threshold plus one day, so a project created yesterday was already "stalled, 15 days quiet" on Today while the bell said "14+". Idle time now counts from the project's creation when there is no activity, so the chips, the bell, the Projects page and the project hero agree, and a new project is not stalled on day one.

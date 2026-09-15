@@ -35,8 +35,13 @@ type DatePickerProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  variant?: "field" | "compact" | "plain";
+  /** `chip` is a one-tap pill that reads as selected once it holds a date. */
+  variant?: "field" | "compact" | "plain" | "chip";
   allowClear?: boolean;
+  /** Open the calendar as soon as it mounts, e.g. when swapped in by a button. */
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  formatLabel?: (date: Date) => string;
 };
 
 export function DatePicker({
@@ -51,8 +56,18 @@ export function DatePicker({
   className,
   variant = "field",
   allowClear = true,
+  defaultOpen = false,
+  onOpenChange,
+  formatLabel = (date) => format(date, "d MMM yyyy"),
 }: DatePickerProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpenState] = React.useState(defaultOpen);
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      setOpenState(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange]
+  );
   const [uncontrolled, setUncontrolled] = React.useState(defaultValue);
   const value = controlledValue ?? uncontrolled;
   const selected = parseDateInput(value);
@@ -97,22 +112,33 @@ export function DatePicker({
                 "rounded-md border border-border bg-muted px-2.5 py-2 text-[13.5px] focus-visible:border-signal focus-visible:ring-[3px] focus-visible:ring-signal/16",
               variant === "plain" &&
                 "h-8 w-auto rounded-md px-2 text-[13px] text-muted-foreground hover:bg-hover hover:text-foreground focus-visible:bg-hover focus-visible:text-foreground",
+              variant === "chip" &&
+                "h-[26px] w-auto gap-1.5 rounded-full border px-2.5 text-[11.5px] font-medium focus-visible:ring-[3px] focus-visible:ring-signal/16",
+              variant === "chip" &&
+                (selected
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-dashed border-border-strong bg-card text-muted-foreground hover:border-faint hover:text-foreground"),
               className
             )}
           >
             <CalendarDays
               className={cn(
-                "h-3.5 w-3.5 shrink-0",
-                selected ? "text-signal" : "text-faint"
+                "shrink-0",
+                variant === "chip" ? "h-3 w-3" : "h-3.5 w-3.5",
+                variant === "chip" ? "text-current" : selected ? "text-signal" : "text-faint"
               )}
             />
             <span
               className={cn(
                 "min-w-0 flex-1 truncate",
-                selected ? "text-foreground" : "text-muted-foreground"
+                variant === "chip"
+                  ? "text-current"
+                  : selected
+                    ? "text-foreground"
+                    : "text-muted-foreground"
               )}
             >
-              {selected ? format(selected, "d MMM yyyy") : placeholder}
+              {selected ? formatLabel(selected) : placeholder}
             </span>
           </button>
         </PopoverTrigger>

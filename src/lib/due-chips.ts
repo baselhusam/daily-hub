@@ -42,3 +42,30 @@ export function formatCustomDue(value: string, today: Date): string {
     ? format(date, "MMM d")
     : format(date, "MMM d, yyyy");
 }
+
+/** Longest estimate the task schema accepts, in minutes. */
+export const MAX_ESTIMATE_MINUTES = 999;
+
+/**
+ * Reads a typed estimate — "45", "45m", "1.5h", "1h 30m", "1h30", "90 min",
+ * "2 hours" — as whole minutes. Null when it cannot be read, or is out of
+ * range; zero counts as "no estimate".
+ */
+export function parseEstimateInput(text: string): number | null {
+  const raw = text.trim().toLowerCase().replace(/,/g, ".");
+  if (!raw) return null;
+  if (/^\d+(\.\d+)?$/.test(raw)) return clampEstimate(Number(raw));
+  const pattern =
+    /^(?:(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours))?\s*(?:(\d+(?:\.\d+)?)\s*(?:m|min|mins|minute|minutes)?)?$/;
+  const match = raw.match(pattern);
+  if (!match || (match[1] === undefined && match[2] === undefined)) return null;
+  const hours = match[1] ? Number(match[1]) : 0;
+  const minutes = match[2] ? Number(match[2]) : 0;
+  return clampEstimate(hours * 60 + minutes);
+}
+
+function clampEstimate(minutes: number): number | null {
+  const rounded = Math.round(minutes);
+  if (!Number.isFinite(rounded) || rounded <= 0 || rounded > MAX_ESTIMATE_MINUTES) return null;
+  return rounded;
+}

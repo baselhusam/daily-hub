@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { CalendarDays, Trash2 } from "lucide-react";
+import { CalendarDays, Timer, Trash2 } from "lucide-react";
 import { createTask, deleteTask, updateTask } from "@/app/actions/tasks";
 import { DatePicker } from "@/components/ui/date-picker";
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { DATE_INPUT_MAX, DATE_INPUT_MIN, toDateInputValue } from "@/lib/dates";
-import { dueChipsFor, ESTIMATE_CHIPS } from "@/lib/due-chips";
+import { dueChipsFor, ESTIMATE_CHIPS, formatCustomDue, parseEstimateInput } from "@/lib/due-chips";
+import { formatEstimate } from "@/lib/streak-utils";
 import { cn } from "@/lib/utils";
 
 export type ComposerProject = {
@@ -69,6 +70,10 @@ export function TaskComposer({
   );
   const [target, setTarget] = React.useState(task?.projectId ?? projectId ?? "");
   const [customDateOpen, setCustomDateOpen] = React.useState(false);
+  const [customEstimateOpen, setCustomEstimateOpen] = React.useState(false);
+  const [customEstimateText, setCustomEstimateText] = React.useState("");
+  const [customEstimateInvalid, setCustomEstimateInvalid] = React.useState(false);
+  const estimateInputRef = React.useRef<HTMLInputElement>(null);
   const [pending, setPending] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const titleRef = React.useRef<HTMLInputElement>(null);
@@ -84,6 +89,39 @@ export function TaskComposer({
   const estimateIsCustom =
     estimate !== null && !ESTIMATE_CHIPS.some((chip) => chip.minutes === estimate);
   const ready = title.trim().length > 0 && !pending;
+
+  React.useEffect(() => {
+    if (customEstimateOpen) {
+      estimateInputRef.current?.focus();
+      estimateInputRef.current?.select();
+    }
+  }, [customEstimateOpen]);
+
+  function openCustomEstimate() {
+    setCustomEstimateText(
+      estimateIsCustom && estimate !== null ? (formatEstimate(estimate) ?? "") : ""
+    );
+    setCustomEstimateInvalid(false);
+    setCustomEstimateOpen(true);
+  }
+
+  /** Reads the typed estimate; an empty box clears, gibberish is refused. */
+  function commitCustomEstimate() {
+    const text = customEstimateText.trim();
+    if (!text) {
+      if (estimateIsCustom) setEstimate(null);
+      setCustomEstimateOpen(false);
+      return;
+    }
+    const minutes = parseEstimateInput(text);
+    if (minutes === null) {
+      setCustomEstimateInvalid(true);
+      estimateInputRef.current?.select();
+      return;
+    }
+    setEstimate(minutes);
+    setCustomEstimateOpen(false);
+  }
 
   async function submit() {
     const trimmed = title.trim();
@@ -212,20 +250,26 @@ export function TaskComposer({
             </Chip>
           ))}
           {customDateOpen || dueIsCustom ? (
-            <span className="inline-flex h-[26px] items-center rounded-full border border-hairline bg-card pl-2">
-              <DatePicker
-                value={due}
-                onValueChange={(next) => {
-                  setDue(next);
-                  if (!next) setCustomDateOpen(false);
-                }}
-                min={DATE_INPUT_MIN}
-                max={DATE_INPUT_MAX}
-                variant="plain"
-                placeholder="Pick a date"
-                className="h-[24px] px-1 text-[11.5px]"
-              />
-            </span>
+            // Mounted with the calendar already open, so the "Date" tap goes
+            // straight to picking; closing it with nothing chosen puts the
+            // button back, and a chosen date reads as the selected chip.
+            <DatePicker
+              key={dueIsCustom ? "custom" : "picking"}
+              value={dueIsCustom ? due : ""}
+              defaultOpen={!dueIsCustom}
+              onOpenChange={(next) => {
+                if (!next) setCustomDateOpen(false);
+              }}
+              onValueChange={(next) => {
+                setDue(next);
+                setCustomDateOpen(false);
+              }}
+              min={DATE_INPUT_MIN}
+              max={DATE_INPUT_MAX}
+              variant="chip"
+              placeholder="Date"
+              formatLabel={(date) => formatCustomDue(toDateInputValue(date), today)}
+            />
           ) : (
             <button
               type="button"
@@ -249,11 +293,52 @@ export function TaskComposer({
               {chip.label}
             </Chip>
           ))}
-          {estimateIsCustom && estimate !== null ? (
-            <Chip active onClick={() => setEstimate(null)}>
-              {estimate >= 60 ? `${Math.round((estimate / 60) * 10) / 10}h` : `${estimate}m`}
+          {customEstimateOpen ? (
+            <input
+              ref={estimateInputRef}
+              value={customEstimateText}
+              onChange={(event) => {
+                setCustomEstimateText(event.target.value);
+                setCustomEstimateInvalid(false);
+              }}
+              onBlur={commitCustomEstimate}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  commitCustomEstimate();
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setCustomEstimateOpen(false);
+                }
+              }}
+              placeholder="45m, 1.5h"
+              aria-label="Custom estimate"
+              aria-invalid={customEstimateInvalid || undefined}
+              inputMode="text"
+              autoComplete="off"
+              className={cn(
+                "h-[26px] w-[84px] rounded-full border bg-card px-2.5 text-[11.5px] font-medium text-foreground outline-none placeholder:text-faint",
+                customEstimateInvalid
+                  ? "border-destructive ring-[3px] ring-destructive/15"
+                  : "border-foreground ring-[3px] ring-signal/16"
+              )}
+            />
+          ) : estimateIsCustom && estimate !== null ? (
+            <Chip active onClick={openCustomEstimate}>
+              {formatEstimate(estimate)}
             </Chip>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={openCustomEstimate}
+              className="inline-flex h-[26px] items-center gap-1.5 rounded-full border border-dashed border-border-strong bg-card px-2.5 text-[11.5px] text-muted-foreground transition-colors duration-[110ms] hover:border-faint hover:text-foreground"
+            >
+              <Timer className="h-3 w-3" />
+              Custom
+            </button>
+          )}
         </ChipRow>
         {editing ? (
           <ChipRow label="In">
