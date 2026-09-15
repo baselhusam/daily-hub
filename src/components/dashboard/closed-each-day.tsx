@@ -58,6 +58,7 @@ export function ClosedEachDayCard({ points, onExpand, className }: ClosedEachDay
   const total = values.reduce((sum, value) => sum + value, 0);
   const peak = Math.max(0, ...values);
   const hit = hover === null ? null : geometry.points[hover];
+  const last = geometry.points.at(-1) ?? null;
   const hovered = hover === null ? null : recent[hover];
   const gradientId = React.useId();
   const foot = hovered
@@ -115,18 +116,16 @@ export function ClosedEachDayCard({ points, onExpand, className }: ClosedEachDay
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
-            {geometry.points.length > 0 ? (
-              <circle
-                cx={geometry.points[geometry.points.length - 1].x}
-                cy={geometry.points[geometry.points.length - 1].y}
-                r={3}
-                fill="var(--card)"
-                stroke="var(--signal)"
-                strokeWidth={2}
-                vectorEffect="non-scaling-stroke"
-              />
-            ) : null}
           </svg>
+          {last ? (
+            // An HTML dot rather than an SVG circle: the chart is stretched
+            // with preserveAspectRatio="none", which would squash a circle.
+            <div
+              aria-hidden
+              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-signal bg-card"
+              style={{ left: `${(last.x / CARD_W) * 100}%`, top: last.y }}
+            />
+          ) : null}
           {hit && hovered ? (
             <>
               <div

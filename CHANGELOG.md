@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Editing a task or project east of Greenwich showed its due date a day early; the date field now reads the stored calendar date directly.
+- The end dot on the Today page's "Closed each day" sparkline was stretched into an oval with the chart; it is now a true circle at any card width.
 
 ## [0.1.12] - 2026-09-13
 
