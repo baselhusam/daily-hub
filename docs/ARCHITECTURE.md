@@ -190,7 +190,7 @@ Two details in `src/lib/logo-color-backfill.ts` matter more than they look:
 
 | Service | Image / build | Port | Role |
 |---------|---------------|------|------|
-| `app` | `ghcr.io/baselhusam/daily-hub` (or local `Dockerfile`) | 9999 | App + SQLite + auto migrate |
+| `app` | `baselhusam/daily-hub` (or local `Dockerfile`) | 9999 | App + SQLite + auto migrate |
 
 Volume: `dailyhub_data` → `/app/data` (`data.db` + `uploads/`).
 

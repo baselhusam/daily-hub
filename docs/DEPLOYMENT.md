@@ -68,7 +68,14 @@ Notes:
 
 ## Option B — Docker (SQLite)
 
-Pre-built images live at [`ghcr.io/baselhusam/daily-hub`](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub). GitHub Releases publish `linux/amd64` and `linux/arm64`.
+Pre-built images are published to both registries:
+
+- Docker Hub: [`baselhusam/daily-hub`](https://hub.docker.com/r/baselhusam/daily-hub)
+- GitHub Container Registry: [`ghcr.io/baselhusam/daily-hub`](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub)
+
+GitHub Releases publish a multi-architecture Linux image for `linux/amd64` and `linux/arm64`. That image runs on Linux distributions with a compatible Docker/OCI runtime, and through Docker Desktop on macOS and Windows. The application image itself uses Alpine Linux; separate images are not needed for Ubuntu, Debian, Fedora, or other host distributions.
+
+These are the production architectures supported by the application's Prisma runtime. ARM32, PowerPC, and s390x are not published because Prisma does not provide the required Alpine query engine for those targets.
 
 | Tag | When it moves |
 |-----|----------------|
@@ -78,18 +85,28 @@ Pre-built images live at [`ghcr.io/baselhusam/daily-hub`](https://github.com/bas
 
 The first GHCR package created by Actions is often **private**. After the first successful publish, open GitHub → Packages → `daily-hub` → Package settings → change visibility to **Public**. Anonymous `docker pull` will fail until then. Repo Settings → Actions → General → Workflow permissions must allow `GITHUB_TOKEN` **read and write**.
 
+Docker Hub publishing requires these GitHub repository settings under **Settings → Secrets and variables → Actions**:
+
+| Type | Name | Value |
+|------|------|-------|
+| Variable | `DOCKERHUB_USERNAME` | Docker Hub username with push access to `baselhusam/daily-hub` |
+| Secret | `DOCKERHUB_TOKEN` | Docker Hub personal access token with Read & Write permission |
+
+Create the public `baselhusam/daily-hub` repository in Docker Hub before the first release. Never store the token in the repository or workflow file.
+
 ### Pull the image
 
 ```bash
 docker run -d --name dailyhub -p 9999:9999 \
   -v dailyhub_data:/app/data \
-  ghcr.io/baselhusam/daily-hub:latest
+  baselhusam/daily-hub:latest
 ```
 
 - App: http://localhost:9999
 - Migrations run automatically on container start (`prisma migrate deploy`)
 - Data volume: `dailyhub_data` mounted at `/app/data` (`data.db` + `uploads/`)
-- Pin a version: `ghcr.io/baselhusam/daily-hub:X.Y.Z` (same as the npm version)
+- Pin a version: `baselhusam/daily-hub:X.Y.Z` (same as the npm version)
+- GHCR remains available as `ghcr.io/baselhusam/daily-hub:X.Y.Z`
 
 **First-time seed (optional):**
 
@@ -128,7 +145,7 @@ docker compose exec app npm run db:seed
 
 ### Build from source (contributors)
 
-Compose still includes a `build:` section. This compiles the `Dockerfile` in this tree and tags the result as `ghcr.io/baselhusam/daily-hub:latest` locally:
+Compose still includes a `build:` section. This compiles the `Dockerfile` in this tree and tags the result as `baselhusam/daily-hub:latest` locally:
 
 ```bash
 docker compose up -d --build
@@ -185,13 +202,13 @@ Multi-stage build:
 - Runs as non-root user `nextjs`
 - `output: "standalone"` in `next.config.ts`
 - `DATABASE_URL=file:/app/data/data.db` and `DAILYHUB_DATA_DIR=/app/data`
-- Published to `ghcr.io/baselhusam/daily-hub` on GitHub Releases (`linux/amd64` + `linux/arm64`)
+- Published to Docker Hub and GHCR on GitHub Releases (`linux/amd64` + `linux/arm64`)
 
 ## Self-hosting on a VPS
 
 Typical steps:
 
-1. `docker run -d --name dailyhub -p 9999:9999 -v dailyhub_data:/app/data ghcr.io/baselhusam/daily-hub:latest` (or clone and `docker compose up -d`)
+1. `docker run -d --name dailyhub -p 9999:9999 -v dailyhub_data:/app/data baselhusam/daily-hub:latest` (or clone and `docker compose up -d`)
 2. Put Caddy/Nginx in front if you need HTTPS on port 443 (reverse proxy to `localhost:9999`)
 
 Contributors deploying from a working tree can use `docker compose up -d --build` instead of pulling.
@@ -236,9 +253,9 @@ npm test
 npm run build
 ```
 
-CI also builds the Docker image for `linux/amd64` (no push) so a broken `Dockerfile` fails before a release.
+CI also builds the Docker image for `linux/amd64` and `linux/arm64` (without pushing) so a broken Dockerfile or architecture-specific dependency fails before a release.
 
-GitHub Releases run [`.github/workflows/publish.yml`](../.github/workflows/publish.yml): npm publish and a multi-arch push to `ghcr.io/baselhusam/daily-hub`.
+GitHub Releases run [`.github/workflows/publish.yml`](../.github/workflows/publish.yml): npm publish and multi-architecture pushes to Docker Hub and GHCR. Stable releases update `latest`; prereleases update `next`; every release also publishes its exact `X.Y.Z` tag.
 
 Database integration tests are not included in v1.
 

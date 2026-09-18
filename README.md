@@ -98,10 +98,10 @@ Do not keep `~/.daily-hub/` in iCloud, Dropbox, or other file-sync folders — S
 ```bash
 docker run -d --name dailyhub -p 9999:9999 \
   -v dailyhub_data:/app/data \
-  ghcr.io/baselhusam/daily-hub:latest
+  baselhusam/daily-hub:latest
 ```
 
-Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume. Pin a version with `ghcr.io/baselhusam/daily-hub:X.Y.Z` (same as the npm version). Optional sample data:
+Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume. Pin a version with `baselhusam/daily-hub:X.Y.Z` (same as the npm version). Images are also published to `ghcr.io/baselhusam/daily-hub`. Optional sample data:
 
 ```bash
 docker exec dailyhub npm run db:seed

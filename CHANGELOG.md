@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-09-19
+
+### Added
+
+- GitHub Releases now publish the multi-architecture DailyHub image to Docker Hub as `baselhusam/daily-hub`, alongside the existing GitHub Container Registry image.
+
+### Changed
+
+- Docker CI now builds both `linux/amd64` and `linux/arm64` on pull requests and pushes to `main`, catching architecture-specific failures before release.
+- Docker Compose and the primary deployment examples now pull from Docker Hub. GHCR remains available as an equivalent registry.
+- Release publishing builds each supported architecture natively, creates a multi-architecture manifest in both registries, and applies the exact version plus `latest` for stable releases or `next` for prereleases.
+
 ## [0.2.0] - 2026-09-16
 
 ### Changed
