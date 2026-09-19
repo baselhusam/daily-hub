@@ -6,6 +6,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@baselhusam/daily-hub"><img src="https://img.shields.io/npm/v/@baselhusam/daily-hub?style=flat&color=2383E2" alt="npm version"></a>
+  <a href="https://hub.docker.com/r/baselhusam/daily-hub"><img src="https://img.shields.io/docker/v/baselhusam/daily-hub?sort=semver&style=flat&logo=docker&label=Docker%20Hub&color=2496ED" alt="Docker Hub image version"></a>
   <a href="https://github.com/baselhusam/daily-hub/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/baselhusam/daily-hub/ci.yml?style=flat&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/baselhusam/daily-hub?style=flat&color=37352F" alt="MIT License"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/@baselhusam/daily-hub?style=flat" alt="Node.js"></a>
@@ -16,6 +17,8 @@
   <a href="https://baselhusam.github.io/daily-hub/">Website</a>
   ·
   <a href="https://www.npmjs.com/package/@baselhusam/daily-hub">npm</a>
+  ·
+  <a href="https://hub.docker.com/r/baselhusam/daily-hub">Docker Hub</a>
   ·
   <a href="https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub">GHCR</a>
   ·
@@ -101,7 +104,7 @@ docker run -d --name dailyhub -p 9999:9999 \
   baselhusam/daily-hub:latest
 ```
 
-Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume. Pin a version with `baselhusam/daily-hub:X.Y.Z` (same as the npm version). Images are also published to `ghcr.io/baselhusam/daily-hub`. Optional sample data:
+Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume. The command above pulls from [Docker Hub](https://hub.docker.com/r/baselhusam/daily-hub); pin a version with `baselhusam/daily-hub:X.Y.Z` (same as the npm version). The same tags are also published to [GHCR](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub) as `ghcr.io/baselhusam/daily-hub`. Optional sample data:
 
 ```bash
 docker exec dailyhub npm run db:seed

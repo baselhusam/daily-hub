@@ -235,7 +235,7 @@ Contributors deploying from a working tree can use `docker compose up -d --build
 | Port 9999 in use | Use `npx daily-hub --port 3000` or change port in `package.json` / `docker-compose.yml` |
 | Empty dashboard after deploy | Run `npm run db:seed` or create data via UI |
 | Logos missing after rebuild | Ensure `dailyhub_data` volume is attached |
-| `docker compose up` fails to pull | Build locally with `docker compose up --build`, or check that the GHCR package is public |
+| `docker compose up` fails to pull | Build locally with `docker compose up --build`, or check that the Docker Hub repository and requested tag are public |
 | Build fails on Prisma | Run `npm run db:generate` before `npm run build` |
 | Query engine missing (`darwin-arm64` / `debian-openssl`) | Update to the latest `@baselhusam/daily-hub`. The CLI ships engines for macOS, Windows, and Linux, and generates a native engine if one is missing. |
 | `SQLITE_BUSY` / database is locked | Restart the app; ensure the data dir is on local disk, not a synced folder; remove stale `-wal`/`-shm` files if no process is running |
