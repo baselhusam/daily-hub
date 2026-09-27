@@ -67,15 +67,19 @@ export function duePillFor(
 }
 
 /**
- * Order for the open list on Today: what has slipped, then what is due
- * today, then dated work soonest-first, then undated work oldest-first.
+ * Order for an open task list: high priority first, down through low, with
+ * unprioritised work last. Within a priority, what has slipped, then what is
+ * due today, then dated work soonest-first, then undated work oldest-first.
  */
 export function sortOpenForToday<
-  T extends { dueDate: Date | null; createdAt: Date }
+  T extends { dueDate: Date | null; createdAt: Date; priority?: number }
 >(tasks: T[], today: Date, mode: CalendarMode): T[] {
   const rank = (task: T) =>
     daysUntil(task.dueDate, today, mode) ?? Number.POSITIVE_INFINITY;
   return [...tasks].sort((a, b) => {
+    const pa = a.priority ?? 0;
+    const pb = b.priority ?? 0;
+    if (pa !== pb) return pb - pa;
     const ra = rank(a);
     const rb = rank(b);
     if (ra !== rb) return ra < rb ? -1 : 1;
@@ -195,6 +199,7 @@ export function ProjectGroup({
         projectId: task.projectId,
         dueDate: task.dueDate,
         estimatedMinutes: task.estimatedMinutes,
+        priority: task.priority,
       };
       return (
         <div key={task.id} className="mx-3 my-1">
@@ -218,6 +223,7 @@ export function ProjectGroup({
             note: firstNoteLine(task.notes),
             meta: taskMeta(task, task.done, today, mode),
             estimate: formatEstimate(task.estimatedMinutes),
+          priority: task.priority,
             due: task.done ? null : duePillFor(task.dueDate, today, mode),
             done: task.done,
             overdue: !task.done && isOverdue(task.dueDate, today, mode),

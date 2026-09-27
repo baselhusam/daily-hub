@@ -18,6 +18,8 @@ import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
 import { DialogInput, FieldLabel } from "@/components/ui/input";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { toDateInputValue } from "@/lib/dates";
+import { PRIORITY_CHIPS, PRIORITY_NONE } from "@/lib/priority";
+import { PriorityGlyph } from "./priority-glyph";
 
 type TaskFormValues = {
   id: string;
@@ -26,6 +28,7 @@ type TaskFormValues = {
   projectId: string | null;
   dueDate: Date | null;
   estimatedMinutes: number | null;
+  priority: number;
 };
 
 type TaskProjectOption = {
@@ -66,12 +69,16 @@ export function CreateTaskDialog({
   const [dueDate, setDueDate] = React.useState(
     task?.dueDate ? toDateInputValue(task.dueDate) : ""
   );
+  const [priority, setPriority] = React.useState(
+    String(task?.priority ?? PRIORITY_NONE)
+  );
   const isEdit = Boolean(task?.id);
 
   React.useEffect(() => {
     if (open) {
       setProjectId(task?.projectId ?? defaultProjectId ?? "none");
       setDueDate(task?.dueDate ? toDateInputValue(task.dueDate) : "");
+      setPriority(String(task?.priority ?? PRIORITY_NONE));
       setError(null);
     }
   }, [open, task, defaultProjectId]);
@@ -115,6 +122,15 @@ export function CreateTaskDialog({
         />
       ),
     })),
+  ];
+
+  const priorityOptions = [
+    ...PRIORITY_CHIPS.map((chip) => ({
+      value: String(chip.value),
+      label: chip.label,
+      leading: <PriorityGlyph priority={chip.value} decorative />,
+    })),
+    { value: String(PRIORITY_NONE), label: "No priority" },
   ];
 
   return (
@@ -171,6 +187,16 @@ export function CreateTaskDialog({
                   value={dueDate}
                   onValueChange={setDueDate}
                   placeholder="No due date"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <FieldLabel>Priority</FieldLabel>
+                <SelectMenu
+                  name="priority"
+                  value={priority}
+                  onValueChange={setPriority}
+                  options={priorityOptions}
+                  ariaLabel="Priority"
                 />
               </label>
               <label className="flex flex-col gap-1.5">

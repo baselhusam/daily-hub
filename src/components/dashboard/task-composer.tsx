@@ -5,9 +5,11 @@ import { CalendarDays, Timer, Trash2 } from "lucide-react";
 import { createTask, deleteTask, updateTask } from "@/app/actions/tasks";
 import { DatePicker } from "@/components/ui/date-picker";
 import { EntityAvatar, InboxAvatar } from "@/components/ui/entity-avatar";
+import { PriorityGlyph } from "./priority-glyph";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { DATE_INPUT_MAX, DATE_INPUT_MIN, toDateInputValue } from "@/lib/dates";
 import { dueChipsFor, ESTIMATE_CHIPS, formatCustomDue, parseEstimateInput } from "@/lib/due-chips";
+import { PRIORITY_CHIPS, PRIORITY_NONE } from "@/lib/priority";
 import { formatEstimate } from "@/lib/streak-utils";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,7 @@ export type ComposerTask = {
   projectId: string | null;
   dueDate: Date | null;
   estimatedMinutes: number | null;
+  priority: number;
 };
 
 type TaskComposerProps = {
@@ -46,8 +49,9 @@ type TaskComposerProps = {
 /**
  * The inline card that opens under a task list — "Add task to X" — and the
  * same card pre-filled when a task's pencil is pressed. Enter in the title
- * commits, ⌘/Ctrl+Enter commits from the note, Esc closes. Dates and
- * estimates are one-tap chips; a custom date opens the calendar in place.
+ * commits, ⌘/Ctrl+Enter commits from the note, Esc closes. Dates, estimates
+ * and priority are one-tap chips (tap the lit one again to clear it); a
+ * custom date opens the calendar in place.
  */
 export function TaskComposer({
   today,
@@ -68,6 +72,7 @@ export function TaskComposer({
   const [estimate, setEstimate] = React.useState<number | null>(
     task?.estimatedMinutes ?? null
   );
+  const [priority, setPriority] = React.useState(task?.priority ?? PRIORITY_NONE);
   const [target, setTarget] = React.useState(task?.projectId ?? projectId ?? "");
   const [customDateOpen, setCustomDateOpen] = React.useState(false);
   const [customEstimateOpen, setCustomEstimateOpen] = React.useState(false);
@@ -133,6 +138,7 @@ export function TaskComposer({
     formData.set("projectId", target || "none");
     formData.set("dueDate", due);
     formData.set("estimatedMinutes", estimate === null ? "" : String(estimate));
+    formData.set("priority", String(priority));
     if (task) formData.set("id", task.id);
     try {
       const result = task ? await updateTask(formData) : await createTask(formData);
@@ -339,6 +345,24 @@ export function TaskComposer({
               Custom
             </button>
           )}
+        </ChipRow>
+        <ChipRow label="Pri">
+          {PRIORITY_CHIPS.map((chip) => (
+            <Chip
+              key={chip.value}
+              active={priority === chip.value}
+              onClick={() =>
+                setPriority(priority === chip.value ? PRIORITY_NONE : chip.value)
+              }
+            >
+              <PriorityGlyph
+                priority={chip.value}
+                decorative
+                className={cn("-ml-0.5 mr-1.5", priority === chip.value && "text-background")}
+              />
+              {chip.label}
+            </Chip>
+          ))}
         </ChipRow>
         {editing ? (
           <ChipRow label="In">

@@ -267,6 +267,7 @@ export function ProjectDetailShell({ data }: { data: ProjectDetailData }) {
         projectId: task.projectId,
         dueDate: task.dueDate,
         estimatedMinutes: task.estimatedMinutes,
+        priority: task.priority,
       };
       return (
         <div key={task.id} className="mx-3.5 my-1">
@@ -290,6 +291,7 @@ export function ProjectDetailShell({ data }: { data: ProjectDetailData }) {
           note: firstNoteLine(task.notes),
           meta: taskMeta(task, task.done, today, mode),
           estimate: formatEstimate(task.estimatedMinutes),
+          priority: task.priority,
           due: task.done ? null : duePillFor(task.dueDate, today, mode),
           done: task.done,
           overdue: !task.done && isOverdue(task.dueDate, today, mode),

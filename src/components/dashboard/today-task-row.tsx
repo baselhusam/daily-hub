@@ -4,6 +4,7 @@ import * as React from "react";
 import { Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { PriorityGlyph } from "./priority-glyph";
 
 export type DuePill = {
   label: string;
@@ -16,6 +17,8 @@ export type TodayTaskRowData = {
   note?: string;
   meta?: string;
   estimate?: string;
+  /** 0–3; the glyph shows on open tasks only. */
+  priority?: number;
   due?: DuePill | null;
   done: boolean;
   overdue?: boolean;
@@ -94,6 +97,7 @@ export function TodayTaskRow({
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-[9px] pt-px">
+        {!task.done && task.priority ? <PriorityGlyph priority={task.priority} /> : null}
         {task.estimate ? (
           <span className="text-[11px] text-faint tabular-nums">{task.estimate}</span>
         ) : null}

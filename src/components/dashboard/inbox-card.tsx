@@ -9,7 +9,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { cn, sortInboxLog } from "@/lib/utils";
 import { CardHeading, TodayCard } from "./today-card";
 import { TaskComposer, type ComposerTask } from "./task-composer";
-import { duePillFor, firstNoteLine, taskMeta } from "./project-group";
+import { duePillFor, firstNoteLine, sortOpenForToday, taskMeta } from "./project-group";
 import { TodayTaskRow } from "./today-task-row";
 
 type InboxCardProps = {
@@ -71,7 +71,11 @@ export function InboxCard({
       return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
     })
   );
-  const openTasks = visible.filter((task) => !task.done);
+  const openTasks = sortOpenForToday(
+    visible.filter((task) => !task.done),
+    today,
+    mode
+  );
   const doneTasks = visible.filter((task) =>
     expanded ? task.done : task.done && (task.doneToday || getDone(task.id, task.done) !== task.done)
   );
@@ -101,6 +105,7 @@ export function InboxCard({
         projectId: null,
         dueDate: task.dueDate,
         estimatedMinutes: task.estimatedMinutes,
+        priority: task.priority,
       };
       return (
         <div key={task.id} className="mx-3 my-1">
@@ -125,6 +130,7 @@ export function InboxCard({
           note: firstNoteLine(task.notes),
           meta: taskMeta(task, task.done, today, mode),
           estimate: formatEstimate(task.estimatedMinutes),
+          priority: task.priority,
           due: task.done ? null : duePillFor(task.dueDate, today, mode),
           done: task.done,
           overdue: !task.done && isOverdue(task.dueDate, today, mode),
