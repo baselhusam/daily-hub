@@ -147,7 +147,7 @@ var require_chunk_3UEKS5W6 = __commonJS({
     var import_chunk_2ESYSVXG = require_chunk_2ESYSVXG();
     var import_node_buffer = require("node:buffer");
     var import_node_path4 = __toESM2(require("node:path"));
-    var import_node_child_process2 = __toESM2(require("node:child_process"));
+    var import_node_child_process3 = __toESM2(require("node:child_process"));
     var import_node_process = __toESM2(require("node:process"));
     var import_node_process2 = __toESM2(require("node:process"));
     var import_node_path22 = __toESM2(require("node:path"));
@@ -161,7 +161,7 @@ var require_chunk_3UEKS5W6 = __commonJS({
     var import_node_fs22 = require("node:fs");
     var import_promises2 = require("node:timers/promises");
     var import_node_buffer2 = require("node:buffer");
-    var import_node_child_process3 = require("node:child_process");
+    var import_node_child_process32 = require("node:child_process");
     var import_node_util = require("node:util");
     var import_node_process4 = __toESM2(require("node:process"));
     var require_windows = (0, import_chunk_2ESYSVXG.__commonJS)({
@@ -14879,7 +14879,7 @@ ${error.message}` : execaMessage;
       if (typeOfExpression === "number") {
         return String(expression);
       }
-      if (typeOfExpression === "object" && expression !== null && !(expression instanceof import_node_child_process3.ChildProcess) && "stdout" in expression) {
+      if (typeOfExpression === "object" && expression !== null && !(expression instanceof import_node_child_process32.ChildProcess) && "stdout" in expression) {
         const typeOfStdout = typeof expression.stdout;
         if (typeOfStdout === "string") {
           return expression.stdout;
@@ -14988,9 +14988,9 @@ ${error.message}` : execaMessage;
       validateTimeout(parsed.options);
       let spawned;
       try {
-        spawned = import_node_child_process2.default.spawn(parsed.file, parsed.args, parsed.options);
+        spawned = import_node_child_process3.default.spawn(parsed.file, parsed.args, parsed.options);
       } catch (error) {
-        const dummySpawned = new import_node_child_process2.default.ChildProcess();
+        const dummySpawned = new import_node_child_process3.default.ChildProcess();
         const errorPromise = Promise.reject(makeError({
           error,
           stdout: "",
@@ -15065,7 +15065,7 @@ ${error.message}` : execaMessage;
       const input = handleInputSync(parsed.options);
       let result;
       try {
-        result = import_node_child_process2.default.spawnSync(parsed.file, parsed.args, { ...parsed.options, input });
+        result = import_node_child_process3.default.spawnSync(parsed.file, parsed.args, { ...parsed.options, input });
       } catch (error) {
         throw makeError({
           error,
@@ -16928,7 +16928,7 @@ var require_dist2 = __commonJS({
 });
 
 // src/cli/index.ts
-var import_node_child_process = require("node:child_process");
+var import_node_child_process2 = require("node:child_process");
 var import_node_fs3 = require("node:fs");
 var import_promises = require("node:fs/promises");
 var import_node_net = require("node:net");
@@ -17150,6 +17150,76 @@ async function installApp(options, runCommand2) {
   }
 }
 
+// src/cli/process-control.ts
+var import_node_child_process = require("node:child_process");
+var STOP_GRACE_MS = 6e3;
+var SHUTDOWN_GRACE_MS = 4e3;
+var KILL_SETTLE_MS = 2e3;
+var POLL_MS = 100;
+var systemProcessOps = {
+  isRunning(pid) {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (error) {
+      return error.code === "EPERM";
+    }
+  },
+  kill(pid, signal) {
+    try {
+      process.kill(pid, signal);
+    } catch (error) {
+      if (error.code !== "ESRCH") throw error;
+    }
+  },
+  sleep: (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms)),
+  now: () => Date.now()
+};
+async function waitForExit(pids, timeoutMs, ops) {
+  const deadline = ops.now() + timeoutMs;
+  while (pids.some((pid) => ops.isRunning(pid))) {
+    if (ops.now() >= deadline) return false;
+    await ops.sleep(POLL_MS);
+  }
+  return true;
+}
+async function stopProcessTree(tree, graceMs, ops) {
+  const all = [...tree.childPids, tree.parentPid];
+  if (ops.isRunning(tree.parentPid)) {
+    ops.kill(tree.parentPid, "SIGTERM");
+  } else {
+    for (const pid of tree.childPids) ops.kill(pid, "SIGTERM");
+  }
+  if (await waitForExit(all, graceMs, ops)) {
+    return { result: "stopped" };
+  }
+  const killed = all.filter((pid) => ops.isRunning(pid));
+  for (const pid of killed) {
+    ops.kill(pid, "SIGKILL");
+  }
+  if (await waitForExit(all, KILL_SETTLE_MS, ops)) {
+    return { result: "forced", killed };
+  }
+  return { result: "failed", survivors: all.filter((pid) => ops.isRunning(pid)) };
+}
+function listChildPids(pid) {
+  if (process.platform === "win32") return [];
+  try {
+    const output = (0, import_node_child_process.execFileSync)("ps", ["-A", "-o", "pid=,ppid="], { encoding: "utf8" });
+    return parseChildPids(output, pid);
+  } catch {
+    return [];
+  }
+}
+function parseChildPids(psOutput, parentPid) {
+  const children = [];
+  for (const line of psOutput.split("\n")) {
+    const [pid, ppid] = line.trim().split(/\s+/).map(Number);
+    if (Number.isInteger(pid) && ppid === parentPid) children.push(pid);
+  }
+  return children;
+}
+
 // src/cli/index.ts
 var packageRoot = (0, import_node_path3.resolve)(__dirname, "..");
 var schemaPath = (0, import_node_path3.join)(packageRoot, "prisma", "schema.prisma");
@@ -17247,7 +17317,7 @@ function parseArgs(argv) {
 async function openBrowser(url) {
   const command = process.platform === "win32" ? "cmd" : process.platform === "darwin" ? "open" : "xdg-open";
   const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
-  (0, import_node_child_process.spawn)(command, args, {
+  (0, import_node_child_process2.spawn)(command, args, {
     detached: true,
     stdio: "ignore"
   }).unref();
@@ -17348,12 +17418,7 @@ function readBackgroundState(dataDir) {
   }
 }
 function isProcessRunning(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
+  return systemProcessOps.isRunning(pid);
 }
 function removeBackgroundState(dataDir, pid) {
   const state = readBackgroundState(dataDir);
@@ -17368,9 +17433,10 @@ function removeBackgroundState(dataDir, pid) {
     }
   }
 }
-function writeBackgroundState(dataDir, port) {
+function writeBackgroundState(dataDir, port, serverPid) {
   const state = {
     pid: process.pid,
+    ...serverPid ? { serverPid } : {},
     port,
     startedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
@@ -17391,19 +17457,52 @@ function printBackgroundStatus(dataDir) {
   console.log(`DailyHub is running in the background at http://127.0.0.1:${state.port} (PID ${state.pid}).`);
   console.log(`Log file: ${backgroundLogPath(dataDir)}`);
 }
-function stopBackgroundServer(dataDir) {
+async function stopBackgroundServer(dataDir) {
   const state = readBackgroundState(dataDir);
   if (!state) {
     console.log("DailyHub is not running in the background.");
     return;
   }
-  if (!isProcessRunning(state.pid)) {
+  const childPids = state.serverPid !== void 0 ? [state.serverPid] : listChildPids(state.pid);
+  const alive = [state.pid, ...childPids].filter(isProcessRunning);
+  if (alive.length === 0) {
     removeBackgroundState(dataDir);
     console.log("DailyHub is not running in the background (removed stale state).");
     return;
   }
-  process.kill(state.pid, "SIGTERM");
-  console.log(`Stopping DailyHub background process (PID ${state.pid}).`);
+  console.log(`Stopping DailyHub background process (PID ${state.pid})...`);
+  const outcome = await stopProcessTree(
+    { parentPid: state.pid, childPids },
+    STOP_GRACE_MS,
+    systemProcessOps
+  );
+  if (outcome.result === "failed") {
+    console.error(
+      `DailyHub is still running (PID ${outcome.survivors.join(", ")}) after SIGKILL. Stop it by hand before starting DailyHub again.`
+    );
+    process.exitCode = 1;
+    return;
+  }
+  removeBackgroundState(dataDir, state.pid);
+  if (outcome.result === "forced") {
+    console.log(
+      `DailyHub did not shut down within ${STOP_GRACE_MS / 1e3}s, so it was force-stopped (PID ${outcome.killed.join(", ")}). Saved data is intact.`
+    );
+    return;
+  }
+  console.log("DailyHub stopped.");
+}
+function assertNoBackgroundInstance(dataDir) {
+  const state = readBackgroundState(dataDir);
+  if (!state || state.pid === process.pid) return;
+  const pids = [state.pid, ...state.serverPid !== void 0 ? [state.serverPid] : []];
+  if (!pids.some(isProcessRunning)) {
+    removeBackgroundState(dataDir);
+    return;
+  }
+  throw new Error(
+    `DailyHub is already running in the background (PID ${state.pid}, port ${state.port}). Run "daily-hub stop" first.`
+  );
 }
 function printBackgroundLogs(dataDir) {
   const logPath = backgroundLogPath(dataDir);
@@ -17416,19 +17515,35 @@ function printBackgroundLogs(dataDir) {
 }
 function runCommand(command, args, env, cwd = packageRoot, stdio = "inherit") {
   return new Promise((resolvePromise, reject) => {
-    const child = (0, import_node_child_process.spawn)(command, args, {
+    const child = (0, import_node_child_process2.spawn)(command, args, {
       cwd,
       env,
-      stdio,
+      stdio: stdio === "tee" ? ["inherit", "pipe", "pipe"] : stdio,
       shell: process.platform === "win32"
     });
+    let output = "";
+    if (stdio === "tee") {
+      child.stdout?.on("data", (chunk) => {
+        process.stdout.write(chunk);
+        output += chunk.toString();
+      });
+      child.stderr?.on("data", (chunk) => {
+        process.stderr.write(chunk);
+        output += chunk.toString();
+      });
+    }
     child.on("error", reject);
-    child.on("exit", (code) => {
+    child.on("close", (code) => {
       if (code === 0) {
         resolvePromise();
         return;
       }
-      reject(new Error(`${command} ${args.join(" ")} exited with code ${code ?? "unknown"}`));
+      reject(
+        Object.assign(
+          new Error(`${command} ${args.join(" ")} exited with code ${code ?? "unknown"}`),
+          { output }
+        )
+      );
     });
   });
 }
@@ -17491,16 +17606,20 @@ async function migrateDatabase(env, dataDir) {
       await runCommand(
         prisma.command,
         [...prisma.prefixArgs, "migrate", "deploy", "--schema", schemaPath],
-        env
+        env,
+        packageRoot,
+        "tee"
       );
       return;
     } catch (error) {
+      const output = error.output ?? "";
       const message = error instanceof Error ? error.message : String(error);
-      const locked = message.includes("database is locked");
+      const locked = `${message}
+${output}`.includes("database is locked");
       if (!locked || attempt === maxAttempts) {
         if (locked) {
           throw new Error(
-            `SQLite database at ${(0, import_node_path3.join)(dataDir, "data.db")} is locked. Stop any other DailyHub process (check port ${env.PORT ?? 9999}), then retry. If nothing is running, delete ${(0, import_node_path3.join)(dataDir, "data.db-wal")} and ${(0, import_node_path3.join)(dataDir, "data.db-shm")} and try again.`
+            `SQLite database at ${(0, import_node_path3.join)(dataDir, "data.db")} is locked by another process. Run "daily-hub stop", or stop whatever else has the database open, then start DailyHub again.`
           );
         }
         throw error;
@@ -17518,11 +17637,12 @@ async function seedDatabase(env) {
 }
 async function startDetached(options, rawArgs) {
   await prepareDataDir(options.dataDir);
+  assertNoBackgroundInstance(options.dataDir);
   const logPath = backgroundLogPath(options.dataDir);
   const logFile = (0, import_node_fs3.openSync)(logPath, "a");
   const childArgs = rawArgs.filter((arg) => arg !== "--detach");
   childArgs.push("--detach-child", "--no-open");
-  const child = (0, import_node_child_process.spawn)(process.execPath, [process.argv[1], ...childArgs], {
+  const child = (0, import_node_child_process2.spawn)(process.execPath, [process.argv[1], ...childArgs], {
     cwd: process.cwd(),
     detached: true,
     stdio: ["ignore", logFile, logFile]
@@ -17577,23 +17697,34 @@ async function startServer(options) {
   await prepareDataDir(options.dataDir);
   const mcpConfig = options.mcpEnabled ? getOrCreateMcpConfig(options.dataDir) : void 0;
   const env = await preparePrisma(options, mcpConfig);
+  assertNoBackgroundInstance(options.dataDir);
   await assertPortAvailable(options.port);
   await migrateDatabase(env, options.dataDir);
   if (options.seed) {
     await seedDatabase(env);
   }
-  const server = (0, import_node_child_process.spawn)(process.execPath, [standaloneServerPath], {
+  const server = (0, import_node_child_process2.spawn)(process.execPath, [standaloneServerPath], {
     cwd: (0, import_node_path3.join)(packageRoot, ".next", "standalone"),
     env,
     stdio: "inherit"
   });
   if (options.detachedChild) {
-    writeBackgroundState(options.dataDir, options.port);
+    writeBackgroundState(options.dataDir, options.port, server.pid);
   }
-  const shutdown = async () => {
-    if (!server.killed) {
-      server.kill("SIGTERM");
-    }
+  let serverExited = false;
+  let shuttingDown = false;
+  const shutdown = () => {
+    if (shuttingDown || serverExited) return;
+    shuttingDown = true;
+    server.kill("SIGTERM");
+    setTimeout(() => {
+      if (!serverExited) {
+        console.error(
+          `DailyHub server did not exit within ${SHUTDOWN_GRACE_MS / 1e3}s of SIGTERM; forcing it.`
+        );
+        server.kill("SIGKILL");
+      }
+    }, SHUTDOWN_GRACE_MS);
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
@@ -17605,6 +17736,7 @@ async function startServer(options) {
     process.exit(1);
   });
   server.on("exit", (code, signal) => {
+    serverExited = true;
     if (options.detachedChild) {
       removeBackgroundState(options.dataDir, process.pid);
     }
@@ -17645,7 +17777,7 @@ async function main() {
     return;
   }
   if (options.command === "stop") {
-    stopBackgroundServer(options.dataDir);
+    await stopBackgroundServer(options.dataDir);
     return;
   }
   if (options.command === "logs") {

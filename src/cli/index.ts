@@ -19,6 +19,13 @@ import {
   resolvePrismaCli,
 } from "./prisma-support";
 import { defaultAppDir, installApp } from "./install-app";
+import {
+  SHUTDOWN_GRACE_MS,
+  STOP_GRACE_MS,
+  listChildPids,
+  stopProcessTree,
+  systemProcessOps,
+} from "./process-control";
 
 declare const __dirname: string;
 
@@ -41,7 +48,10 @@ type CliOptions = {
 };
 
 type BackgroundState = {
+  /** The CLI parent (`start --detach-child`). */
   pid: number;
+  /** The Next server it spawned; absent in state written before 0.2.4. */
+  serverPid?: number;
   port: number;
   startedAt: string;
 };
@@ -280,12 +290,7 @@ function readBackgroundState(dataDir: string): BackgroundState | undefined {
 }
 
 function isProcessRunning(pid: number) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
+  return systemProcessOps.isRunning(pid);
 }
 
 function removeBackgroundState(dataDir: string, pid?: number) {
@@ -303,9 +308,10 @@ function removeBackgroundState(dataDir: string, pid?: number) {
   }
 }
 
-function writeBackgroundState(dataDir: string, port: number) {
+function writeBackgroundState(dataDir: string, port: number, serverPid?: number) {
   const state: BackgroundState = {
     pid: process.pid,
+    ...(serverPid ? { serverPid } : {}),
     port,
     startedAt: new Date().toISOString(),
   };
@@ -329,21 +335,69 @@ function printBackgroundStatus(dataDir: string) {
   console.log(`Log file: ${backgroundLogPath(dataDir)}`);
 }
 
-function stopBackgroundServer(dataDir: string) {
+async function stopBackgroundServer(dataDir: string) {
   const state = readBackgroundState(dataDir);
   if (!state) {
     console.log("DailyHub is not running in the background.");
     return;
   }
 
-  if (!isProcessRunning(state.pid)) {
+  // The server can outlive its parent (a parent killed on its own leaves it
+  // orphaned, still holding data.db), so it is checked as well.
+  const childPids =
+    state.serverPid !== undefined ? [state.serverPid] : listChildPids(state.pid);
+  const alive = [state.pid, ...childPids].filter(isProcessRunning);
+  if (alive.length === 0) {
     removeBackgroundState(dataDir);
     console.log("DailyHub is not running in the background (removed stale state).");
     return;
   }
 
-  process.kill(state.pid, "SIGTERM");
-  console.log(`Stopping DailyHub background process (PID ${state.pid}).`);
+  console.log(`Stopping DailyHub background process (PID ${state.pid})...`);
+  const outcome = await stopProcessTree(
+    { parentPid: state.pid, childPids },
+    STOP_GRACE_MS,
+    systemProcessOps
+  );
+
+  if (outcome.result === "failed") {
+    console.error(
+      `DailyHub is still running (PID ${outcome.survivors.join(", ")}) after SIGKILL. Stop it by hand before starting DailyHub again.`
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  // A parent that was SIGKILLed never got to remove its own state file.
+  removeBackgroundState(dataDir, state.pid);
+  if (outcome.result === "forced") {
+    console.log(
+      `DailyHub did not shut down within ${STOP_GRACE_MS / 1000}s, so it was force-stopped (PID ${outcome.killed.join(", ")}). Saved data is intact.`
+    );
+    return;
+  }
+  console.log("DailyHub stopped.");
+}
+
+/**
+ * Refuse to start over a background instance that is still alive. A server
+ * mid-shutdown has already closed its port, so the port check alone misses
+ * it — and it still holds data.db, which would fail the migration with a raw
+ * "database is locked".
+ */
+function assertNoBackgroundInstance(dataDir: string) {
+  const state = readBackgroundState(dataDir);
+  if (!state || state.pid === process.pid) return;
+
+  const pids = [state.pid, ...(state.serverPid !== undefined ? [state.serverPid] : [])];
+  if (!pids.some(isProcessRunning)) {
+    removeBackgroundState(dataDir);
+    return;
+  }
+
+  throw new Error(
+    `DailyHub is already running in the background (PID ${state.pid}, port ${state.port}). Run "daily-hub stop" first.`
+  );
 }
 
 function printBackgroundLogs(dataDir: string) {
@@ -362,23 +416,42 @@ function runCommand(
   args: string[],
   env: NodeJS.ProcessEnv,
   cwd = packageRoot,
-  stdio: "inherit" | "ignore" = "inherit"
+  stdio: "inherit" | "ignore" | "tee" = "inherit"
 ): Promise<void> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
       cwd,
       env,
-      stdio,
+      stdio: stdio === "tee" ? ["inherit", "pipe", "pipe"] : stdio,
       shell: process.platform === "win32",
     });
 
+    // "tee" still shows the output, and keeps it so a caller can tell one
+    // failure from another.
+    let output = "";
+    if (stdio === "tee") {
+      child.stdout?.on("data", (chunk: Buffer) => {
+        process.stdout.write(chunk);
+        output += chunk.toString();
+      });
+      child.stderr?.on("data", (chunk: Buffer) => {
+        process.stderr.write(chunk);
+        output += chunk.toString();
+      });
+    }
+
     child.on("error", reject);
-    child.on("exit", (code) => {
+    child.on("close", (code) => {
       if (code === 0) {
         resolvePromise();
         return;
       }
-      reject(new Error(`${command} ${args.join(" ")} exited with code ${code ?? "unknown"}`));
+      reject(
+        Object.assign(
+          new Error(`${command} ${args.join(" ")} exited with code ${code ?? "unknown"}`),
+          { output }
+        )
+      );
     });
   });
 }
@@ -462,16 +535,23 @@ async function migrateDatabase(env: NodeJS.ProcessEnv, dataDir: string) {
       await runCommand(
         prisma.command,
         [...prisma.prefixArgs, "migrate", "deploy", "--schema", schemaPath],
-        env
+        env,
+        packageRoot,
+        "tee"
       );
       return;
     } catch (error) {
+      // Prisma prints the cause rather than putting it in the exit code, so
+      // it is read from the captured output.
+      const output = (error as { output?: string }).output ?? "";
       const message = error instanceof Error ? error.message : String(error);
-      const locked = message.includes("database is locked");
+      const locked = `${message}\n${output}`.includes("database is locked");
       if (!locked || attempt === maxAttempts) {
         if (locked) {
+          // Never suggest deleting data.db-wal: after a crash or a SIGKILL it
+          // holds committed writes that have not reached data.db yet.
           throw new Error(
-            `SQLite database at ${join(dataDir, "data.db")} is locked. Stop any other DailyHub process (check port ${env.PORT ?? 9999}), then retry. If nothing is running, delete ${join(dataDir, "data.db-wal")} and ${join(dataDir, "data.db-shm")} and try again.`
+            `SQLite database at ${join(dataDir, "data.db")} is locked by another process. Run "daily-hub stop", or stop whatever else has the database open, then start DailyHub again.`
           );
         }
         throw error;
@@ -493,6 +573,7 @@ async function seedDatabase(env: NodeJS.ProcessEnv) {
 
 async function startDetached(options: CliOptions, rawArgs: string[]) {
   await prepareDataDir(options.dataDir);
+  assertNoBackgroundInstance(options.dataDir);
 
   const logPath = backgroundLogPath(options.dataDir);
   const logFile = openSync(logPath, "a");
@@ -569,6 +650,7 @@ async function startServer(options: CliOptions) {
     ? getOrCreateMcpConfig(options.dataDir)
     : undefined;
   const env = await preparePrisma(options, mcpConfig);
+  assertNoBackgroundInstance(options.dataDir);
   await assertPortAvailable(options.port);
   await migrateDatabase(env, options.dataDir);
 
@@ -583,13 +665,25 @@ async function startServer(options: CliOptions) {
   });
 
   if (options.detachedChild) {
-    writeBackgroundState(options.dataDir, options.port);
+    writeBackgroundState(options.dataDir, options.port, server.pid);
   }
 
-  const shutdown = async () => {
-    if (!server.killed) {
-      server.kill("SIGTERM");
-    }
+  // Next's graceful shutdown waits on open connections (MCP clients, keep-
+  // alive sockets) and can wait forever, so a second chance is not optional.
+  let serverExited = false;
+  let shuttingDown = false;
+  const shutdown = () => {
+    if (shuttingDown || serverExited) return;
+    shuttingDown = true;
+    server.kill("SIGTERM");
+    setTimeout(() => {
+      if (!serverExited) {
+        console.error(
+          `DailyHub server did not exit within ${SHUTDOWN_GRACE_MS / 1000}s of SIGTERM; forcing it.`
+        );
+        server.kill("SIGKILL");
+      }
+    }, SHUTDOWN_GRACE_MS);
   };
 
   process.on("SIGINT", shutdown);
@@ -604,6 +698,7 @@ async function startServer(options: CliOptions) {
   });
 
   server.on("exit", (code, signal) => {
+    serverExited = true;
     if (options.detachedChild) {
       removeBackgroundState(options.dataDir, process.pid);
     }
@@ -651,7 +746,7 @@ async function main() {
   }
 
   if (options.command === "stop") {
-    stopBackgroundServer(options.dataDir);
+    await stopBackgroundServer(options.dataDir);
     return;
   }
 
