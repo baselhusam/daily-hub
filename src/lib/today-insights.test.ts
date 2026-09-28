@@ -5,6 +5,7 @@ import {
   habitDots,
   habitRate,
   habitsKeptThisWeek,
+  milestoneItemsDueWithin,
   milestonesDueWithin,
   oldestOverdueDays,
   openCountAt,
@@ -99,6 +100,19 @@ describe("buildUpNext", () => {
 
   it("counts milestones due within the window", () => {
     expect(milestonesDueWithin(projects, today, 7)).toBe(1);
+  });
+
+  it("lists the window's milestones with their project, skipping slipped and done ones", () => {
+    expect(milestoneItemsDueWithin(projects, today, 7)).toEqual([
+      {
+        id: "milestone:m1",
+        label: "Component pass",
+        projectId: "a",
+        projectName: "Aurora",
+        color: "#5F6DC6",
+        days: 5,
+      },
+    ]);
   });
 });
 

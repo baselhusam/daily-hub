@@ -30,6 +30,8 @@ type TodayTaskRowProps = {
   onEdit?: () => void;
   /** Slightly denser row for the right rail. */
   compact?: boolean;
+  /** A nudge focus picked this row out: tint it so it reads as the match. */
+  highlighted?: boolean;
   className?: string;
 };
 
@@ -50,6 +52,7 @@ export function TodayTaskRow({
   onToggle,
   onEdit,
   compact = false,
+  highlighted = false,
   className,
 }: TodayTaskRowProps) {
   return (
@@ -60,6 +63,8 @@ export function TodayTaskRow({
       className={cn(
         "group flex cursor-pointer items-start gap-[11px] scroll-mt-28 px-4 transition-colors duration-[120ms] hover:bg-canvas-sunk target:bg-signal-wash/40",
         compact ? "py-[7px]" : "py-2",
+        highlighted &&
+          "bg-destructive-wash/55 shadow-[inset_2px_0_0_var(--destructive)] hover:bg-destructive-wash",
         className
       )}
     >

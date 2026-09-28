@@ -8,7 +8,7 @@ import { Plus, X } from "lucide-react";
 import { toggleDailyTask } from "@/app/actions/daily-tasks";
 import { toggleTask } from "@/app/actions/tasks";
 import type { DashboardData } from "@/lib/dashboard";
-import { getGreeting } from "@/lib/dates";
+import { getGreeting, isOverdue } from "@/lib/dates";
 import { useDisplayDay } from "@/lib/hydration";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
 import { useCollapsedProjects } from "@/lib/use-collapsed-projects";
@@ -19,13 +19,16 @@ import { ClosedEachDayCard, ClosedEachDayDialog, toClosedPoints } from "./closed
 import { HabitsCard } from "./habits-card";
 import { InboxCard } from "./inbox-card";
 import { MomentumAnalysisDialog, MomentumCard } from "./momentum-card";
-import { NudgeRow } from "./nudge-row";
+import { isSameFocus, NudgeRow, type NudgeFocus } from "./nudge-row";
 import { OpenTasksCard } from "./open-tasks-card";
 import { ProjectGroup } from "./project-group";
 import { UpNextCard } from "./up-next-card";
 import { WEEK_REVIEW_ID, WeekReviewBanner } from "./week-review-banner";
 
 const UP_NEXT_ID = "up-next";
+
+/** Rail cards a nudge focus did not pick step back without leaving the layout. */
+const DIMMED = "opacity-45 transition-opacity duration-[160ms] hover:opacity-100";
 
 type TodayShellProps = {
   data: DashboardData;
@@ -69,8 +72,43 @@ export function TodayShell({ data }: TodayShellProps) {
 
   const filterProject = data.projects.find((project) => project.id === projectFilter);
   const inboxOnly = projectFilter === "inbox";
-  const scoped = Boolean(filterProject) || inboxOnly;
-  const scopeLabel = filterProject?.name ?? (inboxOnly ? "Inbox" : null);
+
+  // A nudge pill's focus lives in the URL next to the project filter, so Back,
+  // Escape, and the scope chip all clear it the same way.
+  const focusParam = searchParams.get("focus");
+  const focus: NudgeFocus | null =
+    focusParam === "overdue"
+      ? { kind: "overdue" }
+      : focusParam === "milestones"
+        ? { kind: "milestones" }
+        : focusParam === "stalled" && filterProject
+          ? { kind: "stalled", projectId: filterProject.id }
+          : null;
+
+  const scoped = Boolean(filterProject) || inboxOnly || Boolean(focus);
+  const scopeLabel =
+    focus?.kind === "overdue"
+      ? "Overdue"
+      : focus?.kind === "milestones"
+        ? "Milestones this week"
+        : focus?.kind === "stalled" && filterProject
+          ? `${filterProject.name} · stalled`
+          : (filterProject?.name ?? (inboxOnly ? "Inbox" : null));
+
+  // Picked from the server's done state, not the optimistic one, so a task
+  // checked off under the overdue focus stays on screen (struck through)
+  // instead of vanishing from under the cursor.
+  const overdueTaskIds =
+    focus?.kind === "overdue"
+      ? new Set(
+          [...data.projects.flatMap((project) => project.tasks), ...data.inboxTasks]
+            .filter((task) => !task.done && isOverdue(task.dueDate, today, mode))
+            .map((task) => task.id)
+        )
+      : undefined;
+  const milestoneProjectIds = new Set(
+    data.nudges.milestonesThisWeek.map((item) => item.projectId)
+  );
 
   React.useEffect(() => {
     const id = window.location.hash.replace("#", "");
@@ -95,13 +133,25 @@ export function TodayShell({ data }: TodayShellProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [scoped, router]);
 
-  const visibleProjects = filterProject
+  const scopedProjects = filterProject
     ? [filterProject]
     : inboxOnly
       ? []
       : data.projects;
+  const visibleProjects =
+    focus?.kind === "overdue"
+      ? scopedProjects.filter((project) =>
+          project.tasks.some((task) => overdueTaskIds?.has(task.id))
+        )
+      : focus?.kind === "milestones"
+        ? scopedProjects.filter((project) => milestoneProjectIds.has(project.id))
+        : scopedProjects;
+  const inboxMatchesFocus =
+    focus?.kind === "overdue" && data.inboxTasks.some((task) => overdueTaskIds?.has(task.id));
 
-  const collapseInputs = visibleProjects.map((project) => {
+  // Every project, not just the visible ones: the hook prunes overrides for
+  // ids it is not given, and a filter must not wipe out the hidden cards'.
+  const collapseInputs = data.projects.map((project) => {
     const openCount = project.tasks.filter(
       (task) => !optimisticTasks.get(task.id, task.done)
     ).length;
@@ -182,6 +232,15 @@ export function TodayShell({ data }: TodayShellProps) {
     );
   }
 
+  function toggleFocus(next: NudgeFocus) {
+    const href = isSameFocus(focus, next)
+      ? "/"
+      : next.kind === "stalled"
+        ? `/?project=${encodeURIComponent(next.projectId)}&focus=stalled`
+        : `/?focus=${next.kind}`;
+    router.push(href, { scroll: false });
+  }
+
   function jumpTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ block: "center", behavior: "smooth" });
   }
@@ -206,9 +265,9 @@ export function TodayShell({ data }: TodayShellProps) {
         habits={data.dailyTasks}
         getDone={(id, fallback) => optimisticHabits.get(id, fallback)}
         onToggle={(id, done) => void handleToggleHabit(id, done)}
-        className="shrink-0"
+        className={cn("shrink-0", focus && DIMMED)}
       />
-      {!inboxOnly ? (
+      {!inboxOnly && (focus?.kind !== "overdue" || inboxMatchesFocus) ? (
         <InboxCard
           tasks={data.inboxTasks}
           projects={data.projects}
@@ -218,10 +277,25 @@ export function TodayShell({ data }: TodayShellProps) {
           onToggle={(id, done) => void handleToggleTask(id, done)}
           onError={setActionError}
           onCapture={() => captureRef.current?.focus({ projectId: null })}
-          className="shrink-0"
+          focusTaskIds={overdueTaskIds}
+          className={cn("shrink-0", focus && focus.kind !== "overdue" && DIMMED)}
         />
       ) : null}
-      <UpNextCard id={UP_NEXT_ID} items={data.upNext} className="shrink-0" />
+      {focus?.kind === "milestones" ? (
+        <UpNextCard
+          id={UP_NEXT_ID}
+          items={data.nudges.milestonesThisWeek}
+          heading="Milestones this week"
+          highlighted
+          className="shrink-0"
+        />
+      ) : (
+        <UpNextCard
+          id={UP_NEXT_ID}
+          items={data.upNext}
+          className={cn("shrink-0", focus && DIMMED)}
+        />
+      )}
     </div>
   );
 
@@ -281,11 +355,7 @@ export function TodayShell({ data }: TodayShellProps) {
           </p>
         ) : null}
 
-        <NudgeRow
-          nudges={data.nudges}
-          onJumpToOverdue={jumpToOverdue}
-          onJumpToUpNext={() => jumpTo(UP_NEXT_ID)}
-        />
+        <NudgeRow nudges={data.nudges} active={focus} onToggle={toggleFocus} />
 
         <section
           aria-label="Daily pulse"
@@ -320,6 +390,7 @@ export function TodayShell({ data }: TodayShellProps) {
                 {scopeLabel ? (
                   <Link
                     href="/"
+                    scroll={false}
                     className="inline-flex max-w-[16rem] items-center gap-1.5 rounded-full border border-border bg-paper py-[3px] pr-[7px] pl-[9px] text-[11.5px] font-semibold text-ink-soft transition-colors duration-[120ms] hover:border-border-strong"
                     aria-label={`Clear filter (${scopeLabel})`}
                   >
@@ -369,13 +440,19 @@ export function TodayShell({ data }: TodayShellProps) {
             ) : visibleProjects.length === 0 ? (
               <EmptyScope
                 line={
-                  isFreshWorkspace
-                    ? "No open work yet. Add a task above, or create a project to group related work."
-                    : projectFilter
-                      ? "That project isn't here any more."
-                      : "No projects yet. Everything you capture lands in the Inbox."
+                  focus?.kind === "overdue"
+                    ? inboxMatchesFocus
+                      ? "Every overdue task is in the Inbox."
+                      : "Nothing overdue any more."
+                    : focus?.kind === "milestones"
+                      ? "No project has a milestone due this week."
+                      : isFreshWorkspace
+                        ? "No open work yet. Add a task above, or create a project to group related work."
+                        : projectFilter
+                          ? "That project isn't here any more."
+                          : "No projects yet. Everything you capture lands in the Inbox."
                 }
-                showClear={Boolean(projectFilter)}
+                showClear={Boolean(projectFilter) || Boolean(focus)}
               />
             ) : (
               visibleProjects.map((project, index) => (
@@ -386,12 +463,24 @@ export function TodayShell({ data }: TodayShellProps) {
                   index={index}
                   today={today}
                   mode={mode}
-                  expanded={filterProject?.id === project.id}
-                  collapsed={isCollapsed(project.id)}
-                  onToggleCollapsed={() => toggleCollapsed(project.id)}
+                  expanded={filterProject?.id === project.id || focus?.kind === "overdue"}
+                  collapsed={focus?.kind === "overdue" ? false : isCollapsed(project.id)}
+                  // The overdue focus holds every card open; folding one
+                  // would hide exactly what the pill asked to see.
+                  onToggleCollapsed={
+                    focus?.kind === "overdue" ? () => {} : () => toggleCollapsed(project.id)
+                  }
                   onToggleTask={(taskId, done) => void handleToggleTask(taskId, done)}
                   getDone={(id, fallback) => optimisticTasks.get(id, fallback)}
                   onError={setActionError}
+                  focusTaskIds={overdueTaskIds}
+                  highlight={
+                    focus?.kind === "stalled"
+                      ? "warn"
+                      : focus?.kind === "milestones"
+                        ? "done"
+                        : undefined
+                  }
                 />
               ))
             )}

@@ -30,7 +30,7 @@ import {
   habitDots,
   habitRate,
   habitsKeptThisWeek,
-  milestonesDueWithin,
+  milestoneItemsDueWithin,
   oldestOverdueDays,
   openCountAt,
   openMixOf,
@@ -129,7 +129,8 @@ export type DashboardTask = {
 export type DashboardNudges = {
   overdue: { count: number; oldestDays: number };
   stalled: Array<{ id: string; name: string; idleDays: number }>;
-  milestonesThisWeek: number;
+  /** Open milestones due in the next seven days, soonest first. */
+  milestonesThisWeek: UpNextItem[];
 };
 
 export type DashboardActivityPoint = {
@@ -395,11 +396,11 @@ export async function getDashboardData(): Promise<DashboardData> {
       name: project.name,
       idleDays: project.idleDays,
     })),
-    milestonesThisWeek: milestonesDueWithin(
+    milestonesThisWeek: milestoneItemsDueWithin(
       projects.map((project) => ({
         id: project.id,
         name: project.name,
-        color: "",
+        color: projectAccent(project),
         status: project.status,
         dueDate: project.dueDate,
         milestones: project.milestones,

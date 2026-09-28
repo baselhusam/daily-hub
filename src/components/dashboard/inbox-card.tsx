@@ -24,6 +24,8 @@ type InboxCardProps = {
   onCapture: () => void;
   /** Inbox-only filter: show the whole log grouped by day. */
   expanded?: boolean;
+  /** A nudge focus is on: list only these tasks, highlighted. */
+  focusTaskIds?: ReadonlySet<string>;
   className?: string;
 };
 
@@ -62,14 +64,17 @@ export function InboxCard({
   onError,
   onCapture,
   expanded = false,
+  focusTaskIds,
   className,
 }: InboxCardProps) {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const visible = sortInboxLog(
-    tasks.map((task) => {
-      const done = getDone(task.id, task.done);
-      return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
-    })
+    tasks
+      .filter((task) => !focusTaskIds || focusTaskIds.has(task.id))
+      .map((task) => {
+        const done = getDone(task.id, task.done);
+        return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
+      })
   );
   const openTasks = sortOpenForToday(
     visible.filter((task) => !task.done),
@@ -135,6 +140,7 @@ export function InboxCard({
           done: task.done,
           overdue: !task.done && isOverdue(task.dueDate, today, mode),
         }}
+        highlighted={!task.done && Boolean(focusTaskIds?.has(task.id))}
         onToggle={() => onToggle(task.id, task.done)}
         onEdit={() => setEditingId(task.id)}
       />

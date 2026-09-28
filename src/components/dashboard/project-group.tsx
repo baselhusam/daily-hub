@@ -23,6 +23,12 @@ const CHEVRON_SPRING = { type: "spring" as const, stiffness: 420, damping: 32 };
 const ENTRANCE_TRANSITION = { duration: 0.22, ease: [0.2, 0.8, 0.3, 1] as const };
 const AUTO_FOLD_DELAY_MS = 900;
 
+/** The ring a nudge focus puts around the card it picked out. */
+const CARD_HIGHLIGHT = {
+  warn: "border-warn/60 shadow-[0_0_0_3px_color-mix(in_srgb,var(--warn)_12%,transparent)]",
+  done: "border-done/50 shadow-[0_0_0_3px_color-mix(in_srgb,var(--done)_12%,transparent)]",
+} as const;
+
 const STATUS_PILL: Record<string, string> = {
   signal: "bg-signal-soft text-signal",
   warn: "bg-warn-wash text-warn",
@@ -122,6 +128,10 @@ type ProjectGroupProps = {
   onToggleTask: (taskId: string, currentlyDone: boolean) => void;
   getDone: (id: string, fallback: boolean) => boolean;
   onError: (message: string) => void;
+  /** A nudge focus is on: list only these tasks, highlighted. */
+  focusTaskIds?: ReadonlySet<string>;
+  /** A nudge focus is on this whole project: ring the card. */
+  highlight?: keyof typeof CARD_HIGHLIGHT;
 };
 
 export function ProjectGroup({
@@ -136,6 +146,8 @@ export function ProjectGroup({
   onToggleTask,
   getDone,
   onError,
+  focusTaskIds,
+  highlight,
 }: ProjectGroupProps) {
   const reducedMotion = useReducedMotion();
   const [composerOpen, setComposerOpen] = React.useState(false);
@@ -145,10 +157,12 @@ export function ProjectGroup({
   const [revealAll, setRevealAll] = React.useState(false);
 
   const visibleTasks = sortInboxLog(
-    project.tasks.map((task) => {
-      const done = getDone(task.id, task.done);
-      return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
-    })
+    project.tasks
+      .filter((task) => !focusTaskIds || focusTaskIds.has(task.id))
+      .map((task) => {
+        const done = getDone(task.id, task.done);
+        return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
+      })
   );
   const openTasks = sortOpenForToday(
     visibleTasks.filter((task) => !task.done),
@@ -228,6 +242,7 @@ export function ProjectGroup({
             done: task.done,
             overdue: !task.done && isOverdue(task.dueDate, today, mode),
           }}
+          highlighted={!task.done && Boolean(focusTaskIds?.has(task.id))}
           onToggle={() => onToggleTask(task.id, task.done)}
           onEdit={() => {
             setComposerOpen(false);
@@ -285,7 +300,13 @@ export function ProjectGroup({
 
   return (
     <AnimatedRow index={index}>
-      <TodayCard className="overflow-hidden" id={`project-${project.id}`}>
+      <TodayCard
+        className={cn(
+          "overflow-hidden transition-[border-color,box-shadow] duration-[140ms]",
+          highlight && CARD_HIGHLIGHT[highlight]
+        )}
+        id={`project-${project.id}`}
+      >
         <div
           role="button"
           tabIndex={0}

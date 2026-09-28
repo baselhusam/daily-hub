@@ -128,21 +128,38 @@ export function buildUpNext(
   return items.sort((a, b) => a.days - b.days).slice(0, limit);
 }
 
-export function milestonesDueWithin(
+/** Open milestones on live projects landing in the next `days` days, soonest first. */
+export function milestoneItemsDueWithin(
   projects: UpNextProject[],
   today: Date,
   days: number
-): number {
-  let count = 0;
+): UpNextItem[] {
+  const items: UpNextItem[] = [];
   for (const project of projects) {
     if (project.status === "DONE") continue;
     for (const milestone of project.milestones) {
       if (milestone.done || !milestone.dueDate) continue;
       const distance = calendarDaysBetween(milestone.dueDate, today);
-      if (distance >= 0 && distance < days) count += 1;
+      if (distance < 0 || distance >= days) continue;
+      items.push({
+        id: `milestone:${milestone.id}`,
+        label: milestone.name,
+        projectId: project.id,
+        projectName: project.name,
+        color: project.color,
+        days: distance,
+      });
     }
   }
-  return count;
+  return items.sort((a, b) => a.days - b.days);
+}
+
+export function milestonesDueWithin(
+  projects: UpNextProject[],
+  today: Date,
+  days: number
+): number {
+  return milestoneItemsDueWithin(projects, today, days).length;
 }
 
 type HabitLike = { id: string; weekdays: number[]; createdAt: Date };
