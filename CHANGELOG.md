@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-09-29
+
+### Added
+
+- The nudge pills on Today are now filters. Click **N overdue** to see only the projects and Inbox tasks that have slipped, each overdue row tinted red; click a **stalled** pill to narrow Today to that project, ringed in amber; click **milestones this week** to show only the projects with a milestone due in the next seven days, with Up next swapping to that week's milestones. The active pill carries a ×, the others fade, and the rail cards outside the filter step back. Click the pill again, the chip beside "Open work", or press Esc to see everything. The filter lives in the URL (`?focus=…`), so it survives a reload and Back undoes it.
+
+### Changed
+
+- A stalled pill filters Today to the project instead of opening its page; the project page is still one click away in the sidebar.
+
+### Fixed
+
+- Uploading a project or habit logo between 1 MB and 2 MB failed with a generic "An error occurred in the Server Components render" message. Next.js caps Server Action bodies at 1 MB by default, below DailyHub's own 2 MB logo limit; the cap is now raised to fit. A logo over 2 MB is now refused in the browser with "Logo must be smaller than 2MB." instead of the same generic error.
+
 ## [0.2.2] - 2026-09-27
 
 ### Added
