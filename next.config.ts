@@ -29,6 +29,14 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  experimental: {
+    serverActions: {
+      // Logos go through a Server Action, and Next's 1 MB default rejects them
+      // before `uploadLogo` runs. Leave headroom over the 2 MB cap in
+      // `uploaded-image.ts` for the multipart encoding.
+      bodySizeLimit: "3mb",
+    },
+  },
   // Keep the standalone server at `.next/standalone/server.js`, which is the
   // location launched by the published npx CLI even when a parent directory
   // contains another lockfile.

@@ -6,7 +6,7 @@ export type UploadedImage = {
   buffer: Buffer;
 };
 
-const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 const SVG_ALLOWED_TAGS = new Set([
   "svg",

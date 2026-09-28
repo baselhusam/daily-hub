@@ -1,4 +1,5 @@
 import { uploadLogo } from "@/app/actions/upload";
+import { MAX_UPLOAD_BYTES } from "@/lib/uploaded-image";
 
 export function isRemoteLogoUrl(url: string | null | undefined): boolean {
   return Boolean(url && /^https?:\/\//i.test(url));
@@ -27,6 +28,11 @@ export async function applyLogoToFormData(
 
   const logoFile = formData.get("logo") as File | null;
   if (logoFile && logoFile.size > 0) {
+    // Checked here as well as on the server: a Server Action's thrown message
+    // is redacted in production builds, so only a client-side error is readable.
+    if (logoFile.size > MAX_UPLOAD_BYTES) {
+      throw new Error("Logo must be smaller than 2MB.");
+    }
     const uploadData = new FormData();
     uploadData.set("logo", logoFile);
     const logoUrl = await uploadLogo(uploadData);
