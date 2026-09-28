@@ -76,4 +76,4 @@ jobs:
           sbom: false
           tags: daily-hub:ci
           cache-from: type=gha,scope=ci-${{ matrix.platform_pair }}
-          cache-to: type=gha,mode=max,scope=ci-${{ matrix.platform_pair }}
+          cache-to: type=gha,mode=max,ignore-error=true,scope=ci-${{ matrix.platform_pair }}

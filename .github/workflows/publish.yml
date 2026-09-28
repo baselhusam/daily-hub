@@ -148,7 +148,7 @@ jobs:
           sbom: false
           outputs: type=image,name=${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.registry }}-${{ env.PLATFORM_PAIR }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.registry }}-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,ignore-error=true,scope=${{ matrix.registry }}-${{ env.PLATFORM_PAIR }}
 
       - name: Export digest
         run: |
