@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-09-29
+
+### Fixed
+
+- `daily-hub stop` now waits for DailyHub to actually exit, and reports honestly. Before, it sent one SIGTERM and printed "Stopping…" straight away, but Next's graceful shutdown waits on open connections (MCP clients, keep-alive sockets) and could hang indefinitely with data.db still open, so the next `start` failed with "database is locked". The server is now forced after 4 seconds by its own parent, and `stop` forces anything still left after 6 seconds (server first, so it cannot linger as an orphan). SQLite's write-ahead log keeps saved data intact either way.
+- `start` refuses to run over a background instance that is still alive (for example, one mid-shutdown that has already released its port), naming the PID and pointing at `daily-hub stop`.
+- The "database is locked" message on start now actually appears in place of Prisma's raw error, and no longer suggests deleting `data.db-wal`, which after a crash can hold saved changes.
+- CI and release builds no longer fail when GitHub's Actions cache service rejects a layer upload after the image has already built; a failed cache write now only costs the next build its cache.
+
 ## [0.2.3] - 2026-09-29
 
 ### Added
