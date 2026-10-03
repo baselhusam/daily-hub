@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Each project card on Today has a pencil next to its chevron. It opens a menu to switch the project between Active, Paused and Done without leaving Today, and a link to the project's page.
+
 ## [0.2.4] - 2026-09-29
 
 ### Fixed

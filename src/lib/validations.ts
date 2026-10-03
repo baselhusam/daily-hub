@@ -41,6 +41,11 @@ export const updateProjectSchema = createProjectSchema.extend({
   id: z.string().min(1),
 });
 
+export const projectStatusSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(["ACTIVE", "PAUSED", "DONE"]),
+});
+
 export const milestoneSchema = z.object({
   name: z.string().min(1, "Milestone name is required").max(120),
   dueDate: optionalDateSchema,

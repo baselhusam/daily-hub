@@ -6,6 +6,7 @@ import { parseDateInput } from "@/lib/dates";
 import {
   createProjectSchema,
   milestoneSchema,
+  projectStatusSchema,
   updateProjectSchema,
 } from "@/lib/validations";
 import { failAction, type ActionResult } from "@/app/actions/types";
@@ -169,6 +170,29 @@ export async function updateProject(formData: FormData): Promise<ActionResult> {
     }
   } catch {
     return { success: false, error: "Failed to save project." };
+  }
+
+  revalidateAll();
+  return { success: true };
+}
+
+/** Change only a project's status, leaving every other field as it is. */
+export async function setProjectStatus(
+  id: string,
+  status: string
+): Promise<ActionResult> {
+  const parsed = projectStatusSchema.safeParse({ id, status });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  try {
+    await prisma.project.update({
+      where: { id: parsed.data.id },
+      data: { status: parsed.data.status },
+    });
+  } catch (error) {
+    return failAction(error, "Failed to update project status.");
   }
 
   revalidateAll();

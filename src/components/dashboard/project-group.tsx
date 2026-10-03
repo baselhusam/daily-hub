@@ -2,14 +2,23 @@
 
 import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, Check, ChevronDown, Pencil } from "lucide-react";
+import { setProjectStatus } from "@/app/actions/projects";
 import type { DashboardData, DashboardTaskItem } from "@/lib/dashboard";
 import { getDueMeta } from "@/lib/due-meta";
 import { daysUntil, formatEstimate } from "@/lib/streak-utils";
 import { formatAddedAgo, formatCompletedAgo, isOverdue, type CalendarMode } from "@/lib/dates";
 import { shipLabel } from "@/lib/today-insights";
-import { getProjectStatus } from "@/lib/status";
+import {
+  getProjectStatus,
+  PROJECT_STATUS_ORDER,
+  PROJECT_STATUSES,
+  type ProjectStatus,
+} from "@/lib/status";
 import { EntityAvatar } from "@/components/ui/entity-avatar";
+import { OptionMark } from "@/components/ui/option-mark";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, sortInboxLog } from "@/lib/utils";
 import { CaptureGlyph, TodayCard } from "./today-card";
 import { TaskComposer, type ComposerTask } from "./task-composer";
@@ -181,7 +190,8 @@ export function ProjectGroup({
   const openCount = openTasks.length;
   const total = openCount + project.doneCount;
   const pct = total === 0 ? 0 : Math.round((project.doneCount / total) * 100);
-  const status = getProjectStatus(project.status);
+  const [pendingStatus, setPendingStatus] = React.useState<ProjectStatus | null>(null);
+  const status = getProjectStatus(pendingStatus ?? project.status);
   const ship = shipLabel(project.dueDate, today);
   const meta = [openCount === 1 ? "1 open" : `${openCount} open`, ship]
     .filter(Boolean)
@@ -355,6 +365,17 @@ export function ProjectGroup({
                 style={{ width: `${pct}%`, backgroundColor: project.color ?? "var(--signal)" }}
               />
             </span>
+            <ProjectEditMenu
+              projectId={project.id}
+              projectName={project.name}
+              status={pendingStatus ?? project.status}
+              onStatusChange={async (next) => {
+                setPendingStatus(next);
+                const result = await setProjectStatus(project.id, next);
+                if (!result.success) onError(result.error ?? "Failed to update project status.");
+                setPendingStatus(null);
+              }}
+            />
             <span
               aria-hidden
               className="grid h-[26px] w-[26px] place-items-center rounded-[7px] text-hairline transition-colors duration-[120ms] group-hover:text-foreground"
@@ -392,5 +413,88 @@ export function ProjectGroup({
         )}
       </TodayCard>
     </AnimatedRow>
+  );
+}
+
+/**
+ * The pencil in a project card's header: switch the project's status without
+ * leaving Today, or jump to its page for everything else.
+ */
+function ProjectEditMenu({
+  projectId,
+  projectName,
+  status,
+  onStatusChange,
+}: {
+  projectId: string;
+  projectName: string;
+  status: ProjectStatus;
+  onStatusChange: (status: ProjectStatus) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  // The header toggles the card on click and Enter/Space; keep the menu's own
+  // clicks and keys from reaching it.
+  const contain = {
+    onClick: (event: React.SyntheticEvent) => event.stopPropagation(),
+    onKeyDown: (event: React.SyntheticEvent) => event.stopPropagation(),
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          {...contain}
+          aria-label={`Edit ${projectName}`}
+          title="Edit project"
+          className={cn(
+            "grid h-[26px] w-[26px] place-items-center rounded-[7px] text-hairline transition-colors duration-[120ms] hover:bg-hover hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/20",
+            open && "bg-hover text-foreground"
+          )}
+        >
+          <Pencil className="h-[13px] w-[13px]" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[13.5rem] p-1" {...contain}>
+        <div className="px-2 pt-1.5 pb-1 text-[10.5px] font-semibold tracking-[0.06em] text-faint uppercase">
+          Status
+        </div>
+        <div role="menu" aria-label="Project status" className="space-y-0.5">
+          {PROJECT_STATUS_ORDER.map((value) => {
+            const option = PROJECT_STATUSES[value];
+            const selected = value === status;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="menuitemradio"
+                aria-checked={selected}
+                onClick={() => {
+                  setOpen(false);
+                  if (!selected) onStatusChange(value);
+                }}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13.5px] font-medium outline-none transition-colors duration-[120ms] hover:bg-hover focus-visible:bg-hover",
+                  selected && "bg-hover"
+                )}
+              >
+                <OptionMark icon={option.Icon} tone={option.tone} />
+                <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                {selected ? <Check className="h-3.5 w-3.5 shrink-0 text-signal" /> : null}
+              </button>
+            );
+          })}
+        </div>
+        <div className="my-1 border-t border-rule-soft" />
+        <Link
+          href={`/projects/${projectId}`}
+          onClick={() => setOpen(false)}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[13.5px] font-medium text-muted-foreground outline-none transition-colors duration-[120ms] hover:bg-hover hover:text-foreground focus-visible:bg-hover focus-visible:text-foreground"
+        >
+          <ArrowUpRight className="h-[15px] w-[15px] shrink-0" />
+          <span className="flex-1">Open project page</span>
+        </Link>
+      </PopoverContent>
+    </Popover>
   );
 }
