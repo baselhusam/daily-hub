@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-05
+
 ### Added
 
 - Each project card on Today has a pencil next to its chevron. It opens a menu to switch the project between Active, Paused and Done without leaving Today, and a link to the project's page.
+- Focus mode. Put a project (from its card's pencil menu) or any task, Inbox included (from the target on its row), in focus for just today, the next 3 days, this week, or until you clear it. Everything in focus is pinned as pills at the top of Today, showing time left, with a checkbox for tasks and × to drop it. Focused projects lead Open work and focused tasks lead their lists. The lead "In focus" pill switches Today into focus mode, narrowing the page to only that work. A focus lapses on its own after its last day.
+
+### Changed
+
+- The focus and edit buttons on a task row stay hidden until you hover the row (on touch screens they stay visible). They sit in front of the priority, estimate and due date, so those line up flush right with the project header instead of stopping short of it.
+- Project cards on Today show a status pill only for Paused and Done projects. Active is the default there, so its pill was noise.
+
+### Upgrade notes
+
+- A migration adds nullable `focusedAt` and `focusUntil` columns to `Project` and `Task`. It runs automatically on start, leaves existing rows untouched (nothing starts in focus), and needs nothing done by hand.
 
 ## [0.2.4] - 2026-09-29
 
@@ -264,7 +276,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose path with PostgreSQL 16 and migrate-on-start.
 - Today, Projects, Habits, and Analytics surfaces with completion logging.
 
-[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/baselhusam/daily-hub/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/baselhusam/daily-hub/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/baselhusam/daily-hub/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/baselhusam/daily-hub/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/baselhusam/daily-hub/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/baselhusam/daily-hub/compare/v0.1.12...v0.2.0
