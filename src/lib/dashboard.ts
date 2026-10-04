@@ -73,6 +73,8 @@ export type DashboardTaskItem = {
   createdAt: Date;
   estimatedMinutes: number | null;
   projectId: string | null;
+  focusedAt: Date | null;
+  focusUntil: Date | null;
   done: boolean;
   doneToday: boolean;
 };
@@ -88,6 +90,8 @@ export type DashboardProject = {
   status: ProjectStatus;
   sortOrder: number;
   createdAt: Date;
+  focusedAt: Date | null;
+  focusUntil: Date | null;
   milestones: DashboardMilestone[];
   tasks: DashboardTaskItem[];
   openCount: number;
@@ -122,6 +126,8 @@ export type DashboardTask = {
   estimatedMinutes: number | null;
   projectId: string | null;
   project: { id: string; name: string } | null;
+  focusedAt: Date | null;
+  focusUntil: Date | null;
   done: boolean;
   doneToday: boolean;
 };
@@ -195,6 +201,8 @@ function mapTaskItem(
     createdAt: Date;
     estimatedMinutes: number | null;
     projectId: string | null;
+    focusedAt: Date | null;
+    focusUntil: Date | null;
   },
   today: Date,
   completedTaskIdsToday: Set<string>
@@ -335,6 +343,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       status: project.status,
       sortOrder: project.sortOrder,
       createdAt: project.createdAt,
+      focusedAt: project.focusedAt,
+      focusUntil: project.focusUntil,
       milestones: project.milestones,
       tasks: sortInboxLog(
         project.tasks.map((t) => mapTaskItem(t, today, completedTaskIdsToday))

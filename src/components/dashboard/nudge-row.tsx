@@ -4,11 +4,12 @@ import { X } from "lucide-react";
 import type { DashboardNudges } from "@/lib/dashboard";
 import { cn } from "@/lib/utils";
 
-/** What a nudge pill narrows Today down to. */
+/** What a nudge pill (or the focus-mode pill) narrows Today down to. */
 export type NudgeFocus =
   | { kind: "overdue" }
   | { kind: "stalled"; projectId: string }
-  | { kind: "milestones" };
+  | { kind: "milestones" }
+  | { kind: "focused" };
 
 type NudgeRowProps = {
   nudges: DashboardNudges;

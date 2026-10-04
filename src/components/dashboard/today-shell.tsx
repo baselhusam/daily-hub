@@ -6,9 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { Plus, X } from "lucide-react";
 import { toggleDailyTask } from "@/app/actions/daily-tasks";
+import { setProjectFocus, setTaskFocus } from "@/app/actions/focus";
 import { toggleTask } from "@/app/actions/tasks";
 import type { DashboardData } from "@/lib/dashboard";
 import { getGreeting, isOverdue } from "@/lib/dates";
+import { focusRemainingLabel, isFocusActive } from "@/lib/focus";
 import { useDisplayDay } from "@/lib/hydration";
 import { useOptimisticFlags } from "@/lib/optimistic-toggle";
 import { useCollapsedProjects } from "@/lib/use-collapsed-projects";
@@ -16,6 +18,7 @@ import { cn, isTypingTarget } from "@/lib/utils";
 import { BackToTop } from "./back-to-top";
 import { CaptureBar, type CaptureBarHandle } from "./capture-bar";
 import { ClosedEachDayCard, ClosedEachDayDialog, toClosedPoints } from "./closed-each-day";
+import { FocusStrip, type FocusStripItem } from "./focus-strip";
 import { HabitsCard } from "./habits-card";
 import { InboxCard } from "./inbox-card";
 import { MomentumAnalysisDialog, MomentumCard } from "./momentum-card";
@@ -81,9 +84,11 @@ export function TodayShell({ data }: TodayShellProps) {
       ? { kind: "overdue" }
       : focusParam === "milestones"
         ? { kind: "milestones" }
-        : focusParam === "stalled" && filterProject
-          ? { kind: "stalled", projectId: filterProject.id }
-          : null;
+        : focusParam === "focused"
+          ? { kind: "focused" }
+          : focusParam === "stalled" && filterProject
+            ? { kind: "stalled", projectId: filterProject.id }
+            : null;
 
   const scoped = Boolean(filterProject) || inboxOnly || Boolean(focus);
   const scopeLabel =
@@ -91,7 +96,9 @@ export function TodayShell({ data }: TodayShellProps) {
       ? "Overdue"
       : focus?.kind === "milestones"
         ? "Milestones this week"
-        : focus?.kind === "stalled" && filterProject
+        : focus?.kind === "focused"
+          ? "Focus mode"
+          : focus?.kind === "stalled" && filterProject
           ? `${filterProject.name} · stalled`
           : (filterProject?.name ?? (inboxOnly ? "Inbox" : null));
 
@@ -110,6 +117,44 @@ export function TodayShell({ data }: TodayShellProps) {
     data.nudges.milestonesThisWeek.map((item) => item.projectId)
   );
 
+  // What the user chose to focus on. Lapsed focuses drop out here rather than
+  // on the server, so they follow the browser's day like everything else.
+  // Finished projects leave focus with their status; a task finished today
+  // stays (struck through) so checking it off from the strip is visible.
+  const focusedProjects = data.projects.filter(
+    (project) => project.status !== "DONE" && isFocusActive(project, today, mode)
+  );
+  const focusedProjectIds = new Set(focusedProjects.map((project) => project.id));
+  const focusedTasks = [
+    ...data.projects.flatMap((project) =>
+      project.tasks.map((task) => ({ task, project: project as typeof project | null }))
+    ),
+    ...data.inboxTasks.map((task) => ({ task, project: null })),
+  ].filter(
+    ({ task }) => (!task.done || task.doneToday) && isFocusActive(task, today, mode)
+  );
+  const focusedTaskIds = new Set(focusedTasks.map(({ task }) => task.id));
+  const focusItems: FocusStripItem[] = [
+    ...focusedProjects.map((project) => ({
+      kind: "project" as const,
+      id: project.id,
+      name: project.name,
+      color: project.color,
+      logoUrl: project.logoUrl,
+      iconKey: project.iconKey,
+      remaining: focusRemainingLabel(project, today, mode) ?? "",
+      openCount: project.tasks.filter((task) => !optimisticTasks.get(task.id, task.done)).length,
+    })),
+    ...focusedTasks.map(({ task, project }) => ({
+      kind: "task" as const,
+      id: task.id,
+      title: task.title,
+      done: optimisticTasks.get(task.id, task.done),
+      remaining: focusRemainingLabel(task, today, mode) ?? "",
+      project: project ? { name: project.name, color: project.color } : null,
+    })),
+  ];
+
   React.useEffect(() => {
     const id = window.location.hash.replace("#", "");
     if (!id) return;
@@ -117,7 +162,7 @@ export function TodayShell({ data }: TodayShellProps) {
       document.getElementById(id)?.scrollIntoView({ block: "center" });
     });
     return () => cancelAnimationFrame(frame);
-  }, [projectFilter]);
+  }, [projectFilter, focusParam]);
 
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -145,9 +190,24 @@ export function TodayShell({ data }: TodayShellProps) {
         )
       : focus?.kind === "milestones"
         ? scopedProjects.filter((project) => milestoneProjectIds.has(project.id))
-        : scopedProjects;
+        : focus?.kind === "focused"
+          ? scopedProjects.filter(
+              (project) =>
+                focusedProjectIds.has(project.id) ||
+                project.tasks.some((task) => focusedTaskIds.has(task.id))
+            )
+          : scopedProjects;
+  // Projects in focus lead Open work, ahead of the usual recent-activity order.
+  const orderedProjects = [
+    ...visibleProjects.filter((project) => focusedProjectIds.has(project.id)),
+    ...visibleProjects.filter((project) => !focusedProjectIds.has(project.id)),
+  ];
   const inboxMatchesFocus =
-    focus?.kind === "overdue" && data.inboxTasks.some((task) => overdueTaskIds?.has(task.id));
+    (focus?.kind === "overdue" && data.inboxTasks.some((task) => overdueTaskIds?.has(task.id))) ||
+    (focus?.kind === "focused" && data.inboxTasks.some((task) => focusedTaskIds.has(task.id)));
+  // Focus mode and the overdue pill both hold every card open: folding one
+  // would hide exactly what the pill asked to see.
+  const holdOpen = focus?.kind === "overdue" || focus?.kind === "focused";
 
   // Every project, not just the visible ones: the hook prunes overrides for
   // ids it is not given, and a filter must not wipe out the hidden cards'.
@@ -241,6 +301,43 @@ export function TodayShell({ data }: TodayShellProps) {
     router.push(href, { scroll: false });
   }
 
+  /** Bring a focus pill's card or row into view, unfolding its project first. */
+  function jumpToFocusItem(item: FocusStripItem) {
+    const projectId =
+      item.kind === "project"
+        ? item.id
+        : data.projects.find((project) => project.tasks.some((task) => task.id === item.id))?.id;
+    if (projectId && isCollapsed(projectId) && !holdOpen) toggleCollapsed(projectId);
+    const targetId = item.kind === "project" ? `project-${item.id}` : `task-${item.id}`;
+    // A frame for the unfold to mount the row before measuring it.
+    requestAnimationFrame(() => {
+      const target = document.getElementById(targetId);
+      if (!target) {
+        // Filtered out of view: drop the filter and let the hash scroll to it.
+        router.push(`/#${targetId}`, { scroll: false });
+        return;
+      }
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      target.animate(
+        [
+          { boxShadow: "0 0 0 3px color-mix(in srgb, var(--signal) 28%, transparent)" },
+          { boxShadow: "0 0 0 3px color-mix(in srgb, var(--signal) 28%, transparent)", offset: 0.6 },
+          { boxShadow: "0 0 0 0 transparent" },
+        ],
+        { duration: 1400, easing: "ease-out" }
+      );
+    });
+  }
+
+  async function clearFocusItem(item: FocusStripItem) {
+    setActionError(null);
+    const result =
+      item.kind === "project"
+        ? await setProjectFocus(item.id, null)
+        : await setTaskFocus(item.id, null);
+    if (!result.success) setActionError(result.error ?? "Could not update focus. Try again.");
+  }
+
   function jumpTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ block: "center", behavior: "smooth" });
   }
@@ -267,7 +364,8 @@ export function TodayShell({ data }: TodayShellProps) {
         onToggle={(id, done) => void handleToggleHabit(id, done)}
         className={cn("shrink-0", focus && DIMMED)}
       />
-      {!inboxOnly && (focus?.kind !== "overdue" || inboxMatchesFocus) ? (
+      {!inboxOnly &&
+      ((focus?.kind !== "overdue" && focus?.kind !== "focused") || inboxMatchesFocus) ? (
         <InboxCard
           tasks={data.inboxTasks}
           projects={data.projects}
@@ -277,8 +375,12 @@ export function TodayShell({ data }: TodayShellProps) {
           onToggle={(id, done) => void handleToggleTask(id, done)}
           onError={setActionError}
           onCapture={() => captureRef.current?.focus({ projectId: null })}
-          focusTaskIds={overdueTaskIds}
-          className={cn("shrink-0", focus && focus.kind !== "overdue" && DIMMED)}
+          focusTaskIds={focus?.kind === "focused" ? focusedTaskIds : overdueTaskIds}
+          tintMatches={focus?.kind !== "focused"}
+          className={cn(
+            "shrink-0",
+            focus && focus.kind !== "overdue" && focus.kind !== "focused" && DIMMED
+          )}
         />
       ) : null}
       {focus?.kind === "milestones" ? (
@@ -354,6 +456,15 @@ export function TodayShell({ data }: TodayShellProps) {
             {actionError}
           </p>
         ) : null}
+
+        <FocusStrip
+          items={focusItems}
+          active={focus?.kind === "focused"}
+          onToggleMode={() => toggleFocus({ kind: "focused" })}
+          onJump={jumpToFocusItem}
+          onToggleTask={(id, done) => void handleToggleTask(id, done)}
+          onClear={(item) => void clearFocusItem(item)}
+        />
 
         <NudgeRow nudges={data.nudges} active={focus} onToggle={toggleFocus} />
 
@@ -446,6 +557,10 @@ export function TodayShell({ data }: TodayShellProps) {
                       : "Nothing overdue any more."
                     : focus?.kind === "milestones"
                       ? "No project has a milestone due this week."
+                      : focus?.kind === "focused"
+                        ? inboxMatchesFocus
+                          ? "Everything in focus is in the Inbox."
+                          : "Nothing in focus. Use the target on a task, or a project's edit menu, to pick what matters this week."
                       : isFreshWorkspace
                         ? "No open work yet. Add a task above, or create a project to group related work."
                         : projectFilter
@@ -455,7 +570,7 @@ export function TodayShell({ data }: TodayShellProps) {
                 showClear={Boolean(projectFilter) || Boolean(focus)}
               />
             ) : (
-              visibleProjects.map((project, index) => (
+              orderedProjects.map((project, index) => (
                 <ProjectGroup
                   key={project.id}
                   project={project}
@@ -464,16 +579,21 @@ export function TodayShell({ data }: TodayShellProps) {
                   today={today}
                   mode={mode}
                   expanded={filterProject?.id === project.id || focus?.kind === "overdue"}
-                  collapsed={focus?.kind === "overdue" ? false : isCollapsed(project.id)}
-                  // The overdue focus holds every card open; folding one
-                  // would hide exactly what the pill asked to see.
-                  onToggleCollapsed={
-                    focus?.kind === "overdue" ? () => {} : () => toggleCollapsed(project.id)
-                  }
+                  collapsed={holdOpen ? false : isCollapsed(project.id)}
+                  onToggleCollapsed={holdOpen ? () => {} : () => toggleCollapsed(project.id)}
                   onToggleTask={(taskId, done) => void handleToggleTask(taskId, done)}
                   getDone={(id, fallback) => optimisticTasks.get(id, fallback)}
                   onError={setActionError}
-                  focusTaskIds={overdueTaskIds}
+                  // A project in focus shows all its work; any other card in
+                  // focus mode is here for its focused tasks only.
+                  focusTaskIds={
+                    focus?.kind === "focused"
+                      ? focusedProjectIds.has(project.id)
+                        ? undefined
+                        : focusedTaskIds
+                      : overdueTaskIds
+                  }
+                  tintMatches={focus?.kind !== "focused"}
                   highlight={
                     focus?.kind === "stalled"
                       ? "warn"

@@ -37,6 +37,10 @@ model Project {
   dueDate     DateTime?
   status      ProjectStatus @default(ACTIVE)
   sortOrder   Int           @default(0)
+  /// Set while the project is in focus. `focusUntil` is the last focused day
+  /// (local midnight); null with `focusedAt` set means "until I clear it".
+  focusedAt   DateTime?
+  focusUntil  DateTime?
   tasks       Task[]
   milestones  Milestone[]
   createdAt   DateTime      @default(now())
@@ -81,6 +85,10 @@ model Task {
   priority         Int        @default(0)
   estimatedMinutes Int?
   completedAt      DateTime?
+  /// Same pair as Project: in focus while `focusedAt` is set and `focusUntil`
+  /// is null or not yet past.
+  focusedAt        DateTime?
+  focusUntil       DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 }

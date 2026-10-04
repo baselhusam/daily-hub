@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseDateInput } from "@/lib/dates";
+import { FOCUS_SPANS } from "@/lib/focus";
 
 const logoUrlSchema = z
   .string()
@@ -44,6 +45,12 @@ export const updateProjectSchema = createProjectSchema.extend({
 export const projectStatusSchema = z.object({
   id: z.string().min(1),
   status: z.enum(["ACTIVE", "PAUSED", "DONE"]),
+});
+
+export const setFocusSchema = z.object({
+  id: z.string().min(1),
+  /** A span from `FOCUS_SPANS`, or null to clear the focus. */
+  span: z.enum(FOCUS_SPANS).nullable(),
 });
 
 export const milestoneSchema = z.object({

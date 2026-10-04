@@ -3,12 +3,14 @@
 import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { ArrowUpRight, Check, ChevronDown, Pencil } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, Pencil, Target } from "lucide-react";
+import { setProjectFocus, setTaskFocus } from "@/app/actions/focus";
 import { setProjectStatus } from "@/app/actions/projects";
 import type { DashboardData, DashboardTaskItem } from "@/lib/dashboard";
 import { getDueMeta } from "@/lib/due-meta";
 import { daysUntil, formatEstimate } from "@/lib/streak-utils";
 import { formatAddedAgo, formatCompletedAgo, isOverdue, type CalendarMode } from "@/lib/dates";
+import { focusRemainingLabel, isFocusActive, type FocusSpan } from "@/lib/focus";
 import { shipLabel } from "@/lib/today-insights";
 import {
   getProjectStatus,
@@ -20,6 +22,7 @@ import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { OptionMark } from "@/components/ui/option-mark";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, sortInboxLog } from "@/lib/utils";
+import { FocusSpanItems } from "./focus-menu";
 import { CaptureGlyph, TodayCard } from "./today-card";
 import { TaskComposer, type ComposerTask } from "./task-composer";
 import { TodayTaskRow, type DuePill } from "./today-task-row";
@@ -37,6 +40,20 @@ const CARD_HIGHLIGHT = {
   warn: "border-warn/60 shadow-[0_0_0_3px_color-mix(in_srgb,var(--warn)_12%,transparent)]",
   done: "border-done/50 shadow-[0_0_0_3px_color-mix(in_srgb,var(--done)_12%,transparent)]",
 } as const;
+
+/** A project in focus wears a quieter version of the same ring. */
+const FOCUS_RING =
+  "border-signal/45 shadow-[0_0_0_3px_color-mix(in_srgb,var(--signal)_9%,transparent)]";
+
+/** Save a task's focus, reporting a failure the way the other row actions do. */
+export async function saveTaskFocus(
+  taskId: string,
+  span: FocusSpan | null,
+  onError: (message: string) => void
+) {
+  const result = await setTaskFocus(taskId, span);
+  if (!result.success) onError(result.error ?? "Could not update focus. Try again.");
+}
 
 const STATUS_PILL: Record<string, string> = {
   signal: "bg-signal-soft text-signal",
@@ -82,16 +99,18 @@ export function duePillFor(
 }
 
 /**
- * Order for an open task list: high priority first, down through low, with
- * unprioritised work last. Within a priority, what has slipped, then what is
- * due today, then dated work soonest-first, then undated work oldest-first.
+ * Order for an open task list: anything in focus first, then high priority
+ * down through low, with unprioritised work last. Within a priority, what has
+ * slipped, then what is due today, then dated work soonest-first, then undated
+ * work oldest-first.
  */
 export function sortOpenForToday<
-  T extends { dueDate: Date | null; createdAt: Date; priority?: number }
+  T extends { dueDate: Date | null; createdAt: Date; priority?: number; focused?: boolean }
 >(tasks: T[], today: Date, mode: CalendarMode): T[] {
   const rank = (task: T) =>
     daysUntil(task.dueDate, today, mode) ?? Number.POSITIVE_INFINITY;
   return [...tasks].sort((a, b) => {
+    if (Boolean(a.focused) !== Boolean(b.focused)) return a.focused ? -1 : 1;
     const pa = a.priority ?? 0;
     const pb = b.priority ?? 0;
     if (pa !== pb) return pb - pa;
@@ -141,6 +160,8 @@ type ProjectGroupProps = {
   focusTaskIds?: ReadonlySet<string>;
   /** A nudge focus is on this whole project: ring the card. */
   highlight?: keyof typeof CARD_HIGHLIGHT;
+  /** Tint the rows `focusTaskIds` picked out (off for the focus-mode filter). */
+  tintMatches?: boolean;
 };
 
 export function ProjectGroup({
@@ -157,6 +178,7 @@ export function ProjectGroup({
   onError,
   focusTaskIds,
   highlight,
+  tintMatches = true,
 }: ProjectGroupProps) {
   const reducedMotion = useReducedMotion();
   const [composerOpen, setComposerOpen] = React.useState(false);
@@ -170,7 +192,12 @@ export function ProjectGroup({
       .filter((task) => !focusTaskIds || focusTaskIds.has(task.id))
       .map((task) => {
         const done = getDone(task.id, task.done);
-        return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
+        return {
+          ...task,
+          done,
+          completedAt: done ? (task.completedAt ?? today) : null,
+          focused: isFocusActive(task, today, mode),
+        };
       })
   );
   const openTasks = sortOpenForToday(
@@ -193,6 +220,7 @@ export function ProjectGroup({
   const [pendingStatus, setPendingStatus] = React.useState<ProjectStatus | null>(null);
   const status = getProjectStatus(pendingStatus ?? project.status);
   const ship = shipLabel(project.dueDate, today);
+  const projectFocus = focusRemainingLabel(project, today, mode);
   const meta = [openCount === 1 ? "1 open" : `${openCount} open`, ship]
     .filter(Boolean)
     .join(" · ");
@@ -251,9 +279,11 @@ export function ProjectGroup({
             due: task.done ? null : duePillFor(task.dueDate, today, mode),
             done: task.done,
             overdue: !task.done && isOverdue(task.dueDate, today, mode),
+            focus: focusRemainingLabel(task, today, mode),
           }}
-          highlighted={!task.done && Boolean(focusTaskIds?.has(task.id))}
+          highlighted={tintMatches && !task.done && Boolean(focusTaskIds?.has(task.id))}
           onToggle={() => onToggleTask(task.id, task.done)}
+          onFocus={(span) => void saveTaskFocus(task.id, span, onError)}
           onEdit={() => {
             setComposerOpen(false);
             setEditingId(task.id);
@@ -313,7 +343,7 @@ export function ProjectGroup({
       <TodayCard
         className={cn(
           "overflow-hidden transition-[border-color,box-shadow] duration-[140ms]",
-          highlight && CARD_HIGHLIGHT[highlight]
+          highlight ? CARD_HIGHLIGHT[highlight] : projectFocus && FOCUS_RING
         )}
         id={`project-${project.id}`}
       >
@@ -344,14 +374,27 @@ export function ProjectGroup({
               <span className="min-w-0 truncate text-[14.5px] font-semibold tracking-[-0.01em]">
                 {project.name}
               </span>
-              <span
-                className={cn(
-                  "shrink-0 rounded-[5px] px-[7px] py-px text-[10.5px] font-bold tracking-[0.02em]",
-                  STATUS_PILL[status.tone]
-                )}
-              >
-                {status.label}
-              </span>
+              {/* Active is the default on Today (paused and done sort below),
+                  so only the exceptions get a pill. */}
+              {status.value !== "ACTIVE" ? (
+                <span
+                  className={cn(
+                    "shrink-0 rounded-[5px] px-[7px] py-px text-[10.5px] font-bold tracking-[0.02em]",
+                    STATUS_PILL[status.tone]
+                  )}
+                >
+                  {status.label}
+                </span>
+              ) : null}
+              {projectFocus ? (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1 rounded-[5px] bg-signal-soft px-[6px] py-px text-[10.5px] font-bold tracking-[0.02em] text-signal"
+                  title={`In focus · ${projectFocus}`}
+                >
+                  <Target className="h-[10px] w-[10px]" strokeWidth={2.6} />
+                  Focus
+                </span>
+              ) : null}
             </div>
             <div className="mt-[3px] truncate text-[11.5px] text-faint">{meta}</div>
           </div>
@@ -369,6 +412,11 @@ export function ProjectGroup({
               projectId={project.id}
               projectName={project.name}
               status={pendingStatus ?? project.status}
+              focus={projectFocus}
+              onFocusChange={async (span) => {
+                const result = await setProjectFocus(project.id, span);
+                if (!result.success) onError(result.error ?? "Could not update focus. Try again.");
+              }}
               onStatusChange={async (next) => {
                 setPendingStatus(next);
                 const result = await setProjectStatus(project.id, next);
@@ -417,18 +465,23 @@ export function ProjectGroup({
 }
 
 /**
- * The pencil in a project card's header: switch the project's status without
- * leaving Today, or jump to its page for everything else.
+ * The pencil in a project card's header: switch the project's status or focus
+ * without leaving Today, or jump to its page for everything else.
  */
 function ProjectEditMenu({
   projectId,
   projectName,
   status,
+  focus,
+  onFocusChange,
   onStatusChange,
 }: {
   projectId: string;
   projectName: string;
   status: ProjectStatus;
+  /** Time left on the project's focus; null when not in focus. */
+  focus: string | null;
+  onFocusChange: (span: FocusSpan | null) => void;
   onStatusChange: (status: ProjectStatus) => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -485,6 +538,14 @@ function ProjectEditMenu({
             );
           })}
         </div>
+        <div className="my-1 border-t border-rule-soft" />
+        <FocusSpanItems
+          remaining={focus}
+          onPick={(span) => {
+            setOpen(false);
+            onFocusChange(span);
+          }}
+        />
         <div className="my-1 border-t border-rule-soft" />
         <Link
           href={`/projects/${projectId}`}

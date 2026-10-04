@@ -43,4 +43,17 @@ describe("sortOpenForToday", () => {
       "undated",
     ]);
   });
+
+  it("lifts focused tasks above everything else", () => {
+    const tasks = [
+      task("high", 3),
+      { ...task("focused-none", 0), focused: true },
+      task("overdue", 2, day(-1)),
+    ];
+    expect(ids(sortOpenForToday(tasks, today, "local"))).toEqual([
+      "focused-none",
+      "high",
+      "overdue",
+    ]);
+  });
 });

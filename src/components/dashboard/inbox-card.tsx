@@ -4,12 +4,19 @@ import * as React from "react";
 import Link from "next/link";
 import type { DashboardData, DashboardTask } from "@/lib/dashboard";
 import { calendarDayKey, formatLogDay, isOverdue, type CalendarMode } from "@/lib/dates";
+import { focusRemainingLabel, isFocusActive } from "@/lib/focus";
 import { formatEstimate } from "@/lib/streak-utils";
 import { BrandMark } from "@/components/brand-mark";
 import { cn, sortInboxLog } from "@/lib/utils";
 import { CardHeading, TodayCard } from "./today-card";
 import { TaskComposer, type ComposerTask } from "./task-composer";
-import { duePillFor, firstNoteLine, sortOpenForToday, taskMeta } from "./project-group";
+import {
+  duePillFor,
+  firstNoteLine,
+  saveTaskFocus,
+  sortOpenForToday,
+  taskMeta,
+} from "./project-group";
 import { TodayTaskRow } from "./today-task-row";
 
 type InboxCardProps = {
@@ -26,6 +33,8 @@ type InboxCardProps = {
   expanded?: boolean;
   /** A nudge focus is on: list only these tasks, highlighted. */
   focusTaskIds?: ReadonlySet<string>;
+  /** Tint the rows `focusTaskIds` picked out (off for the focus-mode filter). */
+  tintMatches?: boolean;
   className?: string;
 };
 
@@ -65,6 +74,7 @@ export function InboxCard({
   onCapture,
   expanded = false,
   focusTaskIds,
+  tintMatches = true,
   className,
 }: InboxCardProps) {
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -73,7 +83,12 @@ export function InboxCard({
       .filter((task) => !focusTaskIds || focusTaskIds.has(task.id))
       .map((task) => {
         const done = getDone(task.id, task.done);
-        return { ...task, done, completedAt: done ? (task.completedAt ?? today) : null };
+        return {
+          ...task,
+          done,
+          completedAt: done ? (task.completedAt ?? today) : null,
+          focused: isFocusActive(task, today, mode),
+        };
       })
   );
   const openTasks = sortOpenForToday(
@@ -139,9 +154,11 @@ export function InboxCard({
           due: task.done ? null : duePillFor(task.dueDate, today, mode),
           done: task.done,
           overdue: !task.done && isOverdue(task.dueDate, today, mode),
+          focus: focusRemainingLabel(task, today, mode),
         }}
-        highlighted={!task.done && Boolean(focusTaskIds?.has(task.id))}
+        highlighted={tintMatches && !task.done && Boolean(focusTaskIds?.has(task.id))}
         onToggle={() => onToggle(task.id, task.done)}
+        onFocus={(span) => void saveTaskFocus(task.id, span, onError)}
         onEdit={() => setEditingId(task.id)}
       />
     );
