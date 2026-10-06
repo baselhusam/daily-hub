@@ -43,10 +43,32 @@ DailyHub is not a replacement for Linear, Jira, or Notion. It is the **morning s
   </video>
 </p>
 
+## A closer look
+
+<p align="center">
+  <img src="docs/assets/gallery/02-today.png" alt="The Today view: greeting, quick add, momentum, open work grouped by project, and today's habits." width="100%">
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/assets/gallery/03-focus.png" alt="Focus mode pins projects and tasks so Today narrows to what matters."></td>
+    <td width="50%"><img src="docs/assets/gallery/04-projects.png" alt="The Projects list with progress, next milestone and ship date for each project."></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/gallery/05-project.png" alt="A project page with progress, milestones and a completion rhythm chart."></td>
+    <td width="50%"><img src="docs/assets/gallery/06-habits.png" alt="The Habits view with weekly schedules, 14-day history and chains."></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/gallery/07-analytics.png" alt="Analytics: tasks closed, habits kept, focus hours and project rhythm over the last 30 days."></td>
+    <td width="50%"><img src="docs/assets/gallery/08-light-dark.png" alt="DailyHub in light and dark themes, side by side."></td>
+  </tr>
+</table>
+
 ## Features
 
 - **Today** — greeting, quick add, nudges, today’s habits, open work by project, and an inbox
 - **Projects** — status, due dates, milestones, and stalled-work banners
+- **Focus mode** — pin projects or tasks so Today narrows to what matters, until a date or until you clear it
 - **Habits** — weekday schedules, 14-day consistency, and completion rate
 - **Analytics** — completions over time, project breakdown, and weekday patterns
 - **Command palette** — jump to projects, tasks, habits, and milestones
