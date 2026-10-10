@@ -38,9 +38,9 @@ DailyHub is not a replacement for Linear, Jira, or Notion. It is the **morning s
 ## See it in action
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/4581af2e-845f-4ead-a4a9-2e44c5c1fc1e" poster="branding/announcing_video/professional-master-poster.jpg" controls width="100%">
-    Your browser does not support the video element.
-  </video>
+  <a href="https://youtu.be/cAzb6aWz-hM">
+    <img src="docs/assets/gallery/youtube-thumbnail.png" alt="Watch the DailyHub demo on YouTube" width="100%">
+  </a>
 </p>
 
 ## A closer look
