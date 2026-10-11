@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-10-12
+
 ### Fixed
 
+- Reopening a task on a later day now takes back its completion. Only the log dated on the day it was reopened was deleted, so a task finished on Monday and reopened on Wednesday went back to open but kept counting as done on Monday in Analytics, the activity strip and streaks. Reopening now clears every completion the task has. The `set_task_completion` MCP tool had the same bug, and completing an already-done task through it with a different date now moves its completion instead of adding a second one.
+- Docker now respects your timezone. The server decides when a day starts, and the container ran in UTC, so habits reset and "today" rolled over at UTC midnight: 3am in UTC+3, 7pm the evening before in UTC−5. `docker-compose.yml` passes `TZ` through, and the `docker run` examples set it. npx and local runs already used the machine's timezone.
+- Checking a habit twice in quick succession no longer shows an error. Both toggles could see the habit unchecked and both try to insert today's log, and the second hit the unique key.
+- A project or habit created after deleting one no longer shares a sort position with an existing one. New items took the item count as their position; they now go after the highest one.
+- A logo upload that fails validation now says why ("Unsupported file type…", "SVG contains disallowed elements.") instead of a generic error. Production builds redact messages thrown from a Server Action, so the upload now returns its error instead.
 - A `DailyHub.app` built from a checkout with `scripts/build-macos-app.sh` no longer starts the server from that checkout. It served `.next/standalone` in place, so the next `npm run dev` or `npm run build` there rewrote the build under the running server: Today still rendered, but its JS chunks failed to load, nothing hydrated, and every project card stayed invisible at its entrance animation's starting opacity. The dev-built app now always starts the published package through `npx`, like one from `daily-hub install-app`. That installer was never affected.
+
+### Upgrade notes
+
+- A migration removes task completion logs the reopen bug left behind: every log of a task that is not done, and all but the latest log of a task that is done. It runs automatically on start. It does not touch habit logs, or logs of tasks you have deleted, which stay as history. Nothing needs doing by hand.
 
 ## [0.2.5] - 2026-10-05
 
@@ -280,7 +291,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose path with PostgreSQL 16 and migrate-on-start.
 - Today, Projects, Habits, and Analytics surfaces with completion logging.
 
-[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/baselhusam/daily-hub/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/baselhusam/daily-hub/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/baselhusam/daily-hub/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/baselhusam/daily-hub/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/baselhusam/daily-hub/compare/v0.2.2...v0.2.3
