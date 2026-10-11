@@ -177,11 +177,12 @@ The app is a launcher, not a bundled runtime, so Node.js 22+ still needs to be i
 
 ```bash
 docker run -d --name dailyhub -p 9999:9999 \
+  -e TZ=Europe/Berlin \
   -v dailyhub_data:/app/data \
   baselhusam/daily-hub:latest
 ```
 
-Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume, and migrations run automatically on start. Images are built for `linux/amd64` and `linux/arm64`. Pin a release with `baselhusam/daily-hub:X.Y.Z` (it matches the npm version). The same tags are on [GHCR](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub) as `ghcr.io/baselhusam/daily-hub`.
+Set `TZ` to your own timezone: the server decides when a day starts, and the container defaults to UTC. Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume, and migrations run automatically on start. Images are built for `linux/amd64` and `linux/arm64`. Pin a release with `baselhusam/daily-hub:X.Y.Z` (it matches the npm version). The same tags are on [GHCR](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub) as `ghcr.io/baselhusam/daily-hub`.
 
 ```bash
 docker exec dailyhub npm run db:seed   # optional sample data

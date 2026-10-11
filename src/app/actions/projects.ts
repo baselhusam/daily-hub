@@ -78,7 +78,8 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
     parsed.data;
 
   try {
-    const count = await prisma.project.count();
+    // max + 1, not count: after a delete, count collides with an existing slot.
+    const { _max } = await prisma.project.aggregate({ _max: { sortOrder: true } });
 
     const created = await prisma.project.create({
       data: {
@@ -90,7 +91,7 @@ export async function createProject(formData: FormData): Promise<ActionResult> {
         colorSource,
         dueDate: parseDateInput(parsed.data.dueDate),
         status,
-        sortOrder: count,
+        sortOrder: (_max.sortOrder ?? -1) + 1,
       },
       select: { id: true },
     });

@@ -14,6 +14,7 @@ How to run DailyHub locally, with `npx`, Docker, and on a server.
 |----------|----------|---------|
 | `DATABASE_URL` | Yes | `file:./.data/data.db` |
 | `DAILYHUB_DATA_DIR` | No | `~/.daily-hub` for npx, `./.data` for local dev, `/app/data` in Docker |
+| `TZ` | Docker only | `Europe/Berlin` — your timezone. The server decides when a day starts, so without it habits and "today" roll over at UTC midnight. npx and local dev already use your machine's timezone. |
 
 Copy from template:
 
@@ -98,11 +99,13 @@ Create the public `baselhusam/daily-hub` repository in Docker Hub before the fir
 
 ```bash
 docker run -d --name dailyhub -p 9999:9999 \
+  -e TZ=Europe/Berlin \
   -v dailyhub_data:/app/data \
   baselhusam/daily-hub:latest
 ```
 
 - App: http://localhost:9999
+- Set `TZ` to your own timezone; the container defaults to UTC
 - Migrations run automatically on container start (`prisma migrate deploy`)
 - Data volume: `dailyhub_data` mounted at `/app/data` (`data.db` + `uploads/`)
 - Pin a version: `baselhusam/daily-hub:X.Y.Z` (same as the npm version)

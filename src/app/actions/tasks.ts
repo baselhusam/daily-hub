@@ -136,12 +136,10 @@ export async function toggleTask(taskId: string): Promise<ActionResult> {
             completedAt: null,
           },
         }),
+        // Every log, not just today's: a task finished on Monday and reopened
+        // on Wednesday would otherwise keep counting as done on Monday.
         prisma.completionLog.deleteMany({
-          where: {
-            entityType: "TASK",
-            entityId: taskId,
-            completedOn: today,
-          },
+          where: { entityType: "TASK", entityId: taskId },
         }),
       ]);
     } else {

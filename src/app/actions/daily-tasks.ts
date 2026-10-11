@@ -35,7 +35,7 @@ export async function createDailyTask(
   const { title, iconKey, logoUrl, isActive } = parsed.data;
 
   try {
-    const count = await prisma.dailyTask.count();
+    const { _max } = await prisma.dailyTask.aggregate({ _max: { sortOrder: true } });
 
     await prisma.dailyTask.create({
       data: {
@@ -44,7 +44,7 @@ export async function createDailyTask(
         logoUrl: logoUrl || null,
         weekdays: toWeekdaysJson(parsed.data.weekdays),
         isActive,
-        sortOrder: count,
+        sortOrder: (_max.sortOrder ?? -1) + 1,
       },
     });
   } catch (error) {
@@ -100,23 +100,19 @@ export async function toggleDailyTask(
   const today = getTodayDate();
 
   try {
-    const existing = await prisma.completionLog.findFirst({
-      where: {
-        entityType: "DAILY_TASK",
-        entityId: dailyTaskId,
-        completedOn: today,
-      },
-    });
-
-    if (existing) {
-      await prisma.completionLog.delete({ where: { id: existing.id } });
-    } else {
-      await prisma.completionLog.create({
-        data: {
-          entityType: "DAILY_TASK",
-          entityId: dailyTaskId,
-          completedOn: today,
-        },
+    const where = {
+      entityType: "DAILY_TASK" as const,
+      entityId: dailyTaskId,
+      completedOn: today,
+    };
+    // deleteMany + upsert rather than findFirst + create: a quick double-click
+    // runs two toggles at once, and a second create would hit the unique key.
+    const removed = await prisma.completionLog.deleteMany({ where });
+    if (removed.count === 0) {
+      await prisma.completionLog.upsert({
+        where: { entityType_entityId_completedOn: where },
+        create: where,
+        update: {},
       });
     }
   } catch (error) {

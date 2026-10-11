@@ -35,8 +35,9 @@ export async function applyLogoToFormData(
     }
     const uploadData = new FormData();
     uploadData.set("logo", logoFile);
-    const logoUrl = await uploadLogo(uploadData);
-    if (logoUrl) formData.set("logoUrl", logoUrl);
+    const result = await uploadLogo(uploadData);
+    if (!result.success) throw new Error(result.error);
+    if (result.url) formData.set("logoUrl", result.url);
     return;
   }
 

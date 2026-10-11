@@ -10,6 +10,9 @@ services:
       DATABASE_URL: file:/app/data/data.db
       DAILYHUB_DATA_DIR: /app/data
       NODE_ENV: production
+      # The server decides what "today" is, so it must share your timezone or
+      # habits reset at UTC midnight. Set TZ in .env or your shell, e.g. Europe/Berlin.
+      TZ: ${TZ:-UTC}
     ports:
       - "9999:9999"
     volumes:

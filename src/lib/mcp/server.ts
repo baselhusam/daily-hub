@@ -60,6 +60,11 @@ async function setTaskCompletion(taskId: string, completed: boolean, date?: stri
         where: { id: taskId },
         data: { status: "DONE", completedAt: new Date() },
       }),
+      // A task holds one completion at a time; re-completing on another date
+      // moves it rather than adding a second.
+      prisma.completionLog.deleteMany({
+        where: { entityType: "TASK", entityId: taskId, completedOn: { not: completedOn } },
+      }),
       prisma.completionLog.upsert({
         where: {
           entityType_entityId_completedOn: {
@@ -84,7 +89,7 @@ async function setTaskCompletion(taskId: string, completed: boolean, date?: stri
         data: { status: "TODO", completedAt: null },
       }),
       prisma.completionLog.deleteMany({
-        where: { entityType: "TASK", entityId: taskId, completedOn },
+        where: { entityType: "TASK", entityId: taskId },
       }),
     ]);
   }
@@ -215,7 +220,8 @@ export function createDailyHubMcpServer() {
     },
     async ({ name, description, dueDate, status, iconKey, color }) => {
       await ensureDatabaseReady();
-      const sortOrder = await prisma.project.count();
+      const { _max } = await prisma.project.aggregate({ _max: { sortOrder: true } });
+      const sortOrder = (_max.sortOrder ?? -1) + 1;
       const project = await prisma.project.create({
         data: {
           name,
@@ -367,7 +373,7 @@ export function createDailyHubMcpServer() {
     "set_task_completion",
     {
       title: "Set task completion",
-      description: "Mark a task complete or incomplete, and maintain its completion history. Defaults to today; date must be YYYY-MM-DD.",
+      description: "Mark a task complete or incomplete, and maintain its completion history. When completing, date (YYYY-MM-DD) sets the day it counts toward and defaults to today; marking incomplete clears its completion whatever the date.",
       inputSchema: { id: z.string().min(1), completed: z.boolean(), date: dateInput.optional() },
     },
     async ({ id, completed, date }) => result(await setTaskCompletion(id, completed, date))
@@ -387,7 +393,8 @@ export function createDailyHubMcpServer() {
     },
     async ({ title, weekdays, iconKey, isActive }) => {
       await ensureDatabaseReady();
-      const sortOrder = await prisma.dailyTask.count();
+      const { _max } = await prisma.dailyTask.aggregate({ _max: { sortOrder: true } });
+      const sortOrder = (_max.sortOrder ?? -1) + 1;
       const habit = await prisma.dailyTask.create({
         data: {
           title,
