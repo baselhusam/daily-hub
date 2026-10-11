@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A `DailyHub.app` built from a checkout with `scripts/build-macos-app.sh` no longer starts the server from that checkout. It served `.next/standalone` in place, so the next `npm run dev` or `npm run build` there rewrote the build under the running server: Today still rendered, but its JS chunks failed to load, nothing hydrated, and every project card stayed invisible at its entrance animation's starting opacity. The dev-built app now always starts the published package through `npx`, like one from `daily-hub install-app`. That installer was never affected.
+
 ## [0.2.5] - 2026-10-05
 
 ### Added

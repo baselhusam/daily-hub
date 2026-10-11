@@ -40,9 +40,12 @@ sed "s/__VERSION__/$VERSION/g" "$SRC/Info.plist" > "$APP/Contents/Info.plist"
 plutil -lint "$APP/Contents/Info.plist" >/dev/null
 
 # --- launcher ---------------------------------------------------------------
-# The repo's own CLI is a fallback for when the package is not installed
-# globally; it only works once `npm run prepack` has produced .next/standalone.
-sed -e "s|__REPO_CLI__|$REPO_ROOT/bin/daily-hub.js|g" "$SRC/launcher.sh" \
+# Never point the launcher at this checkout. A server started from it serves
+# .next/standalone in place, and the next `npm run dev` or `npm run build` here
+# rewrites that directory under it: the page still renders, but its JS chunks
+# 404, nothing hydrates, and every project card stays at Motion's opacity:0.
+# Left empty, the launcher falls through to the published package via npx.
+sed -e "s|__REPO_CLI__||g" "$SRC/launcher.sh" \
   > "$APP/Contents/MacOS/DailyHub"
 if [ "$APP_MODE" = "1" ]; then
   sed -i '' 's|^APP_MODE="${DAILYHUB_APP_MODE:-0}"|APP_MODE="${DAILYHUB_APP_MODE:-1}"|' \
