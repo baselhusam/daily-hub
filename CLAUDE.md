@@ -163,9 +163,9 @@ signed bundle.
 ## Publishing
 
 Package: [`@baselhusam/daily-hub`](https://www.npmjs.com/package/@baselhusam/daily-hub)  
-Image: [`ghcr.io/baselhusam/daily-hub`](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub)
+Images: [`baselhusam/daily-hub`](https://hub.docker.com/r/baselhusam/daily-hub) (Docker Hub) and [`ghcr.io/baselhusam/daily-hub`](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub)
 
-Publishing is automatic on GitHub Releases. npm uses trusted publishing (OIDC) — no `NPM_TOKEN`. GHCR uses `GITHUB_TOKEN` (`packages: write`) — no Docker Hub credentials.
+Publishing is automatic on GitHub Releases. npm uses trusted publishing (OIDC) — no `NPM_TOKEN`. GHCR uses `GITHUB_TOKEN` (`packages: write`). Docker Hub uses the `DOCKERHUB_USERNAME` variable and `DOCKERHUB_TOKEN` secret.
 
 1. Update [`CHANGELOG.md`](CHANGELOG.md) under **Unreleased** (or add the new version section).
 2. Bump `"version"` in `package.json` **and `package-lock.json`** (it carries the version twice), and commit.
@@ -213,7 +213,7 @@ Thanks for using DailyHub! 🗓️
 The [Publish](.github/workflows/publish.yml) workflow then:
 
 - Builds via `prepack` and runs `npm publish`
-- Builds `linux/amd64` + `linux/arm64` and pushes `ghcr.io/baselhusam/daily-hub:X.Y.Z`
+- Builds `linux/amd64` + `linux/arm64` and pushes `baselhusam/daily-hub:X.Y.Z` to Docker Hub and `ghcr.io/baselhusam/daily-hub:X.Y.Z` to GHCR
 
 Stable releases also move npm `latest` and the image tag `:latest`. Prereleases use the npm `next` dist-tag and image tag `:next` (they do not move `:latest`). The first GHCR package may be private — set it to public in GitHub Packages settings after the first push.
 
