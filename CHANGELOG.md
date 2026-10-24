@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-10-24
+
+### Security
+
+- Updated Next.js to 15.5.28. 15.5.23 was affected by published advisories including unauthenticated remote code execution on Windows-hosted servers and in the image optimizer, cache poisoning, and a Server Action denial of service.
+- Updated the MCP SDK to 1.32, which fixes a single request exhausting server memory during validation and bearer auth accepting tokens issued for another service. Zod is updated to 4.6 for a memory-exhaustion fix in validation, and transitive dependencies (`sharp`, `proxy-addr`, `body-parser`, `postcss` and others) are updated through `npm audit fix`.
+- Next's image optimizer is turned off. Every logo was already rendered `unoptimized`, so the `/_next/image` endpoint served nothing DailyHub used; it now returns 404.
+- DailyHub refuses requests whose `Host` is a public hostname it hasn't been told about. With no login, DNS rebinding let any website the user visited re-point its own domain at `127.0.0.1` and then read the dashboard and run Server Actions as same-origin, since Next compares a Server Action's `Origin` against `Host` and the attacker controls both. `localhost`, IP addresses and local names (single-label, `.local`, `.lan`, `.internal`, `.home.arpa`) are always accepted; any other name needs to be listed in the new `DAILYHUB_ALLOWED_HOSTS` (comma-separated, `*` turns the check off) and otherwise gets a 403.
+- `docker-compose.yml` and the `docker run` examples publish port 9999 on `127.0.0.1` only. `"9999:9999"` bound every interface, so on a VPS without a separate firewall DailyHub was reachable from the internet, and on Linux Docker's published ports bypass `ufw`.
+
+### Fixed
+
+- The README said the MCP endpoint only listens on `127.0.0.1`, which holds for the npx CLI but not Docker. Under Docker no token is generated, so `/mcp` rejected every request; the README and `docs/DEPLOYMENT.md` now say to set `DAILYHUB_MCP_TOKEN` to use it there.
+
+### Upgrade notes
+
+- No migration and no data changes.
+- If you reach DailyHub by a public hostname, typically a reverse-proxy domain such as `tasks.example.com` or a Tailscale `*.ts.net` name, set `DAILYHUB_ALLOWED_HOSTS` to that name or every request gets a 403. Access through `localhost`, an IP address or a local name needs nothing.
+- If you run `docker compose` and open DailyHub from another device, change the port back to `"9999:9999"` in your `docker-compose.yml`. `docker run` users are unaffected until they copy the new example.
+
 ## [0.2.6] - 2026-10-12
 
 ### Fixed
