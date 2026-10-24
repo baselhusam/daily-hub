@@ -29,6 +29,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Logos are rendered with `unoptimized` already; turning the optimizer off
+  // globally also removes the `/_next/image` endpoint, which nothing uses.
+  images: {
+    unoptimized: true,
+  },
   experimental: {
     serverActions: {
       // Logos go through a Server Action, and Next's 1 MB default rejects them

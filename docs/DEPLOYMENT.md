@@ -15,6 +15,8 @@ How to run DailyHub locally, with `npx`, Docker, and on a server.
 | `DATABASE_URL` | Yes | `file:./.data/data.db` |
 | `DAILYHUB_DATA_DIR` | No | `~/.daily-hub` for npx, `./.data` for local dev, `/app/data` in Docker |
 | `TZ` | Docker only | `Europe/Berlin` — your timezone. The server decides when a day starts, so without it habits and "today" roll over at UTC midnight. npx and local dev already use your machine's timezone. |
+| `DAILYHUB_ALLOWED_HOSTS` | No | `tasks.example.com,nas.tail1234.ts.net` — extra hostnames DailyHub answers to. `localhost`, IP addresses, and local names (single-label, `.local`, `.lan`, `.internal`, `.home.arpa`) always work; any other `Host` gets a 403, which blocks DNS rebinding. `*` turns the check off. |
+| `DAILYHUB_MCP_TOKEN` | Docker only | Bearer token for the `/mcp` endpoint. The npx CLI generates one; in Docker, `/mcp` rejects every request until you set it (`openssl rand -hex 32`). |
 
 Copy from template:
 
@@ -98,13 +100,14 @@ Create the public `baselhusam/daily-hub` repository in Docker Hub before the fir
 ### Pull the image
 
 ```bash
-docker run -d --name dailyhub -p 9999:9999 \
+docker run -d --name dailyhub -p 127.0.0.1:9999:9999 \
   -e TZ=Europe/Berlin \
   -v dailyhub_data:/app/data \
   baselhusam/daily-hub:latest
 ```
 
 - App: http://localhost:9999
+- `127.0.0.1:` keeps the port on this machine. Use `-p 9999:9999` to reach it from your network; on Linux, Docker's published ports bypass `ufw`/`firewalld`, so don't rely on the host firewall to close it
 - Set `TZ` to your own timezone; the container defaults to UTC
 - Migrations run automatically on container start (`prisma migrate deploy`)
 - Data volume: `dailyhub_data` mounted at `/app/data` (`data.db` + `uploads/`)
@@ -211,14 +214,15 @@ Multi-stage build:
 
 Typical steps:
 
-1. `docker run -d --name dailyhub -p 9999:9999 -v dailyhub_data:/app/data baselhusam/daily-hub:latest` (or clone and `docker compose up -d`)
-2. Put Caddy/Nginx in front if you need HTTPS on port 443 (reverse proxy to `localhost:9999`)
+1. `docker run -d --name dailyhub -p 127.0.0.1:9999:9999 -e DAILYHUB_ALLOWED_HOSTS=tasks.example.com -v dailyhub_data:/app/data baselhusam/daily-hub:latest` (or clone and `docker compose up -d`)
+2. Put Caddy/Nginx in front if you need HTTPS on port 443 (reverse proxy to `localhost:9999`), and add authentication there — DailyHub has none. If the proxy forwards the original `Host` (Caddy does by default), list that domain in `DAILYHUB_ALLOWED_HOSTS` or DailyHub answers 403
 
 Contributors deploying from a working tree can use `docker compose up -d --build` instead of pulling.
 
 **Security notes for v1:**
 
 - No built-in auth — keep the instance on localhost, a private network, or behind a VPN / reverse-proxy
+- Requests are refused unless `Host` is `localhost`, an IP address, a local name, or listed in `DAILYHUB_ALLOWED_HOSTS` — this stops a website from reaching a local instance by DNS rebinding
 - Store the data volume on local disk (not NFS or synced folders)
 - Uploaded logos are served from `/uploads/*`; SVG responses use `nosniff` and a sandboxed document CSP
 - App responses include CSP, `X-Frame-Options`, and `Referrer-Policy` headers
@@ -236,6 +240,8 @@ Contributors deploying from a working tree can use `docker compose up -d --build
 |-------|-----|
 | `DailyHub now uses SQLite only` | Set `DATABASE_URL` to a `file:` URL (see `.env.example`) |
 | Port 9999 in use | Use `npx daily-hub --port 3000` or change port in `package.json` / `docker-compose.yml` |
+| `DailyHub refused this hostname` (403) | Add the hostname you use to `DAILYHUB_ALLOWED_HOSTS` |
+| Can't reach the container from another device | The default publishes on `127.0.0.1` only; use `-p 9999:9999` (or `"9999:9999"` in compose) on a trusted network |
 | Empty dashboard after deploy | Run `npm run db:seed` or create data via UI |
 | Logos missing after rebuild | Ensure `dailyhub_data` volume is attached |
 | `docker compose up` fails to pull | Build locally with `docker compose up --build`, or check that the Docker Hub repository and requested tag are public |

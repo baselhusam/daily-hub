@@ -48,7 +48,7 @@
     "prepack": "npm run db:generate && npm run build && npm run prepare-standalone && npm run build:cli && npm run build:seed"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@prisma/client": "^6.19.0",
     "@prisma/get-platform": "^6.19.3",
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -65,7 +65,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.562.0",
     "motion": "^12.23.26",
-    "next": "^15.5.6",
+    "next": "^15.5.28",
     "next-themes": "^0.4.6",
     "prisma": "^6.19.0",
     "react": "^19.2.0",
@@ -73,7 +73,7 @@
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.4.0",
     "tsx": "^4.20.6",
-    "zod": "^4.1.12"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
@@ -83,7 +83,7 @@
     "@types/react-dom": "^19.2.2",
     "esbuild": "^0.25.9",
     "eslint": "^9.36.0",
-    "eslint-config-next": "^15.5.6",
+    "eslint-config-next": "^15.5.28",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.3",
     "vitest": "^3.2.7"

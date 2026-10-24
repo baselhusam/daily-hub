@@ -13,8 +13,14 @@ services:
       # The server decides what "today" is, so it must share your timezone or
       # habits reset at UTC midnight. Set TZ in .env or your shell, e.g. Europe/Berlin.
       TZ: ${TZ:-UTC}
+      # Hostnames you reach DailyHub by besides localhost and IP addresses,
+      # e.g. a reverse-proxy domain: DAILYHUB_ALLOWED_HOSTS=tasks.example.com
+      DAILYHUB_ALLOWED_HOSTS: ${DAILYHUB_ALLOWED_HOSTS:-}
+    # DailyHub has no login, so it only listens on this machine. To open it to
+    # your network, use "9999:9999" — and note that Docker's published ports
+    # bypass ufw/firewalld rules on Linux.
     ports:
-      - "9999:9999"
+      - "127.0.0.1:9999:9999"
     volumes:
       - dailyhub_data:/app/data
 

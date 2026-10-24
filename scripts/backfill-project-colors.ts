@@ -31,9 +31,9 @@ const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
 type Decoder = (bytes: Buffer) => Promise<Uint8ClampedArray>;
 
 async function loadDecoder(): Promise<Decoder> {
-  let sharp: typeof import("sharp");
+  let sharp: typeof import("sharp").default;
   try {
-    sharp = (await import("sharp")).default as unknown as typeof import("sharp");
+    sharp = (await import("sharp")).default;
   } catch {
     throw new Error(
       "This script needs `sharp` to decode logos. It normally comes with Next.js — try `npm install` first."

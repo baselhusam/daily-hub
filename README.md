@@ -176,13 +176,13 @@ The app is a launcher, not a bundled runtime, so Node.js 22+ still needs to be i
 ### Docker
 
 ```bash
-docker run -d --name dailyhub -p 9999:9999 \
+docker run -d --name dailyhub -p 127.0.0.1:9999:9999 \
   -e TZ=Europe/Berlin \
   -v dailyhub_data:/app/data \
   baselhusam/daily-hub:latest
 ```
 
-Set `TZ` to your own timezone: the server decides when a day starts, and the container defaults to UTC. Open [http://localhost:9999](http://localhost:9999). Data persists in the `dailyhub_data` volume, and migrations run automatically on start. Images are built for `linux/amd64` and `linux/arm64`. Pin a release with `baselhusam/daily-hub:X.Y.Z` (it matches the npm version). The same tags are on [GHCR](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub) as `ghcr.io/baselhusam/daily-hub`.
+Set `TZ` to your own timezone: the server decides when a day starts, and the container defaults to UTC. Open [http://localhost:9999](http://localhost:9999). The `127.0.0.1:` prefix keeps it on this machine; drop it to reach DailyHub from other devices, but only on a network you trust. If you open it by a hostname other than `localhost`, an IP address, or a local name such as `nas.local`, add it to `-e DAILYHUB_ALLOWED_HOSTS=tasks.example.com` (see [Your data](#your-data)). Data persists in the `dailyhub_data` volume, and migrations run automatically on start. Images are built for `linux/amd64` and `linux/arm64`. Pin a release with `baselhusam/daily-hub:X.Y.Z` (it matches the npm version). The same tags are on [GHCR](https://github.com/baselhusam/daily-hub/pkgs/container/daily-hub) as `ghcr.io/baselhusam/daily-hub`.
 
 ```bash
 docker exec dailyhub npm run db:seed   # optional sample data
@@ -229,7 +229,9 @@ claude mcp add --transport http dailyhub http://127.0.0.1:9999/mcp --header "Aut
 
 </details>
 
-The endpoint only listens on `127.0.0.1` and rejects requests without the token. The token is stored with owner-only permissions in `~/.daily-hub/daily-hub-mcp.json`. To turn the endpoint off, start DailyHub with `--no-mcp`.
+With the npx CLI, the endpoint only listens on `127.0.0.1` and rejects requests without the token. The token is stored with owner-only permissions in `~/.daily-hub/daily-hub-mcp.json`. To turn the endpoint off, start DailyHub with `--no-mcp`.
+
+Under Docker there is no generated token, so `/mcp` rejects every request until you set one: add `-e DAILYHUB_MCP_TOKEN=$(openssl rand -hex 32)` to `docker run`, then use `http://localhost:9999/mcp` with that token as the bearer. `-e DAILYHUB_MCP_ENABLED=false` turns it off entirely.
 
 ## Your data
 
@@ -237,7 +239,7 @@ The endpoint only listens on `127.0.0.1` and rejects requests without the token.
 - **Backups**: stop DailyHub and copy that folder. That copy is the whole backup.
 - **Don’t sync it live**: keep the data folder out of iCloud, Dropbox, and other sync tools. Syncing a SQLite file while it is open can corrupt it.
 - **Upgrades**: run `npx @baselhusam/daily-hub --update`, or pull a newer Docker image. Database migrations apply on start, and the release notes say when a release includes one.
-- **Security**: DailyHub has no login. Keep it on localhost, a private network, or behind an authenticating reverse proxy, and never expose port 9999 to the internet directly.
+- **Security**: DailyHub has no login. Keep it on localhost, a private network, or behind an authenticating reverse proxy, and never expose port 9999 to the internet directly. To stop other websites from reaching a local instance through DNS rebinding, it answers only to `localhost`, IP addresses, and local names (single-label, `.local`, `.lan`, `.internal`, `.home.arpa`). List any other hostname, comma-separated, in `DAILYHUB_ALLOWED_HOSTS`.
 
 ## Built with
 
