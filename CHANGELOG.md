@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `npx @baselhusam/daily-hub` failed to start on Windows with `Failed to open SQLite database. The specified path is invalid. (os error 161)`. The CLI passed Prisma a `file:///C:/...` URL, which Prisma cannot open on Windows; it now passes `file:C:/...` there. macOS and Linux are unchanged.
+
 ## [0.2.7] - 2026-10-24
 
 ### Security

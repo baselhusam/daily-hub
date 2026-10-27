@@ -14,6 +14,24 @@ describe("prisma-support", () => {
     expect(url).toContain("busy_timeout=10000");
   });
 
+  it("uses a file:///path URL on macOS and Linux", () => {
+    expect(databaseUrl("/home/me/.daily-hub", "linux")).toBe(
+      "file:///home/me/.daily-hub/data.db?busy_timeout=10000"
+    );
+    expect(databaseUrl("/Users/me/.daily-hub", "darwin")).toBe(
+      "file:///Users/me/.daily-hub/data.db?busy_timeout=10000"
+    );
+  });
+
+  it("uses a file:C:/path URL on Windows, which Prisma can open", () => {
+    expect(databaseUrl("C:\\Users\\Basel\\.daily-hub", "win32")).toBe(
+      "file:C:/Users/Basel/.daily-hub/data.db?busy_timeout=10000"
+    );
+    expect(databaseUrl("D:\\data\\daily hub\\", "win32")).toBe(
+      "file:D:/data/daily hub/data.db?busy_timeout=10000"
+    );
+  });
+
   it("installs query engines where the bundled Next.js client looks", () => {
     const dirs = queryEngineSearchDirs("/pkg");
     expect(dirs).toContain(generatedClientDir("/pkg"));

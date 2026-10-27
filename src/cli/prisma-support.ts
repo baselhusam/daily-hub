@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { dirname, join, win32 } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   getBinaryTargetForCurrentPlatform,
@@ -14,7 +14,12 @@ type RunCommand = (
   cwd?: string
 ) => Promise<void>;
 
-export function databaseUrl(dataDir: string): string {
+export function databaseUrl(dataDir: string, platform: NodeJS.Platform = process.platform): string {
+  if (platform === "win32") {
+    // Prisma rejects file:///C:/... on Windows ("The specified path is invalid"), so use file:C:/...
+    const databasePath = win32.join(dataDir, "data.db").replaceAll("\\", "/");
+    return `file:${databasePath}?busy_timeout=10000`;
+  }
   const databasePath = join(dataDir, "data.db");
   return `${pathToFileURL(databasePath).href}?busy_timeout=10000`;
 }
